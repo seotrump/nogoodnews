@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import PostCard from '@/components/PostCard'
 import FeedAutoTrigger from '@/components/FeedAutoTrigger'
 import BulkDeleteFeed from '@/components/BulkDeleteFeed'

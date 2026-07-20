@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import Link from 'next/link'
-import { deleteComment } from '@/app/posts/actions'
+import { Link } from '@/i18n/routing'
+import { deleteComment } from '@/app/[locale]/posts/actions'
 import { ADMIN_EMAIL } from '@/utils/auth'
 import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'

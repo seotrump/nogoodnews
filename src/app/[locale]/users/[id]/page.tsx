@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import FollowButton from '@/components/FollowButton'
 

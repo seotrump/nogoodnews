@@ -1,39 +1,30 @@
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import { isAdmin } from '@/utils/auth'
 import DeletePostButton from './DeletePostButton'
 import { Eye, MessageSquare } from 'lucide-react'
 
 import ReactionPanel from './ReactionPanel'
 
+import PostContentClient from './PostContentClient'
 import ClickableArea from './ClickableArea'
+import { useTranslations } from 'next-intl'
 
 export default function PostCard({ post, isDetail = false, currentUser, hideDeleteButton = false }: { post: any, isDetail?: boolean, currentUser?: any, hideDeleteButton?: boolean }) {
+  const t = useTranslations('PostCard');
   const date = new Date(post.created_at).toLocaleString('ko-KR')
-  const authorName = post.accounts?.display_name || '익명'
+  const authorName = post.accounts?.display_name || t('anonymous')
   const isAI = post.accounts?.is_ai
   const avatarUrl = post.accounts?.avatar_url
 
-  const renderWithHashtags = (text: string) => {
-    if (!text) return null;
-    const parts = text.split(/(#[\w가-힣]+)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('#')) {
-        const tag = part.slice(1);
-        return <Link key={i} href={`/tags/${encodeURIComponent(tag)}`} className="text-blue-600 hover:underline">{part}</Link>;
-      }
-      return part;
-    });
-  }
-
   const contentNode = (
-    <div className="mt-1">
-      <h2 className={`text-xl font-bold text-gray-900 mb-2 leading-tight ${!isDetail ? 'hover:text-blue-600 transition' : ''}`}>
-        {renderWithHashtags(post.headline)}
-      </h2>
-      <p className={`text-gray-700 whitespace-pre-wrap text-sm leading-relaxed ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
-        {renderWithHashtags(post.content)}
-      </p>
-    </div>
+    <PostContentClient 
+      initialHeadline={post.headline} 
+      initialContent={post.content} 
+      isDetail={isDetail}
+      postId={post.id}
+      initialReactions={post.reactions || []}
+      currentUserId={currentUser?.id}
+    />
   )
 
   const wrappedContentNode = !isDetail ? (
@@ -70,21 +61,12 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
 
       {post.url && (
         <a href={post.url} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-500 hover:underline mb-3 block truncate bg-blue-50 px-2 py-1 rounded w-full pr-12">
-          🔗 원문 보러가기: {post.url}
+          {t('readOriginal')}: {post.url}
         </a>
       )}
       
-      <div className="mb-4 pr-10">
-        {wrappedContentNode}
-      </div>
-
       <div className="mb-4">
-        <ReactionPanel 
-          targetType="post" 
-          targetId={post.id} 
-          initialReactions={post.reactions || []} 
-          currentUserId={currentUser?.id} 
-        />
+        {wrappedContentNode}
       </div>
 
       <div className="text-xs text-gray-400 flex items-center justify-between border-t pt-3 mt-2">
@@ -110,7 +92,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
           <span className="text-gray-400 font-normal">{date}</span>
           {isDetail && currentUser && (post.author_id === currentUser.id || isAdmin(currentUser)) && (
             <Link href={`/posts/${post.id}/edit`} className="ml-1 text-blue-500 hover:text-blue-700 font-bold transition">
-              수정
+              {t('edit')}
             </Link>
           )}
         </div>

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import PostCard from '@/components/PostCard'
 import { deleteMultiplePosts } from '@/app/feed-actions'
 import { isAdmin } from '@/utils/auth'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 
 export default function BulkDeleteFeed({ posts, currentUser }: { posts: any[], currentUser: any }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])

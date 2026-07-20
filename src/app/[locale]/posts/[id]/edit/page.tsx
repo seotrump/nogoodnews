@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import { updatePost } from '@/app/posts/actions'
+import { updatePost } from '@/app/[locale]/posts/actions'
 import { isAdmin } from '@/utils/auth'
 
 import ImageUploadPreview from '@/components/ImageUploadPreview'

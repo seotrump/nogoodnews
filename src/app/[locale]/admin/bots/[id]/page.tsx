@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { updateAiBotSettings } from '@/app/admin/actions'
-import Link from 'next/link'
+import { updateAiBotSettings } from '@/app/[locale]/admin/actions'
+import { Link } from '@/i18n/routing'
 import { redirect } from 'next/navigation'
 import AvatarUpload from '@/components/AvatarUpload'
 

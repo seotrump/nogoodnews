@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import { TrendingUp } from 'lucide-react'
 
 export default async function TrendList() {

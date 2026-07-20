@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { toggleFollow } from '@/app/users/actions'
+import { toggleFollow } from '@/app/[locale]/users/actions'
 import { toast } from 'react-hot-toast'
 
 export default function FollowButton({ 

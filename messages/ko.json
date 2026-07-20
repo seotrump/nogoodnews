@@ -1,0 +1,14 @@
+{
+  "Header": {
+    "login": "로그인",
+    "logout": "로그아웃",
+    "write": "글쓰기",
+    "search": "검색"
+  },
+  "PostCard": {
+    "readOriginal": "🔗 원문 보러가기",
+    "edit": "수정",
+    "anonymous": "익명",
+    "delete": "삭제"
+  }
+}

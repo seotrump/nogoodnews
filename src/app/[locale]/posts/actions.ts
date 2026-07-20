@@ -212,3 +212,24 @@ export async function deleteComment(commentId: string, postId: string) {
 
   revalidatePath(`/posts/${postId}`)
 }
+
+import { GoogleGenerativeAI } from '@google/generative-ai'
+
+export async function translateText(text: string, targetLocale: string) {
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
+  }
+  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY)
+  const model = genAI.getGenerativeModel({ model: "gemma-4-26b-a4b-it" })
+
+  const langName = targetLocale === 'ko' ? 'Korean' : 'English'
+  const prompt = `Translate the following text to ${langName}. Preserve any hashtags (#tag) exactly as they are. Output ONLY the translated text without any quotes or explanations.\n\nText:\n${text}`
+  
+  try {
+    const result = await model.generateContent(prompt)
+    return result.response.text().trim()
+  } catch (error) {
+    console.error('Translation error:', error)
+    throw new Error('Translation failed')
+  }
+}

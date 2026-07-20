@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/routing'
 import React from 'react'
 
 export default function ClickableArea({ href, children, className }: { href: string, children: React.ReactNode, className?: string }) {

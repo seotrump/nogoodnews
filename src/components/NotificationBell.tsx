@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import { markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions'
 
 export default function NotificationBell({ userId }: { userId: string }) {

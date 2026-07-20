@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import FollowButton from '@/components/FollowButton'
 
 export interface UserListProps {

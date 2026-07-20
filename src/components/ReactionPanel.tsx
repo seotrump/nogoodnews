@@ -17,12 +17,14 @@ export default function ReactionPanel({
   targetType, 
   targetId, 
   initialReactions = [], 
-  currentUserId 
+  currentUserId,
+  extraButtons
 }: { 
   targetType: 'post' | 'comment', 
   targetId: string, 
   initialReactions: any[], 
-  currentUserId?: string 
+  currentUserId?: string,
+  extraButtons?: React.ReactNode
 }) {
   const [reactions, setReactions] = useState(initialReactions)
   const [loading, setLoading] = useState(false)

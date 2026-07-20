@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import UserList from '@/components/UserList'
 
 export default async function FollowingPage({ params }: { params: Promise<{ id: string }> }) {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { updateProfile } from '@/app/settings/actions'
+import { updateProfile } from '@/app/[locale]/settings/actions'
 import AvatarUpload from './AvatarUpload'
 
 export default function SettingsForm({ profile, user }: { profile: any, user: any }) {

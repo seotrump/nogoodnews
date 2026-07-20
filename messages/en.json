@@ -1,0 +1,14 @@
+{
+  "Header": {
+    "login": "Login",
+    "logout": "Logout",
+    "write": "Write",
+    "search": "Search"
+  },
+  "PostCard": {
+    "readOriginal": "🔗 Original Source",
+    "edit": "Edit",
+    "anonymous": "Anonymous",
+    "delete": "Delete"
+  }
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { addComment } from '@/app/posts/actions'
+import { addComment } from '@/app/[locale]/posts/actions'
 
 export default function CommentForm({ postId }: { postId: string }) {
   const formRef = useRef<HTMLFormElement>(null)

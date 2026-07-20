@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 import { Suspense } from "react";
+import {NextIntlClientProvider} from 'next-intl';
+import {getMessages, setRequestLocale} from 'next-intl/server';
+import {routing} from '@/i18n/routing';
+import {notFound} from 'next/navigation';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,22 +25,33 @@ export const metadata: Metadata = {
 import Header from "@/components/Header";
 import ToastProvider from "@/components/ToastProvider";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+  params
+}: {
   children: React.ReactNode;
-}>) {
+  params: Promise<{locale: string}>;
+}) {
+  const {locale} = await params;
+  if (!routing.locales.includes(locale as any)) {
+    notFound();
+  }
+  setRequestLocale(locale);
+  const messages = await getMessages();
+
   return (
     <html
-      lang="ko"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-gray-50">
-        <Header />
-        {children}
-        <Suspense fallback={null}>
-          <ToastProvider />
-        </Suspense>
+        <NextIntlClientProvider messages={messages}>
+          <Header />
+          {children}
+          <Suspense fallback={null}>
+            <ToastProvider />
+          </Suspense>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

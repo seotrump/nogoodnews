@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { updatePassword } from '@/app/settings/actions'
+import { updatePassword } from '@/app/[locale]/settings/actions'
 
 export default function PasswordForm() {
   const [isSaving, setIsSaving] = useState(false)

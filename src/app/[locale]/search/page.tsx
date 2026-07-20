@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import PostCard from '@/components/PostCard'
 import UserList from '@/components/UserList'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const supabase = await createClient()
@@ -32,6 +32,18 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     .ilike('display_name', `%${q}%`)
     .limit(20)
 
+  // 3. 현재 로그인한 유저의 팔로잉 목록 가져오기
+  let currentUserFollowingIds: string[] = []
+  if (user) {
+    const { data: followingData } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', user.id)
+    if (followingData) {
+      currentUserFollowingIds = followingData.map(f => f.following_id)
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-6 sm:mt-8 pb-20 w-full">
       <h1 className="text-2xl font-bold mb-8">
@@ -45,7 +57,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             <h2 className="text-xl font-bold border-b pb-2 mb-4 flex items-center gap-2">
               👤 유저 <span className="text-gray-400 text-sm font-normal">({users.length})</span>
             </h2>
-            <UserList users={users} currentUser={user} />
+            <UserList users={users} currentUserId={user?.id} currentUserFollowingIds={currentUserFollowingIds} />
           </section>
         )}
 
