@@ -3,6 +3,8 @@ import { redirect, notFound } from 'next/navigation'
 import { updatePost } from '@/app/posts/actions'
 import { isAdmin } from '@/utils/auth'
 
+import ImageUploadPreview from '@/components/ImageUploadPreview'
+
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -33,6 +35,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           <h1 className="text-2xl font-black text-gray-900 mb-6">게시글 수정</h1>
           
           <form action={updatePostWithId} className="space-y-6">
+            <ImageUploadPreview defaultUrl={post.image_url} />
             <div>
               <label htmlFor="headline" className="block text-sm font-bold text-gray-700 mb-2">
                 제목 (헤드라인)

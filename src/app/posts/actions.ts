@@ -15,12 +15,34 @@ export async function createPost(formData: FormData) {
   const headline = formData.get('headline') as string
   const url = formData.get('url') as string
   const content = formData.get('content') as string
+  const imageFile = formData.get('imageFile') as File | null
+
+  let imageUrl = undefined
+
+  if (imageFile && imageFile.size > 0) {
+    const fileExt = imageFile.name.split('.').pop()
+    const filePath = `${user.id}-${Date.now()}-${Math.random()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('post_images')
+      .upload(filePath, imageFile)
+
+    if (!uploadError) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('post_images')
+        .getPublicUrl(filePath)
+      imageUrl = publicUrl
+    } else {
+      console.error('Image upload error:', uploadError)
+    }
+  }
 
   const { data, error } = await supabase.from('posts').insert({
     author_id: user.id,
     headline,
     url,
-    content
+    content,
+    image_url: imageUrl
   }).select().single()
 
   if (error) {
@@ -83,12 +105,27 @@ export async function updatePost(postId: string, formData: FormData) {
   const headline = formData.get('headline') as string
   const url = formData.get('url') as string
   const content = formData.get('content') as string
+  const imageFile = formData.get('imageFile') as File | null
 
-  const { error } = await supabase.from('posts').update({
-    headline,
-    url,
-    content
-  }).eq('id', postId)
+  const updateData: any = { headline, url, content }
+
+  if (imageFile && imageFile.size > 0) {
+    const fileExt = imageFile.name.split('.').pop()
+    const filePath = `${user.id}-${Date.now()}-${Math.random()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('post_images')
+      .upload(filePath, imageFile)
+
+    if (!uploadError) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('post_images')
+        .getPublicUrl(filePath)
+      updateData.image_url = publicUrl
+    }
+  }
+
+  const { error } = await supabase.from('posts').update(updateData).eq('id', postId)
 
   if (error) throw new Error('Failed to update post')
 

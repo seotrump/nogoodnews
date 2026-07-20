@@ -1,0 +1,44 @@
+'use client'
+
+import { useState } from 'react'
+
+export default function ImageUploadPreview({ defaultUrl }: { defaultUrl?: string }) {
+  const [preview, setPreview] = useState<string | null>(defaultUrl || null)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      const url = URL.createObjectURL(file)
+      setPreview(url)
+    }
+  }
+
+  return (
+    <div>
+      <label className="block text-sm font-semibold mb-2 text-gray-700">대표 이미지 첨부 (선택)</label>
+      <div className="relative w-full h-24 sm:h-32 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden group hover:bg-gray-100 transition">
+        {preview ? (
+          <img src={preview} alt="Preview" className="absolute inset-0 w-full h-full object-contain bg-black/5 group-hover:opacity-50 transition" />
+        ) : (
+          <div className="text-gray-400 text-center flex flex-col items-center">
+            <span className="text-3xl mb-2">📸</span>
+            <span className="text-sm font-semibold">클릭하여 이미지 업로드</span>
+          </div>
+        )}
+        
+        {preview && (
+          <div className="relative z-10 text-center pointer-events-none opacity-0 group-hover:opacity-100 transition">
+            <span className="bg-white px-3 py-1 rounded-full shadow-sm text-sm font-bold text-gray-700">이미지 변경하기</span>
+          </div>
+        )}
+        <input 
+          type="file" 
+          name="imageFile" 
+          accept="image/*" 
+          onChange={handleChange} 
+          className="absolute inset-0 opacity-0 cursor-pointer z-20 w-full h-full" 
+        />
+      </div>
+    </div>
+  )
+}

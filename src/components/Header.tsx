@@ -21,7 +21,22 @@ export default async function Header() {
         <Link href="/" className="text-2xl font-black tracking-tighter">
           NoGoodNews<span className="text-red-500">.</span>
         </Link>
-        <div className="flex items-center gap-4 text-sm font-medium">
+        <div className="flex items-center gap-4 flex-1 justify-between ml-4 sm:ml-8">
+          <form action="/search" method="get" className="flex-1 max-w-sm hidden sm:block">
+            <div className="relative">
+              <input 
+                type="text" 
+                name="q" 
+                placeholder="게시물, 태그, 유저 검색..." 
+                className="w-full bg-gray-100 border-none rounded-full py-2 pl-4 pr-10 text-sm focus:ring-2 focus:ring-black outline-none"
+              />
+              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
+                🔍
+              </button>
+            </div>
+          </form>
+          
+          <div className="flex items-center gap-3 sm:gap-4 text-sm font-medium ml-auto">
           {user ? (
             <>
               <NotificationBell userId={user.id} />
@@ -53,6 +68,7 @@ export default async function Header() {
               로그인
             </Link>
           )}
+        </div>
         </div>
       </div>
     </header>

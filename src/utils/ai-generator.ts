@@ -3,7 +3,7 @@ import { openai } from '@ai-sdk/openai'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 // 환경변수에서 Gemini API 키를 가져와 초기화
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '')
 
 // ==========================================
 // 1. 댓글 생성 함수
