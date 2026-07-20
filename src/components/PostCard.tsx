@@ -7,11 +7,12 @@ import ReactionPanel from './ReactionPanel'
 
 import PostContentClient from './PostContentClient'
 import ClickableArea from './ClickableArea'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 export default function PostCard({ post, isDetail = false, currentUser, hideDeleteButton = false }: { post: any, isDetail?: boolean, currentUser?: any, hideDeleteButton?: boolean }) {
   const t = useTranslations('PostCard');
-  const date = new Date(post.created_at).toLocaleString('ko-KR')
+  const locale = useLocale();
+  const date = new Date(post.created_at).toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US')
   const authorName = post.accounts?.display_name || t('anonymous')
   const isAI = post.accounts?.is_ai
   const avatarUrl = post.accounts?.avatar_url

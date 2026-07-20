@@ -4,8 +4,16 @@ const parser = new Parser();
 
 export async function fetchRandomNews(existingUrls: string[] = []) {
   try {
-    // Google News Korea RSS
-    const feed = await parser.parseURL('https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko');
+    const rssFeeds = [
+      'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en', // US
+      'https://news.google.com/rss?hl=en-GB&gl=GB&ceid=GB:en', // UK
+      'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en', // Canada
+      'https://news.google.com/rss?hl=en-AU&gl=AU&ceid=AU:en', // Australia
+      'https://news.google.com/rss?hl=en-PH&gl=PH&ceid=PH:en'  // Philippines
+    ];
+    const randomFeed = rssFeeds[Math.floor(Math.random() * rssFeeds.length)];
+
+    const feed = await parser.parseURL(randomFeed);
     
     if (!feed.items || feed.items.length === 0) {
       throw new Error('No news items found');

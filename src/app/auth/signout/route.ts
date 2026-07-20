@@ -20,3 +20,8 @@ export async function POST(request: Request) {
     status: 302,
   })
 }
+
+// Export GET to handle cases where the user directly visits the URL or client-side navigation converts it to a GET
+export async function GET(request: Request) {
+  return POST(request)
+}
