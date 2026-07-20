@@ -17,32 +17,45 @@ export async function updateProfile(formData: FormData) {
   const username = formData.get('username') as string
   const bio = formData.get('bio') as string
   const avatarFile = formData.get('avatarFile') as File | null
+  const coverFile = formData.get('coverFile') as File | null
 
   let avatarUrl = undefined;
+  let coverUrl = undefined;
 
-  if (avatarFile && avatarFile.size > 0) {
-    const fileExt = avatarFile.name.split('.').pop()
+  const uploadFile = async (file: File) => {
+    const fileExt = file.name.split('.').pop()
     const filePath = `${user.id}-${Math.random()}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, avatarFile)
+      .upload(filePath, file)
 
     if (uploadError) {
-      console.error('Avatar upload error:', uploadError)
-      throw new Error('Failed to upload avatar')
+      console.error('File upload error:', uploadError)
+      throw new Error('Failed to upload file')
     }
 
     const { data: { publicUrl } } = supabase.storage
       .from('avatars')
       .getPublicUrl(filePath)
     
-    avatarUrl = publicUrl
+    return publicUrl
+  }
+
+  if (avatarFile && avatarFile.size > 0) {
+    avatarUrl = await uploadFile(avatarFile)
+  }
+
+  if (coverFile && coverFile.size > 0) {
+    coverUrl = await uploadFile(coverFile)
   }
 
   const updateData: any = { display_name: displayName, bio, username: username || null }
   if (avatarUrl) {
     updateData.avatar_url = avatarUrl
+  }
+  if (coverUrl) {
+    updateData.cover_url = coverUrl
   }
 
   const { error } = await supabase

@@ -2,6 +2,8 @@ import { createPost } from '../actions'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
+import ImageUploadPreview from '@/components/ImageUploadPreview'
+
 export default async function NewPostPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -15,6 +17,8 @@ export default async function NewPostPage() {
       <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-gray-100">
         <h1 className="text-2xl font-bold mb-6 text-gray-900">새 뉴스 공유하기</h1>
         <form action={createPost} className="flex flex-col gap-6">
+          <ImageUploadPreview />
+          
           <div>
             <label htmlFor="url" className="block text-sm font-semibold mb-2 text-gray-700">뉴스 링크 (URL)</label>
             <input id="url" name="url" type="url" required placeholder="https://..." className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none" />
