@@ -1,4 +1,5 @@
 import { Link } from '@/i18n/routing'
+import { useTranslations } from 'next-intl'
 
 interface SortFilterProps {
   currentSort: string
@@ -6,6 +7,8 @@ interface SortFilterProps {
 }
 
 export default function SortFilter({ currentSort, currentFeed = 'global' }: SortFilterProps) {
+  const t = useTranslations('SortFilter')
+
   const getHref = (sort: string) => {
     const q = []
     if (sort !== 'latest') q.push(`sort=${sort}`)
@@ -14,9 +17,9 @@ export default function SortFilter({ currentSort, currentFeed = 'global' }: Sort
   }
 
   const options = [
-    { value: 'latest', label: '최신순', href: getHref('latest') },
-    { value: 'comments', label: '댓글 많은 순', href: getHref('comments') },
-    { value: 'views', label: '조회 많은 순', href: getHref('views') }
+    { value: 'latest', label: t('latest'), href: getHref('latest') },
+    { value: 'comments', label: t('comments'), href: getHref('comments') },
+    { value: 'views', label: t('views'), href: getHref('views') }
   ]
 
   return (

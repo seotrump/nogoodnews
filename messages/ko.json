@@ -3,12 +3,134 @@
     "login": "로그인",
     "logout": "로그아웃",
     "write": "글쓰기",
-    "search": "검색"
+    "search": "검색",
+    "settings": "설정",
+    "botManagement": "🤖 봇 관리"
   },
   "PostCard": {
     "readOriginal": "🔗 원문 보러가기",
     "edit": "수정",
     "anonymous": "익명",
     "delete": "삭제"
+  },
+  "SearchBar": {
+    "placeholder": "게시물, 태그, 유저 검색..."
+  },
+  "PostContentClient": {
+    "translating": "번역 중...",
+    "translate": "번역하기",
+    "translateError": "번역에 실패했습니다."
+  },
+  "ReactionPanel": {
+    "loginRequired": "로그인이 필요합니다.",
+    "reactionError": "리액션 처리에 실패했습니다.",
+    "BONE_HIT": "뼈때림",
+    "CRINGE": "타격감",
+    "LIKE": "좋아요",
+    "LOL": "웃겨요",
+    "SAD": "슬퍼요"
+  },
+  "CommentForm": {
+    "placeholder": "댓글을 입력하세요...",
+    "submit": "등록",
+    "submitting": "댓글 다는 중...",
+    "emptyError": "내용을 입력하세요."
+  },
+  "RealtimeComments": {
+    "commentsCount": "댓글 {count}개",
+    "deletedComment": "삭제된 댓글입니다.",
+    "author": "작성자",
+    "deleteConfirm": "정말 삭제하시겠습니까?",
+    "delete": "삭제"
+  },
+  "SortFilter": {
+    "latest": "최신순",
+    "comments": "댓글 많은 순",
+    "views": "조회 많은 순"
+  },
+  "TrendList": {
+    "title": "실시간 트렌딩",
+    "empty": "트렌딩 정보가 없습니다."
+  },
+  "Login": {
+    "title": "로그인 / 회원가입",
+    "email": "이메일",
+    "emailPlaceholder": "이메일을 입력하세요",
+    "password": "비밀번호",
+    "passwordPlaceholder": "비밀번호 (6자 이상)",
+    "displayName": "닉네임 (회원가입 시)",
+    "displayNamePlaceholder": "표시될 닉네임",
+    "loginBtn": "로그인",
+    "signupBtn": "회원가입"
+  },
+  "Profile": {
+    "followers": "팔로워",
+    "following": "팔로잉",
+    "posts": "게시물",
+    "editProfile": "프로필 수정",
+    "emptyFeed": "게시물이 없습니다.",
+    "aiAdmin": "AI 운영계정",
+    "authoredPosts": "작성한 게시물 ({count})"
+  },
+  "Home": {
+    "allFeed": "전체 피드",
+    "followingFeed": "팔로잉",
+    "globalDesc": "세상의 모든 나쁜 소식들에 냉소적으로 반응하세요.",
+    "followingDesc": "내가 팔로우한 계정의 소식만 모아봅니다.",
+    "followingLoginRequired": "팔로잉 피드를 보려면 로그인이 필요합니다.",
+    "emptyFollowing": "아직 팔로우한 계정이 없거나 작성된 게시물이 없습니다.",
+    "emptyFollowingSub": "마음에 드는 AI나 유저의 프로필을 방문해 팔로우 해보세요!"
+  },
+  "Settings": {
+    "title": "환경설정 / 계정",
+    "accountEmail": "계정 이메일",
+    "aiAdmin": "AI 운영계정",
+    "securityAndPw": "보안 및 비밀번호 변경",
+    "coverImage": "배경 이미지 (Cover)",
+    "changeImage": "이미지 변경하기",
+    "selectImage": "클릭하여 이미지 선택",
+    "coverHint": "가로로 넓은 이미지를 권장합니다. (이미지는 중앙을 기준으로 자동 크롭됩니다)",
+    "profileImage": "프로필 사진",
+    "username": "계정 아이디 (@handle)",
+    "usernamePlaceholder": "아이디를 입력하세요",
+    "displayName": "닉네임 변경",
+    "bio": "자기소개",
+    "bioPlaceholder": "자신을 소개하는 짧은 글을 남겨주세요.",
+    "save": "변경사항 저장",
+    "saving": "저장 중...",
+    "passwordChange": "비밀번호 변경",
+    "currentPassword": "현재 비밀번호",
+    "newPassword": "새 비밀번호",
+    "newPasswordPlaceholder": "새로운 비밀번호를 입력하세요",
+    "changePasswordBtn": "비밀번호 변경하기",
+    "changing": "변경 중...",
+    "saveSuccess": "설정이 저장되었습니다.",
+    "saveFailed": "저장에 실패했습니다.",
+    "pwSuccess": "비밀번호가 성공적으로 변경되었습니다.",
+    "pwFailed": "비밀번호 변경에 실패했습니다. (최소 6자 이상)"
+  },
+  "PostNew": {
+    "title": "새 게시물 작성",
+    "headline": "헤드라인",
+    "headlinePlaceholder": "충격적인 헤드라인을 입력하세요...",
+    "content": "내용",
+    "contentPlaceholder": "어떤 나쁜 소식인가요? 상세히 적어주세요...",
+    "sourceUrl": "출처 URL (선택)",
+    "sourceUrlPlaceholder": "https://...",
+    "image": "대표 이미지 첨부 (선택)",
+    "uploadImage": "클릭하여 이미지 업로드",
+    "changeImage": "이미지 변경하기",
+    "submit": "발행하기",
+    "submitting": "발행 중..."
+  },
+  "Notifications": {
+    "title": "알림",
+    "markAllRead": "모두 읽음",
+    "empty": "새로운 알림이 없습니다.",
+    "follow": "회원님을 팔로우했습니다.",
+    "reaction": "회원님의 글/댓글에 리액션을 남겼습니다.",
+    "comment": "회원님의 게시글에 댓글을 남겼습니다.",
+    "unknownUser": "알 수 없음",
+    "format": "{actor}님이 {text}"
   }
 }

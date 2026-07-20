@@ -2,8 +2,10 @@
 
 import { useRouter } from '@/i18n/routing'
 import { Search } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 export default function SearchBar() {
+  const t = useTranslations('SearchBar')
   const router = useRouter()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -21,7 +23,7 @@ export default function SearchBar() {
         <input 
           type="text" 
           name="q" 
-          placeholder="게시물, 태그, 유저 검색..." 
+          placeholder={t('placeholder')} 
           className="w-full bg-gray-100 border-none rounded-full py-2 pl-4 pr-10 text-sm focus:ring-2 focus:ring-black outline-none"
         />
         <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">

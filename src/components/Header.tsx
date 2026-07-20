@@ -37,18 +37,18 @@ export default async function Header() {
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-200 border flex items-center justify-center text-xs text-gray-400">?</div>
                 )}
-                <span>{profile?.display_name}님</span>
+                <span>{profile?.display_name}</span>
               </Link>
               {hasAdmin && (
                 <Link href="/admin" className="flex items-center gap-1.5 text-purple-600 hover:text-purple-800 transition font-semibold px-3 py-1.5 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200">
-                  🤖 봇 관리
+                  {t('botManagement')}
                 </Link>
               )}
               <Link href="/posts/new" className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition shadow-sm">
                 {t('write')}
               </Link>
               <Link href="/settings" className="text-gray-600 hover:text-black transition p-2 bg-gray-100 rounded-lg">
-                설정
+                {t('settings')}
               </Link>
               <form action="/auth/signout" method="post">
                 <button className="text-gray-500 hover:text-red-500 transition font-semibold">{t('logout')}</button>

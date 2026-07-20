@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 export default function AvatarUpload({ defaultUrl }: { defaultUrl: string }) {
+  const t = useTranslations('Settings')
   const [preview, setPreview] = useState(defaultUrl)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,13 +23,16 @@ export default function AvatarUpload({ defaultUrl }: { defaultUrl: string }) {
         className="w-16 h-16 rounded-full object-cover border shadow-sm" 
       />
       <div>
-        <input 
-          type="file" 
-          name="avatarFile" 
-          accept="image/*" 
-          onChange={handleFileChange}
-          className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer" 
-        />
+        <label className="cursor-pointer bg-gray-100 text-gray-700 hover:bg-gray-200 py-2 px-4 rounded-full text-sm font-semibold transition">
+          {t('changeImage')}
+          <input 
+            type="file" 
+            name="avatarFile" 
+            accept="image/*" 
+            onChange={handleFileChange}
+            className="hidden" 
+          />
+        </label>
       </div>
     </div>
   )

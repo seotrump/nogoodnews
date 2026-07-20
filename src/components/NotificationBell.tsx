@@ -4,8 +4,10 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { Link } from '@/i18n/routing'
 import { markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions'
+import { useTranslations } from 'next-intl'
 
 export default function NotificationBell({ userId }: { userId: string }) {
+  const t = useTranslations('Notifications')
   const [notifications, setNotifications] = useState<any[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -112,10 +114,10 @@ export default function NotificationBell({ userId }: { userId: string }) {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden flex flex-col max-h-[80vh]">
           <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-            <h3 className="font-bold text-gray-800 text-sm">알림</h3>
+            <h3 className="font-bold text-gray-800 text-sm">{t('title')}</h3>
             {unreadCount > 0 && (
               <button onClick={handleReadAll} className="text-xs text-blue-600 hover:underline">
-                모두 읽음
+                {t('markAllRead')}
               </button>
             )}
           </div>
@@ -123,23 +125,26 @@ export default function NotificationBell({ userId }: { userId: string }) {
           <div className="overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-6 text-center text-sm text-gray-500">
-                새로운 알림이 없습니다.
+                {t('empty')}
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
                 {notifications.map((n) => {
-                  let text = ''
+                  let textKey = ''
                   let href = '#'
                   
                   if (n.type === 'follow') {
-                    text = '회원님을 팔로우했습니다.'
+                    textKey = 'follow'
                     href = `/users/${n.actor_id}`
                   } else if (n.type === 'reaction') {
-                    text = '회원님의 글/댓글에 리액션을 남겼습니다.'
+                    textKey = 'reaction'
                   } else if (n.type === 'comment') {
-                    text = '회원님의 게시글에 댓글을 남겼습니다.'
+                    textKey = 'comment'
                     href = `/posts/${n.target_id}`
                   }
+
+                  const textStr = textKey ? t(textKey) : ''
+                  const actorName = n.actor?.display_name || t('unknownUser')
 
                   return (
                     <Link 
@@ -155,7 +160,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-800">
-                          <span className="font-bold">{n.actor?.display_name || '알 수 없음'}</span>님이 {text}
+                          {t('format', { actor: actorName, text: textStr })}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
                           {new Date(n.created_at).toLocaleDateString()}

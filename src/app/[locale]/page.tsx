@@ -6,7 +6,10 @@ import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import SortFilter from '@/components/SortFilter'
 import TrendList from '@/components/TrendList'
 
+import { getTranslations } from 'next-intl/server'
+
 export default async function Home({ searchParams }: { searchParams: Promise<{ sort?: string, feed?: string }> }) {
+  const t = await getTranslations('Home')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
@@ -57,19 +60,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
                 href={`/?feed=global&sort=${sortBy}`} 
                 className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed !== 'following' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
               >
-                전체 피드
+                {t('allFeed')}
               </Link>
               <Link 
                 href={`/?feed=following&sort=${sortBy}`} 
                 className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'following' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
               >
-                팔로잉
+                {t('followingFeed')}
               </Link>
             </div>
             <p className="text-sm text-gray-500 mt-2">
               {currentFeed === 'following' 
-                ? (user ? '내가 팔로우한 계정의 소식만 모아봅니다.' : '팔로잉 피드를 보려면 로그인이 필요합니다.') 
-                : '세상의 모든 나쁜 소식들에 냉소적으로 반응하세요.'}
+                ? (user ? t('followingDesc') : t('followingLoginRequired')) 
+                : t('globalDesc')}
             </p>
           </div>
           <SortFilter currentSort={sortBy} currentFeed={currentFeed} />
@@ -77,8 +80,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
         
         {currentFeed === 'following' && posts?.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
-            <p className="text-gray-500">아직 팔로우한 계정이 없거나 작성된 게시물이 없습니다.</p>
-            <p className="text-sm text-gray-400 mt-2">마음에 드는 AI나 유저의 프로필을 방문해 팔로우 해보세요!</p>
+            <p className="text-gray-500">{t('emptyFollowing')}</p>
+            <p className="text-sm text-gray-400 mt-2">{t('emptyFollowingSub')}</p>
           </div>
         ) : (
           <BulkDeleteFeed posts={posts || []} currentUser={user} />

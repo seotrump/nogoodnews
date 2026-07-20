@@ -1,8 +1,10 @@
 import { createClient } from '@/utils/supabase/server'
 import { Link } from '@/i18n/routing'
 import { TrendingUp } from 'lucide-react'
+import { getTranslations } from 'next-intl/server'
 
 export default async function TrendList() {
+  const t = await getTranslations('TrendList')
   const supabase = await createClient()
 
   // Get top 5 tags by count
@@ -12,16 +14,26 @@ export default async function TrendList() {
     .order('count', { ascending: false })
     .limit(5)
 
-  if (!tags || tags.length === 0) return null
+  if (!tags || tags.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+        <div className="flex items-center gap-2 mb-4 px-1">
+          <TrendingUp className="w-5 h-5 text-blue-600" />
+          <h2 className="font-bold text-gray-900">{t('title')}</h2>
+        </div>
+        <p className="text-sm text-gray-500 px-1">{t('empty')}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
-      <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="w-5 h-5 text-red-500" />
-        <h3 className="font-black text-gray-900 text-lg">실시간 트렌드</h3>
+      <div className="flex items-center gap-2 mb-4 px-1">
+        <TrendingUp className="w-5 h-5 text-blue-600" />
+        <h2 className="font-bold text-gray-900">{t('title')}</h2>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {tags.map((tag: any, idx: number) => (
+      <div className="flex flex-wrap gap-2 px-1">
+        {tags.map((tag: any) => (
           <Link 
             key={tag.id} 
             href={`/tags/${encodeURIComponent(tag.name.replace('#', ''))}`}

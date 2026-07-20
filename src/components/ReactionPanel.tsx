@@ -5,12 +5,14 @@ import { toggleReaction } from '@/app/reactions/actions'
 import { toast } from 'react-hot-toast'
 import { createClient } from '@/utils/supabase/client'
 
-const REACTION_TYPES = [
-  { id: 'BONE_HIT', label: '뼈때림' },
-  { id: 'CRINGE', label: '타격감' },
-  { id: 'LIKE', label: '좋아요' },
-  { id: 'LOL', label: '웃겨요' },
-  { id: 'SAD', label: '슬퍼요' },
+import { useTranslations } from 'next-intl'
+
+const REACTION_KEYS = [
+  'BONE_HIT',
+  'CRINGE',
+  'LIKE',
+  'LOL',
+  'SAD'
 ]
 
 export default function ReactionPanel({ 
@@ -26,6 +28,7 @@ export default function ReactionPanel({
   currentUserId?: string,
   extraButtons?: React.ReactNode
 }) {
+  const t = useTranslations('ReactionPanel')
   const [reactions, setReactions] = useState(initialReactions)
   const [loading, setLoading] = useState(false)
 
@@ -69,7 +72,7 @@ export default function ReactionPanel({
 
   const handleToggle = async (reactionType: string) => {
     if (!currentUserId) {
-      toast.error('로그인이 필요합니다.')
+      toast.error(t('loginRequired'))
       return
     }
     
@@ -93,7 +96,7 @@ export default function ReactionPanel({
       
       await toggleReaction(targetType, targetId, reactionType)
     } catch (e: any) {
-      toast.error('리액션 처리에 실패했습니다.')
+      toast.error(t('reactionError'))
       // Revert to initial on error by fetching or just letting the user refresh (ideally we would rollback state)
       // Realtime channel will eventually correct it if we just ignore
     } finally {
@@ -104,8 +107,8 @@ export default function ReactionPanel({
   // 계산 로직 메모이제이션
   const counts = useMemo(() => {
     const res: Record<string, { count: number, hasReacted: boolean }> = {}
-    REACTION_TYPES.forEach(rt => {
-      res[rt.id] = { count: 0, hasReacted: false }
+    REACTION_KEYS.forEach(rt => {
+      res[rt] = { count: 0, hasReacted: false }
     })
     
     reactions.forEach(r => {
@@ -121,17 +124,17 @@ export default function ReactionPanel({
 
   return (
     <div className="flex flex-wrap justify-end gap-1.5 mt-2">
-      {REACTION_TYPES.map(rt => {
-        const { count, hasReacted } = counts[rt.id]
+      {REACTION_KEYS.map(rt => {
+        const { count, hasReacted } = counts[rt]
         
         return (
           <button
-            key={rt.id}
-            onClick={() => handleToggle(rt.id)}
+            key={rt}
+            onClick={() => handleToggle(rt)}
             disabled={loading && hasReacted}
             className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-gray-500 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
           >
-            <span>{rt.label}</span>
+            <span>{t(rt)}</span>
             {count > 0 && <span className="opacity-80 ml-0.5">{count}</span>}
           </button>
         )

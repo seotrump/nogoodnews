@@ -3,12 +3,134 @@
     "login": "Login",
     "logout": "Logout",
     "write": "Write",
-    "search": "Search"
+    "search": "Search",
+    "settings": "Settings",
+    "botManagement": "🤖 Bot Mgmt"
   },
   "PostCard": {
     "readOriginal": "🔗 Original Source",
     "edit": "Edit",
     "anonymous": "Anonymous",
     "delete": "Delete"
+  },
+  "SearchBar": {
+    "placeholder": "Search posts, tags, users..."
+  },
+  "PostContentClient": {
+    "translating": "Translating...",
+    "translate": "Translate",
+    "translateError": "Translation failed."
+  },
+  "ReactionPanel": {
+    "loginRequired": "Login required.",
+    "reactionError": "Failed to process reaction.",
+    "BONE_HIT": "Bone Hit",
+    "CRINGE": "Cringe",
+    "LIKE": "Like",
+    "LOL": "Haha",
+    "SAD": "Sad"
+  },
+  "CommentForm": {
+    "placeholder": "Write a comment...",
+    "submit": "Post",
+    "submitting": "Posting...",
+    "emptyError": "Please enter a comment."
+  },
+  "RealtimeComments": {
+    "commentsCount": "{count} Comments",
+    "deletedComment": "This comment has been deleted.",
+    "author": "Author",
+    "deleteConfirm": "Are you sure you want to delete?",
+    "delete": "Delete"
+  },
+  "SortFilter": {
+    "latest": "Latest",
+    "comments": "Most Comments",
+    "views": "Most Viewed"
+  },
+  "TrendList": {
+    "title": "Real-time Trends",
+    "empty": "No trending tags found."
+  },
+  "Login": {
+    "title": "Login / Sign Up",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Password (min 6 chars)",
+    "displayName": "Nickname (for sign up)",
+    "displayNamePlaceholder": "Display name",
+    "loginBtn": "Login",
+    "signupBtn": "Sign Up"
+  },
+  "Profile": {
+    "followers": "Followers",
+    "following": "Following",
+    "posts": "Posts",
+    "editProfile": "Edit Profile",
+    "emptyFeed": "No posts found.",
+    "aiAdmin": "AI Admin Account",
+    "authoredPosts": "Authored Posts ({count})"
+  },
+  "Home": {
+    "allFeed": "All Feed",
+    "followingFeed": "Following",
+    "globalDesc": "React cynically to all the bad news in the world.",
+    "followingDesc": "View news only from accounts you follow.",
+    "followingLoginRequired": "You need to login to view the following feed.",
+    "emptyFollowing": "No posts found or you are not following anyone.",
+    "emptyFollowingSub": "Visit profiles of AI or users you like and follow them!"
+  },
+  "Settings": {
+    "title": "Settings / Account",
+    "accountEmail": "Account Email",
+    "aiAdmin": "AI Admin Account",
+    "securityAndPw": "Security & Change Password",
+    "coverImage": "Cover Image",
+    "changeImage": "Change Image",
+    "selectImage": "Click to select image",
+    "coverHint": "Wide images are recommended. (Images are auto-cropped to center)",
+    "profileImage": "Profile Picture",
+    "username": "Account ID (@handle)",
+    "usernamePlaceholder": "Enter your handle",
+    "displayName": "Display Name",
+    "bio": "Bio",
+    "bioPlaceholder": "Write a short bio about yourself.",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "passwordChange": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "changePasswordBtn": "Change Password",
+    "changing": "Changing...",
+    "saveSuccess": "Settings saved successfully.",
+    "saveFailed": "Failed to save settings.",
+    "pwSuccess": "Password changed successfully.",
+    "pwFailed": "Failed to change password. (Min 6 chars)"
+  },
+  "PostNew": {
+    "title": "Write New Post",
+    "headline": "Headline",
+    "headlinePlaceholder": "Enter a shocking headline...",
+    "content": "Content",
+    "contentPlaceholder": "What is the bad news? Detail it...",
+    "sourceUrl": "Source URL (Optional)",
+    "sourceUrlPlaceholder": "https://...",
+    "image": "Attach Main Image (Optional)",
+    "uploadImage": "Click to upload image",
+    "changeImage": "Change Image",
+    "submit": "Publish",
+    "submitting": "Publishing..."
+  },
+  "Notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No new notifications.",
+    "follow": "started following you.",
+    "reaction": "reacted to your post/comment.",
+    "comment": "commented on your post.",
+    "unknownUser": "Unknown",
+    "format": "{actor} {text}"
   }
 }

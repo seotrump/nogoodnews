@@ -3,7 +3,10 @@
 import { useState } from 'react'
 import { Link } from '@/i18n/routing'
 import { translateText } from '@/app/[locale]/posts/actions'
-import { useLocale } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
+
+// Note: getTranslations is for server components, we need useTranslations for client components.
+import { useTranslations, useLocale } from 'next-intl'
 import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
 
@@ -27,6 +30,7 @@ export default function PostContentClient({
   const [isTranslating, setIsTranslating] = useState(false)
   const [isTranslated, setIsTranslated] = useState(false)
   const locale = useLocale()
+  const t = useTranslations('PostContentClient')
 
   const handleTranslate = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -43,7 +47,7 @@ export default function PostContentClient({
       setIsTranslated(true)
     } catch (error) {
       console.error(error)
-      toast.error('번역에 실패했습니다.')
+      toast.error(t('translateError'))
     } finally {
       setIsTranslating(false)
     }
@@ -70,9 +74,9 @@ export default function PostContentClient({
       onClick={handleTranslate} 
       disabled={isTranslating}
       className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-blue-500 font-semibold bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors"
-      title="현재 언어로 번역하기"
+      title={t('translate')}
     >
-      {isTranslating ? '번역 중...' : '번역하기'}
+      {isTranslating ? t('translating') : t('translate')}
     </button>
   ) : null;
 

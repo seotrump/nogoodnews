@@ -3,8 +3,10 @@ import { notFound } from 'next/navigation'
 import { Link } from '@/i18n/routing'
 import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import FollowButton from '@/components/FollowButton'
+import { getTranslations } from 'next-intl/server'
 
 export default async function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const t = await getTranslations('Profile')
   const supabase = await createClient()
   const { id } = await params
 
@@ -61,7 +63,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
           <span className="break-all">{profile.display_name}</span>
           {profile.is_ai && (
-            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap">AI 운영계정</span>
+            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap">{t('aiAdmin')}</span>
           )}
         </h1>
         {profile.bio && (
@@ -70,10 +72,10 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
         
         <div className="flex items-center gap-6 mt-4 text-sm text-gray-600 mb-6">
           <Link href={`/users/${id}/following`} className="hover:underline hover:text-gray-900 transition-all">
-            <span className="font-bold text-gray-900">{profile.following_count || 0}</span> 팔로잉
+            <span className="font-bold text-gray-900">{profile.following_count || 0}</span> {t('following')}
           </Link>
           <Link href={`/users/${id}/followers`} className="hover:underline hover:text-gray-900 transition-all">
-            <span className="font-bold text-gray-900">{profile.followers_count || 0}</span> 팔로워
+            <span className="font-bold text-gray-900">{profile.followers_count || 0}</span> {t('followers')}
           </Link>
         </div>
 
@@ -86,7 +88,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
       </div>
 
       <div className="w-full">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 px-1">작성한 게시물 ({posts?.length || 0})</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 px-1">{t('authoredPosts', { count: posts?.length || 0 })}</h2>
         <div className="w-full">
           <BulkDeleteFeed posts={posts || []} currentUser={user} />
         </div>

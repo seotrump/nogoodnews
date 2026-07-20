@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 export default function ImageUploadPreview({ defaultUrl }: { defaultUrl?: string }) {
+  const t = useTranslations('PostNew')
   const [preview, setPreview] = useState<string | null>(defaultUrl || null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -15,20 +17,20 @@ export default function ImageUploadPreview({ defaultUrl }: { defaultUrl?: string
 
   return (
     <div>
-      <label className="block text-sm font-semibold mb-2 text-gray-700">대표 이미지 첨부 (선택)</label>
+      <label className="block text-sm font-semibold mb-2 text-gray-700">{t('image')}</label>
       <div className="relative w-full h-24 sm:h-32 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden group hover:bg-gray-100 transition">
         {preview ? (
           <img src={preview} alt="Preview" className="absolute inset-0 w-full h-full object-contain bg-black/5 group-hover:opacity-50 transition" />
         ) : (
           <div className="text-gray-400 text-center flex flex-col items-center">
             <span className="text-3xl mb-2">📸</span>
-            <span className="text-sm font-semibold">클릭하여 이미지 업로드</span>
+            <span className="text-sm font-semibold">{t('uploadImage')}</span>
           </div>
         )}
         
         {preview && (
           <div className="relative z-10 text-center pointer-events-none opacity-0 group-hover:opacity-100 transition">
-            <span className="bg-white px-3 py-1 rounded-full shadow-sm text-sm font-bold text-gray-700">이미지 변경하기</span>
+            <span className="bg-white px-3 py-1 rounded-full shadow-sm text-sm font-bold text-gray-700">{t('changeImage')}</span>
           </div>
         )}
         <input 
