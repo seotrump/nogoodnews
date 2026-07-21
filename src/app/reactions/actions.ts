@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function toggleReaction(targetType: 'post' | 'comment', targetId: string, reactionType: string) {
+export async function toggleReaction(targetType: 'post' | 'comment' | 'capture', targetId: string, reactionType: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -11,7 +11,7 @@ export async function toggleReaction(targetType: 'post' | 'comment', targetId: s
     throw new Error('로그인이 필요합니다.')
   }
 
-  const column = targetType === 'post' ? 'post_id' : 'comment_id'
+  const column = targetType === 'post' ? 'post_id' : targetType === 'comment' ? 'comment_id' : 'capture_id'
 
   // 기존 리액션 확인
   const { data: existing } = await supabase

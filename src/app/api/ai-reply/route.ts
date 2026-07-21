@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: Request) {
   try {
-    const { postId, userComment, botId } = await req.json()
+    const { postId, userComment, botId, locale = 'ko' } = await req.json()
 
     if (!postId || !userComment || !botId) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
@@ -43,7 +43,8 @@ export async function POST(req: Request) {
       post.headline,
       userComment,
       bot.persona_prompt,
-      bot.ai_model_provider
+      bot.ai_model_provider,
+      locale
     )
 
     if (!aiReplyContent) {

@@ -12,19 +12,22 @@ export async function generateComment(
   headline: string,
   content: string,
   personaPrompt: string,
-  provider: string = 'gemini',
-  recentComments: string = ''
+  provider: string = 'openai',
+  recentComments: string = '',
+  locale: string = 'ko'
 ) {
   console.log("🚨 [디버그-댓글] generateComment 함수가 호출되었습니다!", { provider });
 
   // 관리자 화면에서 OpenAI를 선택했고, 환경변수에 키가 있을 때만 작동
   const useOpenAI = provider === 'openai' && !!process.env.OPENAI_API_KEY;
+  const languageInstruction = locale === 'ko' ? '반드시 한국어로 작성하세요.' : 'You must write in English.';
 
   const prompt = `
 당신은 뉴스/이슈 커뮤니티의 자동 댓글 봇입니다. 
-다음 페르소나 설정에 맞춰서 냉소적이고 짧은 댓글을 작성해주세요.
+다음 뉴스 내용과 페르소나를 바탕으로, 과장되거나 너무 길지 않게 인터넷 커뮤니티(예: 디시인사이드, 레딧 등) 스타일로 짧고 자연스러운 댓글을 하나만 작성하세요.
+${languageInstruction}
 
-[페르소나 설정]
+[페르소나]
 ${personaPrompt}
 
 [뉴스 정보]
@@ -38,7 +41,6 @@ ${recentComments || '(이전 댓글 없음)'}
 1. 인삿말, 부연 설명 없이 오직 '댓글 내용'만 출력하세요.
 2. 1~2문장 정도로 아주 짧고 강렬하게 작성하세요.
 3. 존댓말/반말 여부는 페르소나 설정에 따릅니다.
-4. **원본 게시물(뉴스)의 언어를 감지하여 동일한 언어로 작성하되, 잘 모르겠거나 기본 상황에서는 반드시 영어(English)로 작성하세요.**
 `
 
   if (useOpenAI) {
@@ -84,18 +86,21 @@ export async function generateReply(
   headline: string,
   userComment: string,
   personaPrompt: string,
-  provider: string = 'gemini'
+  provider: string = 'gemini',
+  locale: string = 'ko'
 ) {
   console.log("🚨 [디버그-멘션] generateReply 함수가 호출되었습니다!", { provider });
 
   const useOpenAI = provider === 'openai' && !!process.env.OPENAI_API_KEY;
+  const languageInstruction = locale === 'ko' ? '반드시 한국어로 작성하세요.' : 'You must write in English.';
 
   const prompt = `
-당신은 뉴스/이슈 커뮤니티의 자동 댓글 봇입니다. 
-방금 한 유저가 다음 뉴스 게시물에서 당신을 멘션(@)하며 말을 걸었습니다.
-페르소나 설정에 맞춰서, 유저의 말에 직접적으로 대답(혹은 반박/비난)하는 댓글을 작성해주세요.
+당신은 커뮤니티의 활동적인 유저입니다. 누군가 당신을 멘션하여 말을 걸었습니다.
+아래 대화 컨텍스트를 보고, 당신의 페르소나에 맞춰 자연스럽게 대댓글(답글)을 작성하세요.
+너무 길거나 딱딱하게 쓰지 말고, 실제 커뮤니티 유저처럼 짧고 유머러스하거나 까칠하게 대응하세요.
+${languageInstruction}
 
-[페르소나 설정]
+[페르소나]
 ${personaPrompt}
 
 [현재 뉴스 헤드라인]
@@ -148,11 +153,13 @@ ${userComment}
 export async function generatePost(
   newsItem: { title: string, link: string, contentSnippet: string },
   personaPrompt: string,
-  provider: string = 'gemini'
+  provider: string = 'gemini',
+  locale: string = 'ko'
 ) {
   console.log("🚨 [디버그-피드] generatePost 함수가 호출되었습니다!", { provider });
 
   const useOpenAI = provider === 'openai' && !!process.env.OPENAI_API_KEY;
+  const languageInstruction = locale === 'ko' ? '반드시 한국어로 작성하세요.' : 'You must write in English.';
 
   const prompt = `
 당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.
@@ -169,7 +176,7 @@ ${personaPrompt}
 1. 인사말이나 구구절절한 기사 요약은 절대 쓰지 마세요.
 2. 기사 내용을 바탕으로 유튜버나 커뮤니티 네임드처럼 "자극적이고 시니컬한 한 줄 제목"을 적고, 줄을 바꾼 뒤 "사람들의 댓글을 유도하는 짧고 굵은 한 줄 평(어그로/비판/체념)"을 적으세요.
 3. 총 2~3줄로 매우 짧고 강렬하게 작성하세요.
-4. **반드시 모든 내용을 영어(English)로 작성하세요.**
+4. ${languageInstruction}
 `
 
   if (useOpenAI) {

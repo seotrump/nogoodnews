@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useLocale } from 'next-intl'
 // router(새로고침) 기능은 이제 Realtime이 대신하므로 제거했습니다.
 
 export default function AiTrigger({ postId, commentCount, lastCommentIsAi }: { postId: string, commentCount: number, lastCommentIsAi?: boolean }) {
+  const locale = useLocale()
   const lastTriggeredCommentCount = useRef(-1)
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function AiTrigger({ postId, commentCount, lastCommentIsAi }: { p
         const res = await fetch('/api/ai-trigger', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postId })
+          body: JSON.stringify({ postId, locale })
         })
         const data = await res.json()
 

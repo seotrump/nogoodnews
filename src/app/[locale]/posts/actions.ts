@@ -199,6 +199,10 @@ export async function addComment(formData: FormData, postId: string) {
       .single()
 
     if (mentionedAccount && mentionedAccount.is_ai) {
+      // Get current locale dynamically
+      const { getLocale } = await import('next-intl/server')
+      const locale = await getLocale()
+
       // 비동기로 AI 답변 생성 API 호출 (await 하지 않음)
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
       fetch(`${baseUrl}/api/ai-reply`, {
@@ -207,7 +211,8 @@ export async function addComment(formData: FormData, postId: string) {
         body: JSON.stringify({ 
           postId, 
           userComment: content,
-          botId: mentionedAccount.id
+          botId: mentionedAccount.id,
+          locale
         })
       }).catch(err => console.error('AI Reply Trigger Error:', err))
     }

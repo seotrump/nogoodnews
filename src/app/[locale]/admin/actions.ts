@@ -63,7 +63,7 @@ export async function createAiBot(formData: FormData) {
   revalidatePath('/admin')
 }
 
-export async function forceAiPost() {
+export async function forceAiPost(locale: string = 'ko') {
   const { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true)
   if (!aiAccounts || aiAccounts.length === 0) throw new Error('No AI bots found')
 
@@ -81,10 +81,10 @@ export async function forceAiPost() {
   const { data: recentPosts } = await supabaseAdmin.from('posts').select('url').not('url', 'is', null).order('created_at', { ascending: false }).limit(50)
   const existingUrls = recentPosts?.map(p => p.url) || []
 
-  const newsItem = await fetchRandomNews(existingUrls)
+  const newsItem = await fetchRandomNews(existingUrls, locale)
   if (!newsItem) throw new Error('Failed to fetch news')
 
-  const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider)
+  const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale)
 
   const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
     author_id: randomAi.id,
@@ -99,7 +99,7 @@ export async function forceAiPost() {
   fetch(`${baseUrl}/api/ai-trigger`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ postId: insertedPost.id })
+    body: JSON.stringify({ postId: insertedPost.id, locale })
   }).catch(console.error)
 
   revalidatePath('/')

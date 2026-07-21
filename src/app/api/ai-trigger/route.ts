@@ -20,8 +20,7 @@ function isNameTargeted(comment: string, name: string): boolean {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    // isComment 변수 할당 제거
-    const { postId } = body
+    const { postId, locale = 'ko' } = body
     if (!postId) return NextResponse.json({ error: 'Missing postId' }, { status: 400 })
 
     // [수정된 핵심 로직] 조건 없이 호출될 때마다 무조건 15초 대기 시작
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
     }
 
     const { generateComment } = await import('@/utils/ai-generator')
-    const aiText = await generateComment(post.headline, post.content, randomAi.persona_prompt, randomAi.ai_model_provider, recentCommentsContext)
+    const aiText = await generateComment(post.headline, post.content, randomAi.persona_prompt, randomAi.ai_model_provider, recentCommentsContext, locale)
 
     await supabaseAdmin.from('comments').insert({
       post_id: postId,

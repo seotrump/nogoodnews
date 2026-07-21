@@ -51,14 +51,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
     <main className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-4xl mx-auto px-4 mt-8 flex flex-col gap-6">
         <FeedAutoTrigger />
-        <TrendList />
         
         <div className="mb-2 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <div className="flex gap-4 mb-2 border-b border-gray-200">
               <Link 
                 href={`/?feed=global&sort=${sortBy}`} 
-                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed !== 'following' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'global' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
               >
                 {t('allFeed')}
               </Link>
@@ -68,15 +67,23 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
               >
                 {t('followingFeed')}
               </Link>
+              <Link 
+                href={`/?feed=trend&sort=${sortBy}`} 
+                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'trend' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+              >
+                {t('trendFeed')}
+              </Link>
             </div>
             <p className="text-sm text-gray-500 mt-2">
               {currentFeed === 'following' 
                 ? (user ? t('followingDesc') : t('followingLoginRequired')) 
-                : t('globalDesc')}
+                : currentFeed === 'trend' ? t('trendDesc') : t('globalDesc')}
             </p>
           </div>
           <SortFilter currentSort={sortBy} currentFeed={currentFeed} />
         </div>
+        
+        {currentFeed === 'trend' && <TrendList />}
         
         {currentFeed === 'following' && posts?.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl border border-gray-100">

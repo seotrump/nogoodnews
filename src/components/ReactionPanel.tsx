@@ -19,16 +19,17 @@ export default function ReactionPanel({
   targetType, 
   targetId, 
   initialReactions = [], 
-  currentUserId,
+  currentUser,
   extraButtons
 }: { 
-  targetType: 'post' | 'comment', 
+  targetType: 'post' | 'comment' | 'capture', 
   targetId: string, 
-  initialReactions: any[], 
-  currentUserId?: string,
+  initialReactions?: any[], 
+  currentUser?: any,
   extraButtons?: React.ReactNode
 }) {
   const t = useTranslations('ReactionPanel')
+  const currentUserId = currentUser?.id
   const [reactions, setReactions] = useState(initialReactions)
   const [loading, setLoading] = useState(false)
 

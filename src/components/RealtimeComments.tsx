@@ -1,21 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/utils/supabase/client'
 import { toPng } from 'html-to-image'
 import { Link } from '@/i18n/routing'
 import { deleteComment } from '@/app/[locale]/posts/actions'
 import { ADMIN_EMAIL } from '@/utils/auth'
 import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
-
-// 클라이언트 화면용 Supabase 연결 (반드시 PUBLIC 키 사용)
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { CheckSquare, Camera, MessageSquare } from 'lucide-react'
 
 export default function RealtimeComments({ postId, initialComments, currentUser }: { postId: string, initialComments: any[], currentUser: any }) {
+    const supabase = createClient()
     const [comments, setComments] = useState(initialComments)
     const [deletingId, setDeletingId] = useState<string | null>(null)
     const [zoomedImage, setZoomedImage] = useState<string | null>(null)
@@ -94,6 +90,32 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 await navigator.clipboard.write([
                     new ClipboardItem({ 'image/png': blob })
                 ])
+
+                // 자동 저장 로직 (로그인된 사용자만)
+                if (currentUser) {
+                    const fileExt = 'png'
+                    const fileName = `capture-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`
+                    
+                    const { error: uploadError } = await supabase.storage
+                        .from('captures')
+                        .upload(fileName, blob)
+                    
+                    if (!uploadError) {
+                        const { data: { publicUrl } } = supabase.storage
+                            .from('captures')
+                            .getPublicUrl(fileName)
+                            
+                        const { error: insertErr } = await supabase.from('user_captures').insert({
+                            user_id: currentUser.id,
+                            image_url: publicUrl,
+                            post_id: postId
+                        })
+                        if (insertErr) console.error('Capture insert error:', insertErr)
+                    } else {
+                        console.error('Capture upload error:', uploadError)
+                    }
+                }
+
                 toast.dismiss(loadingToast)
                 toast.success('클립보드에 복사되었습니다! (Ctrl+V)')
             } catch (clipErr) {
@@ -105,7 +127,10 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 toast.success('이미지가 다운로드되었습니다.')
             }
 
-        } catch (e) {
+            // 캡처 성공 후 선택 모드 해제
+            setIsSelectMode(false)
+            setSelectedCommentIds([])
+        } catch (e: any) {
             console.error(e)
             toast.dismiss(loadingToast)
             toast.error('캡처에 실패했습니다.')
@@ -173,19 +198,19 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                     disabled={selectedCommentIds.length === 0}
                                     className="text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm disabled:opacity-50"
                                 >
-                                    📸 {selectedCommentIds.length}개 캡처하기
+                                    <Camera className="w-4 h-4" /> {selectedCommentIds.length}개 캡처하기
                                 </button>
                             </>
                         ) : (
                             <>
                                 <button onClick={() => setIsSelectMode(true)} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                                    ☑️ 선택박제
+                                    <CheckSquare className="w-4 h-4" /> 선택박제
                                 </button>
                                 <button onClick={() => handleCapture('all')} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                                    📸 전체박제
+                                    <Camera className="w-4 h-4" /> 전체박제
                                 </button>
-                                <button onClick={() => handleCapture('dialogue')} className="text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                                    💬 대화박제
+                                <button onClick={() => handleCapture('dialogue')} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
+                                    <MessageSquare className="w-4 h-4" /> 대화박제
                                 </button>
                             </>
                         )}
@@ -254,7 +279,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 targetType="comment" 
                                 targetId={comment.id} 
                                 initialReactions={comment.reactions || []} 
-                                currentUserId={currentUser?.id} 
+                                currentUser={currentUser} 
                             />
                         </div>
                     </div>

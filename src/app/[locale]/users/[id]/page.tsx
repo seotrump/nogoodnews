@@ -3,12 +3,18 @@ import { notFound } from 'next/navigation'
 import { Link } from '@/i18n/routing'
 import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import FollowButton from '@/components/FollowButton'
+import ReactionPanel from '@/components/ReactionPanel'
+import ProfileSortFilter from '@/components/ProfileSortFilter'
 import { getTranslations } from 'next-intl/server'
+import { MessageSquare, Heart, TrendingUp, Camera } from 'lucide-react'
 
-export default async function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function UserProfilePage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ tab?: string, sort?: string }> }) {
   const t = await getTranslations('Profile')
   const supabase = await createClient()
   const { id } = await params
+  const { tab, sort } = await searchParams
+  const currentTab = tab || 'comments'
+  const sortBy = sort || (currentTab === 'feeds' ? 'latest' : 'reactions')
 
   // Get current user for admin checks
   const { data: { user } } = await supabase.auth.getUser()
@@ -36,12 +42,97 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     if (follow) initialIsFollowing = true
   }
 
-  // Get user posts
-  const { data: posts } = await supabase
-    .from('posts')
-    .select('*, accounts(display_name, is_ai, avatar_url)')
-    .eq('author_id', id)
-    .order('created_at', { ascending: false })
+  // Get user posts if feeds tab
+  let posts: any[] = []
+  if (currentTab === 'feeds') {
+    let postsQuery = supabase
+      .from('posts')
+      .select('*, accounts(display_name, is_ai, avatar_url), reactions(id)')
+      .eq('author_id', id)
+
+    if (sortBy === 'comments') {
+      postsQuery = postsQuery.order('comments_count', { ascending: false })
+    } else if (sortBy === 'views') {
+      postsQuery = postsQuery.order('views_count', { ascending: false })
+    } else {
+      postsQuery = postsQuery.order('created_at', { ascending: false })
+    }
+
+    const { data } = await postsQuery
+    posts = data || []
+  }
+
+  // Get user comments if comments tab
+  let bestComments: any[] = []
+  if (currentTab === 'comments') {
+    const { data: commentsData, error } = await supabase
+      .from('comments')
+      .select('*, posts(headline, id)')
+      .eq('author_id', id)
+    
+    if (error) {
+      console.error("Error fetching user comments:", error)
+    }
+    
+    if (commentsData && commentsData.length > 0) {
+      const commentIds = commentsData.map(c => c.id)
+      const { data: reactionsData } = await supabase
+        .from('reactions')
+        .select('comment_id')
+        .in('comment_id', commentIds)
+
+      const reactionCounts = reactionsData?.reduce((acc: any, r: any) => {
+        acc[r.comment_id] = (acc[r.comment_id] || 0) + 1
+        return acc
+      }, {}) || {}
+
+      bestComments = commentsData
+        .map(c => ({ ...c, reactionCount: reactionCounts[c.id] || 0 }))
+        .sort((a, b) => {
+          if (sortBy === 'latest') {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          }
+          if (b.reactionCount !== a.reactionCount) return b.reactionCount - a.reactionCount
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        })
+        .slice(0, 50)
+    }
+  }
+
+  // Get user captures if captures tab
+  let captures: any[] = []
+  if (currentTab === 'captures') {
+    const { data: capturesData } = await supabase
+      .from('user_captures')
+      .select('*, posts(headline)')
+      .eq('user_id', id)
+      .order('created_at', { ascending: false })
+      
+    if (capturesData && capturesData.length > 0) {
+      const captureIds = capturesData.map(c => c.id)
+      const { data: reactionsData } = await supabase
+        .from('reactions')
+        .select('*')
+        .in('capture_id', captureIds)
+        
+      captures = capturesData.map(c => {
+        const itemReactions = reactionsData?.filter(r => r.capture_id === c.id) || []
+        return {
+          ...c,
+          reactions: itemReactions,
+          reactionCount: itemReactions.length
+        }
+      }).sort((a, b) => {
+        if (sortBy === 'latest') {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        }
+        if (b.reactionCount !== a.reactionCount) {
+          return b.reactionCount - a.reactionCount
+        }
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-6 sm:mt-8 flex flex-col gap-6 pb-20 w-full overflow-hidden">
@@ -88,9 +179,103 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
       </div>
 
       <div className="w-full">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 px-1">{t('authoredPosts', { count: posts?.length || 0 })}</h2>
+        <div className="flex gap-4 mb-6 border-b border-gray-200 px-1 overflow-x-auto whitespace-nowrap hide-scrollbar">
+          <Link scroll={false} href={`/users/${id}?tab=comments`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'comments' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+            <MessageSquare className="w-5 h-5" /> {t('bestComments')}
+          </Link>
+          <Link scroll={false} href={`/users/${id}?tab=captures`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'captures' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+            <Camera className="w-5 h-5" /> {t('bestCaptures')}
+          </Link>
+          <Link scroll={false} href={`/users/${id}?tab=feeds`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'feeds' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+            <TrendingUp className="w-5 h-5" /> {t('bestFeeds')}
+          </Link>
+        </div>
+        
+        <ProfileSortFilter userId={id} currentTab={currentTab} currentSort={sortBy} />
+        
         <div className="w-full">
-          <BulkDeleteFeed posts={posts || []} currentUser={user} />
+          {currentTab === 'feeds' ? (
+            <BulkDeleteFeed posts={posts || []} currentUser={user} />
+          ) : currentTab === 'captures' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {captures.length === 0 ? (
+                <div className="col-span-full text-center py-12 bg-white rounded-xl border border-gray-100">
+                  <p className="text-gray-500">박제된 이미지가 없습니다.</p>
+                </div>
+              ) : (
+                captures.map(capture => (
+                  <div key={capture.id} className="flex flex-col gap-2">
+                    {capture.post_id ? (
+                      <Link 
+                        href={`/posts/${capture.post_id}`} 
+                        className="block bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col gap-3 group hover:shadow-md transition cursor-pointer"
+                      >
+                        <div className="relative w-full bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center p-2" style={{ aspectRatio: '1 / 1' }}>
+                          <img src={capture.image_url} alt="Captured comment" className="max-w-full max-h-full object-contain" />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="bg-white text-black text-sm font-bold py-2 px-4 rounded-full shadow-sm">
+                              원문 글 보러가기 🔗
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
+                          {capture.posts?.headline || '원문 정보 없음'}
+                        </p>
+                      </Link>
+                    ) : (
+                      <div className="block bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col gap-3 group cursor-default">
+                        <div className="relative w-full bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center p-2" style={{ aspectRatio: '1 / 1' }}>
+                          <img src={capture.image_url} alt="Captured comment" className="max-w-full max-h-full object-contain" />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <a href={capture.image_url} target="_blank" rel="noreferrer" className="bg-white text-black text-sm font-bold py-2 px-4 rounded-full shadow-sm hover:scale-105 transition-transform">
+                              원본 이미지 📸
+                            </a>
+                          </div>
+                        </div>
+                        <p className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">이전 캡처 기록</p>
+                      </div>
+                    )}
+                    <div className="px-1">
+                      <ReactionPanel 
+                        targetType="capture" 
+                        targetId={capture.id} 
+                        initialReactions={capture.reactions || []} 
+                        currentUser={user} 
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {bestComments.length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
+                  <p className="text-gray-500">{t('emptyComments')}</p>
+                </div>
+              ) : (
+                bestComments.map(comment => (
+                  <Link key={comment.id} href={`/posts/${comment.post_id}`} className="block bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div className="text-sm text-gray-500 mb-2 truncate">
+                      <span className="font-bold text-gray-700">원문:</span> {comment.posts?.headline}
+                    </div>
+                    <p className="text-gray-900 mb-3 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
+                    {comment.image_url && (
+                        <div className="mb-3">
+                            <img src={comment.image_url} alt="Comment image" className="h-20 object-contain bg-gray-50 rounded" />
+                        </div>
+                    )}
+                    <div className="flex items-center gap-3 text-sm text-gray-500">
+                      <span className="flex items-center gap-1 text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-full">
+                        <Heart className="w-4 h-4 fill-current" /> {comment.reactionCount}
+                      </span>
+                      <span>{new Date(comment.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

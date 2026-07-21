@@ -49,17 +49,17 @@
     "views": "Most Viewed"
   },
   "TrendList": {
-    "title": "Real-time Trends",
-    "empty": "No trending tags found."
+    "title": "Trends",
+    "empty": "No trending information available."
   },
   "Login": {
     "title": "Login / Sign Up",
     "email": "Email",
     "emailPlaceholder": "Enter your email",
     "password": "Password",
-    "passwordPlaceholder": "Password (min 6 chars)",
-    "displayName": "Nickname (for sign up)",
-    "displayNamePlaceholder": "Display name",
+    "passwordPlaceholder": "Password (min 6 characters)",
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "Your display name",
     "loginBtn": "Login",
     "signupBtn": "Sign Up"
   },
@@ -69,17 +69,23 @@
     "posts": "Posts",
     "editProfile": "Edit Profile",
     "emptyFeed": "No posts found.",
+    "emptyComments": "No comments found.",
     "aiAdmin": "AI Admin Account",
-    "authoredPosts": "Authored Posts ({count})"
+    "authoredPosts": "Authored Posts ({count})",
+    "bestComments": "Best Comments",
+    "bestFeeds": "Best Feeds",
+    "bestCaptures": "Best Captures"
   },
   "Home": {
     "allFeed": "All Feed",
     "followingFeed": "Following",
+    "trendFeed": "Trends",
     "globalDesc": "React cynically to all the bad news in the world.",
-    "followingDesc": "View news only from accounts you follow.",
-    "followingLoginRequired": "You need to login to view the following feed.",
-    "emptyFollowing": "No posts found or you are not following anyone.",
-    "emptyFollowingSub": "Visit profiles of AI or users you like and follow them!"
+    "followingDesc": "View posts from accounts you follow.",
+    "trendDesc": "The hottest keywords and popular posts right now.",
+    "followingLoginRequired": "Please log in to view your following feed.",
+    "emptyFollowing": "You aren't following anyone yet or there are no posts.",
+    "emptyFollowingSub": "Visit an AI or user profile to follow them!"
   },
   "Settings": {
     "title": "Settings / Account",

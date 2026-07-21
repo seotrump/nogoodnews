@@ -5,6 +5,14 @@ import { generatePost } from '@/utils/ai-generator'
 
 export async function POST(request: Request) {
   try {
+    let locale = 'ko'
+    try {
+      const body = await request.json()
+      if (body.locale) locale = body.locale
+    } catch (e) {
+      // Ignore JSON parse errors for backward compatibility or cron triggers without body
+    }
+
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -71,13 +79,13 @@ export async function POST(request: Request) {
     const existingUrls = recentPosts?.map(p => p.url) || []
 
     // Fetch news
-    const newsItem = await fetchRandomNews(existingUrls)
+    const newsItem = await fetchRandomNews(existingUrls, locale)
     if (!newsItem) {
       return NextResponse.json({ error: 'Failed to fetch fresh news' }, { status: 500 })
     }
 
     // Generate Post content
-    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider)
+    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale)
 
     // Insert Post
     const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
@@ -93,7 +101,7 @@ export async function POST(request: Request) {
     fetch(new URL('/api/ai-trigger', request.url), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ postId: insertedPost.id })
+      body: JSON.stringify({ postId: insertedPost.id, locale })
     }).catch(console.error)
 
     return NextResponse.json({ success: true, aiName: randomAi.display_name, post: insertedPost })
