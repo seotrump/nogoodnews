@@ -8,6 +8,7 @@ import { deleteComment } from '@/app/[locale]/posts/actions'
 import { ADMIN_EMAIL } from '@/utils/auth'
 import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
+import { saveBotCaptures } from '@/app/reactions/actions'
 import { CheckSquare, Camera, MessageSquare } from 'lucide-react'
 
 export default function RealtimeComments({ postId, initialComments, currentUser }: { postId: string, initialComments: any[], currentUser: any }) {
@@ -105,12 +106,35 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                             .from('captures')
                             .getPublicUrl(fileName)
                             
+                        let capturedBots: string[] = []
+                        if (mode === 'selected') {
+                            capturedBots = comments
+                                .filter((c: any) => selectedCommentIds.includes(c.id) && c.accounts?.is_ai)
+                                .map((c: any) => c.author_id)
+                        } else {
+                            capturedBots = comments
+                                .filter((c: any) => c.accounts?.is_ai)
+                                .map((c: any) => c.author_id)
+                        }
+                        
+                        const uniqueBots = Array.from(new Set(capturedBots)).filter(id => id !== currentUser.id)
+
+                        // 1. 유저 본인의 캡처는 클라이언트에서 저장 (RLS 통과)
                         const { error: insertErr } = await supabase.from('user_captures').insert({
                             user_id: currentUser.id,
                             image_url: publicUrl,
                             post_id: postId
                         })
                         if (insertErr) console.error('Capture insert error:', insertErr)
+                            
+                        // 2. 봇들의 캡처는 서버 액션(Admin 권한)으로 우회 저장
+                        if (uniqueBots.length > 0) {
+                            try {
+                                await saveBotCaptures(uniqueBots, publicUrl, postId)
+                            } catch (e) {
+                                console.error('Failed to save for bots:', e)
+                            }
+                        }
                     } else {
                         console.error('Capture upload error:', uploadError)
                     }

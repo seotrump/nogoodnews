@@ -39,3 +39,25 @@ export async function toggleReaction(targetType: 'post' | 'comment' | 'capture',
   // 캐시 갱신 (메인 화면, 유저 프로필, 상세 페이지 모두 포괄적으로 갱신하기 위해 layout 제외하고 '/'부터 갱신)
   revalidatePath('/', 'layout')
 }
+
+export async function saveBotCaptures(botIds: string[], imageUrl: string, postId: string) {
+  if (!botIds || botIds.length === 0) return;
+
+  const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+  const supabaseAdmin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const insertData = botIds.map(botId => ({
+    user_id: botId,
+    image_url: imageUrl,
+    post_id: postId
+  }))
+
+  const { error } = await supabaseAdmin.from('user_captures').insert(insertData)
+  if (error) {
+    console.error('Failed to save bot captures:', error)
+    throw new Error('Failed to save bot captures')
+  }
+}
