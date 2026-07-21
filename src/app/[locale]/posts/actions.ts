@@ -172,11 +172,13 @@ export async function addComment(formData: FormData, postId: string) {
   }
 
   const content = formData.get('content') as string
+  const imageUrl = formData.get('image_url') as string | null
 
   const { error } = await supabase.from('comments').insert({
     post_id: postId,
     author_id: user.id,
-    content
+    content,
+    image_url: imageUrl
   })
 
   if (error) {

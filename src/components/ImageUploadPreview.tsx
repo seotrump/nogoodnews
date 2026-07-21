@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 
 export default function ImageUploadPreview({ defaultUrl }: { defaultUrl?: string }) {
@@ -14,6 +14,34 @@ export default function ImageUploadPreview({ defaultUrl }: { defaultUrl?: string
       setPreview(url)
     }
   }
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          const file = item.getAsFile();
+          if (file) {
+            const url = URL.createObjectURL(file);
+            setPreview(url);
+            
+            const input = document.querySelector('input[name="imageFile"]') as HTMLInputElement;
+            if (input) {
+              const dataTransfer = new DataTransfer();
+              dataTransfer.items.add(file);
+              input.files = dataTransfer.files;
+            }
+          }
+          break;
+        }
+      }
+    };
+    
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, []);
+
 
   return (
     <div>

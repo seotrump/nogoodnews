@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { toPng } from 'html-to-image'
 import { Link } from '@/i18n/routing'
 import { deleteComment } from '@/app/[locale]/posts/actions'
 import { ADMIN_EMAIL } from '@/utils/auth'
@@ -17,6 +18,7 @@ const supabase = createClient(
 export default function RealtimeComments({ postId, initialComments, currentUser }: { postId: string, initialComments: any[], currentUser: any }) {
     const [comments, setComments] = useState(initialComments)
     const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null)
 
     const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
 
@@ -36,6 +38,50 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
             toast.error('삭제에 실패했습니다.')
         } finally {
             setDeletingId(null)
+        }
+    }
+
+    const handleCapture = async (mode: 'all' | 'dialogue') => {
+        const container = document.getElementById('comments-container')
+        if (!container) return
+
+        const loadingToast = toast.loading('이미지 생성 중...')
+        try {
+            const className = mode === 'all' ? 'capture-mode-all' : 'capture-mode-dialogue'
+            container.classList.add(className)
+
+            // DOM 렌더링 대기
+            await new Promise(resolve => setTimeout(resolve, 150))
+
+            const dataUrl = await toPng(container, {
+                backgroundColor: '#ffffff',
+                pixelRatio: 2,
+            })
+
+            container.classList.remove(className)
+
+            try {
+                const res = await fetch(dataUrl)
+                const blob = await res.blob()
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ])
+                toast.dismiss(loadingToast)
+                toast.success('클립보드에 복사되었습니다! (Ctrl+V)')
+            } catch (clipErr) {
+                const link = document.createElement('a')
+                link.download = `nogoodnews-comments-${Date.now()}.png`
+                link.href = dataUrl
+                link.click()
+                toast.dismiss(loadingToast)
+                toast.success('이미지가 다운로드되었습니다.')
+            }
+
+        } catch (e) {
+            console.error(e)
+            toast.dismiss(loadingToast)
+            toast.error('캡처에 실패했습니다.')
+            container.classList.remove('capture-mode-all', 'capture-mode-dialogue')
         }
     }
 
@@ -83,13 +129,25 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
 
     return (
         <>
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-                댓글 <span className="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded-full">{comments.length}</span>
-            </h3>
+            <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                    댓글 <span className="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded-full">{comments.length}</span>
+                </h3>
+                {comments.length > 0 && (
+                    <div className="flex gap-2">
+                        <button onClick={() => handleCapture('all')} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
+                            📸 전체박제
+                        </button>
+                        <button onClick={() => handleCapture('dialogue')} className="text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
+                            💬 대화박제
+                        </button>
+                    </div>
+                )}
+            </div>
 
-            <div className="flex flex-col gap-6">
+            <div id="comments-container" className="flex flex-col gap-6 bg-white">
                 {comments.map((comment: any) => (
-                    <div key={comment.id} className="pb-6 border-b last:border-b-0 border-gray-100">
+                    <div key={comment.id} className="pb-6 border-b last:border-b-0 border-gray-100 comment-item">
                         <div className="flex items-center gap-2 mb-2">
                             <Link href={`/users/${comment.author_id}`} className="flex items-center gap-2 font-semibold text-gray-800 hover:underline">
                                 {comment.accounts?.avatar_url ? (
@@ -108,15 +166,27 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 <button
                                     onClick={() => handleDelete(comment.id)}
                                     disabled={deletingId === comment.id}
-                                    className="text-xs text-gray-400 hover:text-red-500 transition ml-2 disabled:opacity-40"
+                                    className="delete-btn text-xs text-gray-400 hover:text-red-500 transition ml-2 disabled:opacity-40"
                                 >
                                     {deletingId === comment.id ? '삭제 중...' : '삭제'}
                                 </button>
                             )}
                         </div>
-                        <p className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{comment.content}</p>
+                        <p className="comment-text text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{comment.content}</p>
                         
-                        <div className="mt-1">
+                        {comment.image_url && (
+                            <div className="mt-3 mb-2 rounded-lg overflow-hidden border border-gray-100 max-w-sm inline-block">
+                                <img 
+                                    src={comment.image_url} 
+                                    alt="첨부된 짤방" 
+                                    className="w-full h-auto max-h-60 object-contain bg-gray-50 cursor-zoom-in" 
+                                    loading="lazy" 
+                                    onClick={() => setZoomedImage(comment.image_url)}
+                                />
+                            </div>
+                        )}
+
+                        <div className="mt-1 reaction-panel">
                             <ReactionPanel 
                                 targetType="comment" 
                                 targetId={comment.id} 
@@ -130,6 +200,16 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                     <p className="text-gray-500 text-center py-8 text-sm">아직 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!</p>
                 )}
             </div>
+
+            {zoomedImage && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4 cursor-zoom-out"
+                    onClick={() => setZoomedImage(null)}
+                >
+                    <img src={zoomedImage} alt="Zoomed" className="max-w-full max-h-full object-contain" />
+                    <button className="absolute top-4 right-4 text-white text-3xl font-bold">&times;</button>
+                </div>
+            )}
         </>
     )
 }
