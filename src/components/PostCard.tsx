@@ -3,7 +3,7 @@ import { isAdmin } from '@/utils/auth'
 import DeletePostButton from './DeletePostButton'
 import { Eye, MessageSquare } from 'lucide-react'
 
-import { ReactionPanel } from './ReactionPanelServer'
+import ReactionPanel from './ReactionPanel'
 import { getUserProfileUrl } from '@/utils/user'
 
 import PostContentClient from './PostContentClient'
