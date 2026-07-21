@@ -21,14 +21,16 @@ export default async function SettingsPage() {
     .single()
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-3 sm:p-8 mt-2 sm:mt-10 bg-white sm:rounded-xl shadow-sm border-x sm:border border-gray-100 mb-20">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">{t('title')}</h1>
-      
-      <SettingsForm profile={profile} user={user} />
+    <div className="w-full max-w-2xl mx-auto p-2 sm:px-4 mt-4 sm:mt-8 mb-20 flex flex-col gap-4 sm:gap-6">
+      <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">{t('title')}</h1>
+        
+        <SettingsForm profile={profile} user={user} />
 
-      <div className="mt-12 pt-8 border-t border-gray-200">
-        <h2 className="text-xl font-bold mb-6 text-gray-900">{t('securityAndPw')}</h2>
-        <PasswordForm />
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <h2 className="text-xl font-bold mb-6 text-gray-900">{t('securityAndPw')}</h2>
+          <PasswordForm />
+        </div>
       </div>
     </div>
   )

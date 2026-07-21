@@ -66,14 +66,14 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
       <div>
         <label htmlFor="username" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">{t('username')}</label>
         <div className="flex bg-gray-50 border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-black">
-          <span className="px-3 py-3 text-gray-500 font-bold bg-gray-100 border-r border-gray-200">@</span>
+          <span className="px-3 py-3 text-gray-500 font-bold bg-gray-100 border-r border-gray-200 whitespace-nowrap">@</span>
           <input 
             id="username" 
             name="username" 
             type="text" 
             defaultValue={profile?.username || ''} 
             placeholder={t('usernamePlaceholder')}
-            className="w-full bg-transparent p-2.5 sm:p-3 outline-none font-medium text-gray-900" 
+            className="flex-1 min-w-0 bg-transparent p-2.5 sm:p-3 outline-none font-medium text-gray-900" 
           />
         </div>
       </div>

@@ -12,6 +12,11 @@ export async function createPost(formData: FormData) {
     throw new Error('Not authenticated')
   }
 
+  const { data: account } = await supabase.from('accounts').select('is_banned').eq('id', user.id).single()
+  if (account?.is_banned) {
+    throw new Error('Account is banned')
+  }
+
   const headline = formData.get('headline') as string
   const url = formData.get('url') as string
   const content = formData.get('content') as string
@@ -169,6 +174,11 @@ export async function addComment(formData: FormData, postId: string) {
 
   if (!user) {
     throw new Error('Not authenticated')
+  }
+
+  const { data: account } = await supabase.from('accounts').select('is_banned').eq('id', user.id).single()
+  if (account?.is_banned) {
+    throw new Error('Account is banned')
   }
 
   const content = formData.get('content') as string

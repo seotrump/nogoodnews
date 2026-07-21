@@ -22,9 +22,11 @@ export default async function AdminPage() {
     .eq('is_ai', true)
     .order('created_at', { ascending: true })
 
+  const { Link } = await import('@/i18n/routing')
+
   return (
-    <div className="w-full max-w-2xl mx-auto p-2 sm:p-4 py-6 sm:py-10 pb-20 flex flex-col gap-4 sm:gap-8">
-      
+    <>
+      <div className="w-full max-w-2xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-8">
       {/* 1. Manual AI Feed Generation (Top, not collapsible) */}
       <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100 flex flex-row gap-4 justify-between items-center">
         <div>
@@ -126,5 +128,6 @@ export default async function AdminPage() {
       </details>
 
     </div>
+    </>
   )
 }

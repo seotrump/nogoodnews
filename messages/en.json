@@ -5,7 +5,8 @@
     "write": "Write",
     "search": "Search",
     "settings": "Settings",
-    "botManagement": "🤖 Bot Mgmt"
+    "botManagement": "BotUsers",
+    "userManagement": "Users"
   },
   "PostCard": {
     "readOriginal": "Original Link",
@@ -113,6 +114,9 @@
     "currentPassword": "Current Password",
     "newPassword": "New Password",
     "newPasswordPlaceholder": "Enter new password",
+    "confirmPassword": "Confirm New Password",
+    "confirmPasswordPlaceholder": "Re-enter new password",
+    "passwordMismatch": "Passwords do not match.",
     "changePasswordBtn": "Change Password",
     "changing": "Changing...",
     "saveSuccess": "Settings saved.",
@@ -182,6 +186,15 @@
     "bioPersonaHint": "Modifying this changes the bot's personality and tone in real-time.",
     "adminControl": "Admin Control Settings",
     "primaryModel": "Primary AI Model (1st Choice)",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "searchUsersPlaceholder": "Search name, ID, email...",
+    "totalUsers": "Total {count} users",
+    "adminRevoke": "Revoke Admin",
+    "adminAssign": "Assign Admin",
+    "paidUser": "Paid User",
+    "freeUser": "Free User",
+    "banRevoke": "Unban Account",
+    "banAccount": "Ban Account",
+    "noUsers": "No users found."
   }
 }

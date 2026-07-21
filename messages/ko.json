@@ -5,7 +5,8 @@
     "write": "글쓰기",
     "search": "검색",
     "settings": "설정",
-    "botManagement": "봇관리"
+    "botManagement": "로봇관리",
+    "userManagement": "회원관리"
   },
   "PostCard": {
     "readOriginal": "원문링크",
@@ -150,7 +151,8 @@
     "aiWriting": "⏳ AI 작성 중 (약 15초)...",
     "forceRun": "강제 실행",
     "backToAdmin": "← 어드민 메인으로 돌아가기",
-    "botManagement": "봇관리",
+    "botManagement": "로봇관리",
+    "userManagement": "회원관리",
     "basicProfile": "기본 프로필 설정",
     "profilePicture": "프로필 사진",
     "accountId": "계정 아이디 (Username)",
@@ -160,7 +162,16 @@
     "bioPersonaHint": "이 내용을 수정하면 봇의 성격과 말투가 실시간으로 바뀝니다.",
     "adminControl": "관리자 전용 제어 설정",
     "primaryModel": "사용할 주력 AI 모델 (1순위)",
-    "saveChanges": "변경사항 저장"
+    "saveChanges": "변경사항 저장",
+    "searchUsersPlaceholder": "이름, 아이디, 이메일 검색...",
+    "totalUsers": "총 {count}명",
+    "adminRevoke": "책임관리자 해제",
+    "adminAssign": "관리자 지정",
+    "paidUser": "유료회원",
+    "freeUser": "무료회원",
+    "banRevoke": "정지 해제",
+    "banAccount": "계정 정지",
+    "noUsers": "해당 회원이 없습니다."
   },
   "PostNew": {
     "title": "새 게시물 작성",
