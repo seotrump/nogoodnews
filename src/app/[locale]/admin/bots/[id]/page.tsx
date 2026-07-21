@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
-import { updateAiBotSettings } from '@/app/[locale]/admin/actions'
 import { Link } from '@/i18n/routing'
 import { redirect } from 'next/navigation'
-import AvatarUpload from '@/components/AvatarUpload'
 import { getTranslations } from 'next-intl/server'
+import BotFormClient from './BotFormClient'
 
 export default async function BotSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const t = await getTranslations('Admin')
@@ -35,79 +34,23 @@ export default async function BotSettingsPage({ params }: { params: Promise<{ id
       <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
         <h1 className="text-2xl font-bold mb-8 text-center">{t('botManagement')}</h1>
 
-        <form action={updateAiBotSettings} className="flex flex-col gap-8">
-          <input type="hidden" name="botId" value={bot.id} />
-
-          {/* 일반 유저와 동일한 영역 (프로필/기본설정) */}
-          <div>
-            <h2 className="text-lg font-bold mb-4 border-b pb-2">{t('basicProfile')}</h2>
-
-            <div className="flex flex-col gap-5">
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-700">{t('profilePicture')}</label>
-                <AvatarUpload defaultUrl={bot.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${bot.id}`} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-700">{t('accountId')}</label>
-                <div className="flex bg-gray-50 border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-black">
-                  <span className="px-3 py-3 text-gray-500 font-bold bg-gray-100 border-r border-gray-200">@</span>
-                  <input name="username" type="text" defaultValue={bot.username || ''} placeholder={t('enterId')} className="w-full bg-transparent p-3 outline-none font-semibold" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-700">{t('displayName')}</label>
-                <input name="displayName" type="text" defaultValue={bot.display_name} required className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none font-semibold" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-700">{t('bioPersona')}</label>
-                <textarea name="personaPrompt" rows={4} defaultValue={bot.persona_prompt} required className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none font-semibold text-gray-800 leading-relaxed"></textarea>
-                <p className="text-xs text-gray-500 mt-1">{t('bioPersonaHint')}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 봇 전용 제어 영역 */}
-          <div>
-            <h2 className="text-lg font-bold mb-4 border-b pb-2 text-blue-600">{t('adminControl')}</h2>
-
-            <div className="flex flex-col gap-5">
-              {/* 하나로 통일된 AI 모델 선택창 */}
-              <div>
-                <label className="block text-sm font-semibold mb-1 text-gray-700">{t('primaryModel')}</label>
-                <select name="aiModelProvider" defaultValue={bot.ai_model_provider || 'base-gemma-4-26b'} className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none font-semibold">
-                  <option value="base-gemma-4-26b">Local (base-gemma-4-26b)</option>
-                  <option value="gemma-4-31b">Local (gemma-4-31b)</option>
-                  <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-1">{t('modelFallbackHint')}</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-gray-700">{t('postingInterval')}</label>
-                  <input name="interval" type="number" defaultValue={bot.auto_post_interval_minutes || 60} min="1" className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none font-semibold" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-gray-700">{t('postPriority')}</label>
-                  <input name="postPriority" type="number" defaultValue={bot.post_priority ?? 1} min="0" max="10" className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none font-semibold" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-gray-700">{t('commentPriority')}</label>
-                  <input name="commentPriority" type="number" defaultValue={bot.comment_priority ?? 1} min="0" max="10" className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none font-semibold" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-6 border-t border-gray-100 flex justify-end">
-            <button type="submit" className="bg-black text-white font-bold py-4 px-8 rounded-lg hover:bg-gray-800 transition text-lg w-full sm:w-auto">
-              {t('saveChanges')}
-            </button>
-          </div>
-        </form>
+        <BotFormClient bot={bot} tKeys={{
+          basicProfile: t('basicProfile'),
+          profilePicture: t('profilePicture'),
+          accountId: t('accountId'),
+          enterId: t('enterId'),
+          displayName: t('displayName'),
+          bioPersona: t('bioPersona'),
+          bioPersonaHint: t('bioPersonaHint'),
+          adminControl: t('adminControl'),
+          primaryModel: t('primaryModel'),
+          modelFallbackHint: t('modelFallbackHint'),
+          postingInterval: t('postingInterval'),
+          postPriority: t('postPriority'),
+          commentPriority: t('commentPriority'),
+          saveChanges: t('saveChanges'),
+          saveSuccess: '성공적으로 저장되었습니다.'
+        }} />
       </div>
     </div>
   )

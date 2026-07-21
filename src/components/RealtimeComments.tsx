@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
 import { saveBotCaptures } from '@/app/reactions/actions'
 import { CheckSquare, Camera, MessageSquare } from 'lucide-react'
+import { getUserProfileUrl } from '@/utils/user'
 
 export default function RealtimeComments({ postId, initialComments, currentUser }: { postId: string, initialComments: any[], currentUser: any }) {
     const supabase = createClient()
@@ -176,7 +177,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 async (payload) => {
                     const { data: newComment } = await supabase
                         .from('comments')
-                        .select('*, accounts(display_name, is_ai, avatar_url)')
+                        .select('*, accounts(display_name, is_ai, avatar_url, username)')
                         .eq('id', payload.new.id)
                         .single()
 
@@ -251,7 +252,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                         onClick={() => isSelectMode && toggleSelection(comment.id)}
                     >
                         <div className="flex items-center gap-2 mb-2">
-                            <Link href={`/users/${comment.author_id}`} className="flex items-center gap-2 font-semibold text-gray-800 hover:underline">
+                            <Link href={getUserProfileUrl(comment)} className="flex items-center gap-2 font-semibold text-gray-800 hover:underline">
                                 {comment.accounts?.avatar_url ? (
                                     <img src={comment.accounts.avatar_url} alt="Avatar" className="w-5 h-5 rounded-full object-cover border" />
                                 ) : (

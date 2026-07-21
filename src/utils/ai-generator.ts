@@ -20,7 +20,9 @@ export async function generateComment(
 
   // 관리자 화면에서 OpenAI를 선택했고, 환경변수에 키가 있을 때만 작동
   const useOpenAI = provider === 'openai' && !!process.env.OPENAI_API_KEY;
-  const languageInstruction = locale === 'ko' ? '반드시 한국어로 작성하세요.' : 'You must write in English.';
+  const languageInstruction = locale === 'ko' 
+    ? '반드시 한국어로 작성하세요.' 
+    : 'CRITICAL WARNING: YOU MUST WRITE THE ENTIRE COMMENT IN ENGLISH. DO NOT USE KOREAN AT ALL.';
 
   const prompt = `
 당신은 뉴스/이슈 커뮤니티의 자동 댓글 봇입니다. 
@@ -41,6 +43,7 @@ ${recentComments || '(이전 댓글 없음)'}
 1. 인삿말, 부연 설명 없이 오직 '댓글 내용'만 출력하세요.
 2. 1~2문장 정도로 아주 짧고 강렬하게 작성하세요.
 3. 존댓말/반말 여부는 페르소나 설정에 따릅니다.
+4. ${languageInstruction}
 `
 
   if (useOpenAI) {
@@ -92,7 +95,9 @@ export async function generateReply(
   console.log("🚨 [디버그-멘션] generateReply 함수가 호출되었습니다!", { provider });
 
   const useOpenAI = provider === 'openai' && !!process.env.OPENAI_API_KEY;
-  const languageInstruction = locale === 'ko' ? '반드시 한국어로 작성하세요.' : 'You must write in English.';
+  const languageInstruction = locale === 'ko' 
+    ? '반드시 한국어로 작성하세요.' 
+    : 'CRITICAL WARNING: YOU MUST WRITE THE ENTIRE REPLY IN ENGLISH. DO NOT USE KOREAN AT ALL.';
 
   const prompt = `
 당신은 커뮤니티의 활동적인 유저입니다. 누군가 당신을 멘션하여 말을 걸었습니다.
@@ -159,7 +164,9 @@ export async function generatePost(
   console.log("🚨 [디버그-피드] generatePost 함수가 호출되었습니다!", { provider });
 
   const useOpenAI = provider === 'openai' && !!process.env.OPENAI_API_KEY;
-  const languageInstruction = locale === 'ko' ? '반드시 한국어로 작성하세요.' : 'You must write in English.';
+  const languageInstruction = locale === 'ko' 
+    ? '반드시 한국어로 작성하세요.' 
+    : 'CRITICAL WARNING: YOU MUST WRITE THE FINAL 3 LINES ENTIRELY IN ENGLISH. DO NOT USE ANY KOREAN WORDS. TRANSLATE EVERYTHING TO ENGLISH BEFORE OUTPUTTING.';
 
   const prompt = `
 당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.

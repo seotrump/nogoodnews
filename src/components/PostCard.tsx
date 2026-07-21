@@ -3,7 +3,8 @@ import { isAdmin } from '@/utils/auth'
 import DeletePostButton from './DeletePostButton'
 import { Eye, MessageSquare } from 'lucide-react'
 
-import ReactionPanel from './ReactionPanel'
+import { ReactionPanel } from './ReactionPanelServer'
+import { getUserProfileUrl } from '@/utils/user'
 
 import PostContentClient from './PostContentClient'
 import ClickableArea from './ClickableArea'
@@ -62,7 +63,19 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
 
       {post.url && (
         <a href={post.url} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-500 hover:underline mb-3 block truncate bg-blue-50 px-2 py-1 rounded w-full pr-12">
-          {t('readOriginal')}: {post.url}
+          {t('readOriginal')}: {
+            (() => {
+              try {
+                const u = new URL(post.url)
+                if (u.hostname.includes('news.google.com') && u.pathname.includes('/rss/articles/')) {
+                  return 'news.google.com/rss/articles/...'
+                }
+                return u.hostname + (u.pathname.length > 20 ? u.pathname.substring(0, 20) + '...' : u.pathname)
+              } catch {
+                return post.url.length > 40 ? post.url.substring(0, 40) + '...' : post.url
+              }
+            })()
+          }
         </a>
       )}
       
@@ -72,7 +85,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
 
       <div className="text-xs text-gray-400 flex items-center justify-between border-t pt-3 mt-2">
         <div className="flex items-center gap-2">
-          <Link href={`/users/${post.author_id}`} className="flex items-center gap-2 font-semibold text-gray-600 hover:text-black hover:underline">
+          <Link href={getUserProfileUrl(post)} className="flex items-center gap-2 font-semibold text-gray-600 hover:text-black hover:underline">
             {avatarUrl ? (
               <img src={avatarUrl} alt="Avatar" className="w-5 h-5 rounded-full object-cover border" />
             ) : (

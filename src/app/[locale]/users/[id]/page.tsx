@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { Link } from '@/i18n/routing'
 import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import FollowButton from '@/components/FollowButton'
@@ -11,32 +11,50 @@ import { MessageSquare, Heart, TrendingUp, Camera } from 'lucide-react'
 export default async function UserProfilePage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ tab?: string, sort?: string }> }) {
   const t = await getTranslations('Profile')
   const supabase = await createClient()
-  const { id } = await params
+  let { id } = await params
   const { tab, sort } = await searchParams
   const currentTab = tab || 'comments'
   const sortBy = sort || (currentTab === 'feeds' ? 'latest' : 'reactions')
 
   // Get current user for admin checks
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user: currentUser } } = await supabase.auth.getUser()
 
   // Get user profile
-  const { data: profile, error } = await supabase
+  const rawId = decodeURIComponent((await params).id);
+  const isUsername = rawId.startsWith('@')
+  const lookupValue = isUsername ? rawId.substring(1) : rawId
+
+  let profileQuery = supabase
     .from('accounts')
     .select('*')
-    .eq('id', id)
-    .single()
+
+  if (isUsername) {
+    profileQuery = profileQuery.eq('username', lookupValue)
+  } else {
+    profileQuery = profileQuery.eq('id', lookupValue)
+  }
+
+  const { data: profile, error } = await profileQuery.single()
 
   if (error || !profile) {
     notFound()
   }
 
+  // Redirect from UUID to @username if username exists
+  if (!isUsername && profile.username) {
+    redirect(`/users/@${profile.username}`)
+  }
+
+  id = profile.id
+  const profileUrlId = profile.username ? `@${profile.username}` : profile.id
+
   // Check if current user is following this profile
   let initialIsFollowing = false
-  if (user) {
+  if (currentUser) {
     const { data: follow } = await supabase
       .from('follows')
       .select('follower_id')
-      .eq('follower_id', user.id)
+      .eq('follower_id', currentUser.id)
       .eq('following_id', id)
       .maybeSingle()
     if (follow) initialIsFollowing = true
@@ -161,41 +179,41 @@ export default async function UserProfilePage({ params, searchParams }: { params
           <p className="mt-3 sm:mt-4 text-gray-700 max-w-lg text-sm leading-relaxed">{profile.bio}</p>
         )}
         
-        <div className="flex items-center gap-6 mt-4 text-sm text-gray-600 mb-6">
-          <Link href={`/users/${id}/following`} className="hover:underline hover:text-gray-900 transition-all">
-            <span className="font-bold text-gray-900">{profile.following_count || 0}</span> {t('following')}
+        <div className="flex gap-4 mt-2">
+          <Link href={`/users/${profileUrlId}/following`} className="hover:underline hover:text-gray-900 transition-all">
+            <span className="font-bold">{profile.following_count || 0}</span> <span className="text-gray-500">팔로잉</span>
           </Link>
-          <Link href={`/users/${id}/followers`} className="hover:underline hover:text-gray-900 transition-all">
-            <span className="font-bold text-gray-900">{profile.followers_count || 0}</span> {t('followers')}
+          <Link href={`/users/${profileUrlId}/followers`} className="hover:underline hover:text-gray-900 transition-all">
+            <span className="font-bold">{profile.followers_count || 0}</span> <span className="text-gray-500">팔로워</span>
           </Link>
         </div>
 
         <FollowButton 
-          targetUserId={id} 
+          targetUserId={profile.id} 
           initialIsFollowing={initialIsFollowing} 
-          currentUserId={user?.id} 
+          currentUserId={currentUser?.id} 
         />
         </div>
       </div>
 
       <div className="w-full">
         <div className="flex gap-4 mb-6 border-b border-gray-200 px-1 overflow-x-auto whitespace-nowrap hide-scrollbar">
-          <Link scroll={false} href={`/users/${id}?tab=comments`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'comments' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+          <Link scroll={false} href={`/users/${profileUrlId}?tab=comments`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'comments' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
             <MessageSquare className="w-5 h-5" /> {t('bestComments')}
           </Link>
-          <Link scroll={false} href={`/users/${id}?tab=captures`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'captures' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+          <Link scroll={false} href={`/users/${profileUrlId}?tab=captures`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'captures' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
             <Camera className="w-5 h-5" /> {t('bestCaptures')}
           </Link>
-          <Link scroll={false} href={`/users/${id}?tab=feeds`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'feeds' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+          <Link scroll={false} href={`/users/${profileUrlId}?tab=feeds`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'feeds' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
             <TrendingUp className="w-5 h-5" /> {t('bestFeeds')}
           </Link>
         </div>
         
-        <ProfileSortFilter userId={id} currentTab={currentTab} currentSort={sortBy} />
+        <ProfileSortFilter userId={profileUrlId} currentTab={currentTab} currentSort={sortBy} />
         
         <div className="w-full">
           {currentTab === 'feeds' ? (
-            <BulkDeleteFeed posts={posts || []} currentUser={user} />
+            <BulkDeleteFeed posts={posts || []} currentUser={currentUser} />
           ) : currentTab === 'captures' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {captures.length === 0 ? (
@@ -206,22 +224,21 @@ export default async function UserProfilePage({ params, searchParams }: { params
                 captures.map(capture => (
                   <div key={capture.id} className="flex flex-col gap-2">
                     {capture.post_id ? (
-                      <Link 
-                        href={`/posts/${capture.post_id}`} 
-                        className="block bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col gap-3 group hover:shadow-md transition cursor-pointer"
-                      >
-                        <div className="relative w-full bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center p-2" style={{ aspectRatio: '1 / 1' }}>
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col gap-3 group hover:shadow-md transition">
+                        <a href={capture.image_url} target="_blank" rel="noreferrer" className="block relative w-full bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center p-2 cursor-zoom-in" style={{ aspectRatio: '1 / 1' }}>
                           <img src={capture.image_url} alt="Captured comment" className="max-w-full max-h-full object-contain" />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <span className="bg-white text-black text-sm font-bold py-2 px-4 rounded-full shadow-sm">
-                              원문 글 보러가기 🔗
+                            <span className="bg-white text-black text-sm font-bold py-2 px-4 rounded-full shadow-sm hover:scale-105 transition-transform">
+                              원본 이미지 보기 📸
                             </span>
                           </div>
-                        </div>
-                        <p className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
-                          {capture.posts?.headline || '원문 정보 없음'}
-                        </p>
-                      </Link>
+                        </a>
+                        <Link href={`/posts/${capture.post_id}`} className="block hover:underline">
+                          <p className="text-sm font-bold text-gray-800 truncate leading-snug">
+                            {capture.posts?.headline || '원문 정보 없음'}
+                          </p>
+                        </Link>
+                      </div>
                     ) : (
                       <div className="block bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col gap-3 group cursor-default">
                         <div className="relative w-full bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center p-2" style={{ aspectRatio: '1 / 1' }}>
@@ -232,7 +249,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
                             </a>
                           </div>
                         </div>
-                        <p className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">이전 캡처 기록</p>
+                        <p className="text-sm font-bold text-gray-800 truncate leading-snug">이전 캡처 기록</p>
                       </div>
                     )}
                     <div className="px-1">
@@ -240,7 +257,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
                         targetType="capture" 
                         targetId={capture.id} 
                         initialReactions={capture.reactions || []} 
-                        currentUser={user} 
+                        currentUser={currentUser} 
                       />
                     </div>
                   </div>

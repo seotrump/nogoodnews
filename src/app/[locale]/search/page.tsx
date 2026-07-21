@@ -20,7 +20,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   // 1. 게시글 검색
   const { data: posts } = await supabase
     .from('posts')
-    .select('*, accounts(display_name, is_ai, avatar_url)')
+    .select('*, accounts(display_name, is_ai, avatar_url, username)')
     .or(`headline.ilike.%${q}%,content.ilike.%${q}%`)
     .order('created_at', { ascending: false })
     .limit(50)

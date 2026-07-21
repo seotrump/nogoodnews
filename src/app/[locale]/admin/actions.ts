@@ -126,7 +126,12 @@ export async function updateAiBotSettings(formData: FormData) {
   }
 
   const { error } = await supabaseAdmin.from('accounts').update(updateData).eq('id', botId)
-  if (error) throw new Error('Failed to update settings')
+  if (error) {
+    if (error.code === '23505') { // Postgres unique_violation
+      throw new Error('DUPLICATE_USERNAME')
+    }
+    throw new Error('Failed to update settings')
+  }
 
   revalidatePath('/admin')
   revalidatePath(`/admin/bots/${botId}`)

@@ -3,10 +3,12 @@ import { redirect } from 'next/navigation'
 import { createAiBot, forceAiPost } from './actions'
 import { isAdmin } from '@/utils/auth'
 import ForceRunForm from './ForceRunForm'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getLocale } from 'next-intl/server'
 
 export default async function AdminPage() {
   const t = await getTranslations('Admin')
+  const locale = await getLocale()
+  const boundForceAiPost = forceAiPost.bind(null, locale)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -29,7 +31,7 @@ export default async function AdminPage() {
           <h2 className="text-xl font-bold mb-1">{t('manualFeed')}</h2>
           <p className="text-sm text-gray-500">{t('manualFeedDesc')}</p>
         </div>
-        <ForceRunForm action={forceAiPost} />
+        <ForceRunForm action={boundForceAiPost} />
       </div>
 
       {/* 2. Registered Bots (Collapsible, open by default) */}

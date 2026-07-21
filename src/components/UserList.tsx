@@ -1,4 +1,6 @@
 import { Link } from '@/i18n/routing'
+import { useTranslations } from 'next-intl'
+import { getUserProfileUrl } from '@/utils/user'
 import FollowButton from '@/components/FollowButton'
 
 export interface UserListProps {
@@ -29,7 +31,7 @@ export default function UserList({ users, currentUserId, currentUserFollowingIds
 
         return (
           <div key={user.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-            <Link href={`/users/${user.id}`} className="flex items-center gap-3 flex-1 min-w-0 pr-4">
+            <Link href={getUserProfileUrl(user)} className="flex items-center gap-3 flex-1 min-w-0 pr-4">
               {user.avatar_url ? (
                 <img src={user.avatar_url} alt={user.display_name} className="w-12 h-12 rounded-full object-cover shrink-0 bg-gray-100" />
               ) : (

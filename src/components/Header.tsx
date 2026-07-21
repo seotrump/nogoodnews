@@ -1,6 +1,7 @@
 import { Link } from '@/i18n/routing'
 import { createClient } from '@/utils/supabase/server'
 import { isAdmin } from '@/utils/auth'
+import { getUserProfileUrl } from '@/utils/user'
 import NotificationBell from '@/components/NotificationBell'
 import SearchBar from '@/components/SearchBar'
 import { getTranslations } from 'next-intl/server';
@@ -31,7 +32,7 @@ export default async function Header() {
           {user ? (
             <>
               <NotificationBell userId={user.id} />
-              <Link href={`/users/${user.id}`} className="hidden sm:flex items-center gap-2 text-gray-600 font-semibold hover:underline">
+              <Link href={getUserProfileUrl(user)} className="hidden sm:flex items-center gap-2 text-gray-600 font-semibold hover:underline">
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full object-cover border" />
                 ) : (

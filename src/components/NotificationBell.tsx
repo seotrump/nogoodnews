@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import { getUserProfileUrl } from '@/utils/user'
 import { createClient } from '@/utils/supabase/client'
 import { Link } from '@/i18n/routing'
 import { markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions'
@@ -135,7 +136,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
                   
                   if (n.type === 'follow') {
                     textKey = 'follow'
-                    href = `/users/${n.actor_id}`
+                    href = getUserProfileUrl({ id: n.actor_id, accounts: { username: n.actor?.username } })
                   } else if (n.type === 'reaction') {
                     textKey = 'reaction'
                   } else if (n.type === 'comment') {
