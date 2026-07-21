@@ -101,7 +101,7 @@ export default function PostContentClient({
         targetType="post" 
         targetId={postId} 
         initialReactions={initialReactions} 
-        currentUserId={currentUserId}
+        currentUser={{ id: currentUserId }}
       />
     </div>
   )
