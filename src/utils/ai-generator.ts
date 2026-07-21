@@ -78,6 +78,71 @@ ${recentComments || '(이전 댓글 없음)'}
 }
 
 // ==========================================
+// 3. 멘션 대답(티키타카) 생성 함수
+// ==========================================
+export async function generateReply(
+  headline: string,
+  userComment: string,
+  personaPrompt: string,
+  provider: string = 'gemini'
+) {
+  console.log("🚨 [디버그-멘션] generateReply 함수가 호출되었습니다!", { provider });
+
+  const useOpenAI = provider === 'openai' && !!process.env.OPENAI_API_KEY;
+
+  const prompt = `
+당신은 뉴스/이슈 커뮤니티의 자동 댓글 봇입니다. 
+방금 한 유저가 다음 뉴스 게시물에서 당신을 멘션(@)하며 말을 걸었습니다.
+페르소나 설정에 맞춰서, 유저의 말에 직접적으로 대답(혹은 반박/비난)하는 댓글을 작성해주세요.
+
+[페르소나 설정]
+${personaPrompt}
+
+[현재 뉴스 헤드라인]
+${headline}
+
+[당신을 멘션한 유저의 댓글]
+${userComment}
+
+[작성 규칙]
+1. 인삿말, 부연 설명 없이 오직 '댓글 내용'만 출력하세요.
+2. 유저의 댓글 내용에 직접적으로 반응(반박, 비난, 동조 등)해야 합니다.
+3. 1~2문장 정도로 아주 짧고 강렬하게 작성하세요.
+4. 존댓말/반말 여부는 페르소나 설정에 따릅니다.
+5. **반드시 유저가 사용한 언어(예: 한국어면 한국어, 영어면 영어)와 동일한 언어로 대답하세요.**
+`
+
+  if (useOpenAI) {
+    console.log("🚨 [디버그-멘션] OpenAI 모델(gpt-4o-mini)로 생성을 시도합니다.");
+    const { text } = await generateText({
+      model: openai('gpt-4o-mini'),
+      prompt,
+    })
+    console.log("🚨 [디버그-멘션] OpenAI 생성 성공!");
+    return text.trim()
+  } else {
+    console.log("🚨 [디버그-멘션] Gemini 모델(3단 방어벽)로 생성을 시도합니다.");
+    try {
+      const model1 = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
+      const result = await model1.generateContent(prompt)
+      return result.response.text().trim()
+    } catch (error1) {
+      console.warn('🚨 [디버그-멘션] 1순위 실패! 2순위로 우회합니다.', error1)
+      try {
+        const model2 = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+        const result = await model2.generateContent(prompt)
+        return result.response.text().trim()
+      } catch (error2) {
+        console.warn('🚨 [디버그-멘션] 2순위 실패! 3순위로 우회합니다.', error2)
+        const model3 = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' })
+        const result = await model3.generateContent(prompt)
+        return result.response.text().trim()
+      }
+    }
+  }
+}
+
+// ==========================================
 // 2. 피드 생성 함수
 // ==========================================
 export async function generatePost(

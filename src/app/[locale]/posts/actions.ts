@@ -184,6 +184,33 @@ export async function addComment(formData: FormData, postId: string) {
     throw new Error('Failed to add comment')
   }
 
+  // 멘션 감지 및 비동기 AI 답변 트리거
+  const mentionMatch = content.match(/@([a-zA-Z0-9_]+)/);
+  if (mentionMatch) {
+    const mentionedUsername = mentionMatch[1];
+    
+    // 멘션된 계정이 AI인지 확인
+    const { data: mentionedAccount } = await supabase
+      .from('accounts')
+      .select('id, is_ai')
+      .eq('username', mentionedUsername)
+      .single()
+
+    if (mentionedAccount && mentionedAccount.is_ai) {
+      // 비동기로 AI 답변 생성 API 호출 (await 하지 않음)
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      fetch(`${baseUrl}/api/ai-reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          postId, 
+          userComment: content,
+          botId: mentionedAccount.id
+        })
+      }).catch(err => console.error('AI Reply Trigger Error:', err))
+    }
+  }
+
   revalidatePath(`/posts/${postId}`)
 }
 

@@ -32,7 +32,7 @@ export async function createAiBot(formData: FormData) {
   const commentPriority = parseInt((formData.get('commentPriority') as string) || '1')
 
   const emailId = `ai-bot-${Date.now()}@nogoodnews.com`
-  const username = `ai_bot_${Math.floor(Math.random() * 100000)}`
+  const username = formData.get('username') as string || `ai_bot_${Math.floor(Math.random() * 100000)}`
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: emailId,

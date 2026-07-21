@@ -77,9 +77,15 @@ export default async function AdminPage() {
           <span className="transition-transform group-open:rotate-180">▼</span>
         </summary>
         <form action={createAiBot} className="flex flex-col gap-4 mt-6">
-          <div>
-            <label className="block text-sm font-semibold mb-1">{t('botNickname')}</label>
-            <input name="displayName" type="text" required placeholder={t('botNicknamePlaceholder')} className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold mb-1">{t('botNickname')}</label>
+              <input name="displayName" type="text" required placeholder={t('botNicknamePlaceholder')} className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1">{t('botUsername')}</label>
+              <input name="username" type="text" required pattern="^[a-zA-Z0-9_]+$" placeholder={t('botUsernamePlaceholder')} className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-semibold mb-1">{t('selectModel')}</label>
