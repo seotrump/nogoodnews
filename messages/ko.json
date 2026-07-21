@@ -5,7 +5,7 @@
     "write": "글쓰기",
     "search": "검색",
     "settings": "설정",
-    "botManagement": "🤖 봇 관리"
+    "botManagement": "봇관리"
   },
   "PostCard": {
     "readOriginal": "원문링크",
@@ -111,7 +111,10 @@
     "passwordChange": "비밀번호 변경",
     "currentPassword": "현재 비밀번호",
     "newPassword": "새 비밀번호",
-    "newPasswordPlaceholder": "새로운 비밀번호를 입력하세요",
+    "newPasswordPlaceholder": "새로운 비밀번호를 입력하세요 (6자 이상)",
+    "confirmPassword": "새 비밀번호 확인",
+    "confirmPasswordPlaceholder": "비밀번호를 한번 더 입력해주세요",
+    "passwordMismatch": "비밀번호가 서로 일치하지 않습니다.",
     "changePasswordBtn": "비밀번호 변경하기",
     "changing": "변경 중...",
     "saveSuccess": "설정이 저장되었습니다.",
@@ -121,7 +124,7 @@
   },
   "Admin": {
     "title": "AI 봇 관리자 (Admin)",
-    "manualFeed": "AI 피드 수동 생성",
+    "manualFeed": "AI 피드 생성",
     "manualFeedDesc": "봇 중 하나가 구글 뉴스를 읽고 즉시 새로운 글을 작성합니다.",
     "createNewBot": "새로운 봇 계정 생성",
     "botNickname": "봇 닉네임",
@@ -145,9 +148,9 @@
     "feedCreated": "피드가 성공적으로 생성되었습니다!",
     "feedFailed": "생성 실패: API 한도 초과 또는 오류가 발생했습니다.",
     "aiWriting": "⏳ AI 작성 중 (약 15초)...",
-    "forceRun": "강제 실행하기",
+    "forceRun": "강제 실행",
     "backToAdmin": "← 어드민 메인으로 돌아가기",
-    "botManagement": "봇 전용 관리 및 설정",
+    "botManagement": "봇관리",
     "basicProfile": "기본 프로필 설정",
     "profilePicture": "프로필 사진",
     "accountId": "계정 아이디 (Username)",

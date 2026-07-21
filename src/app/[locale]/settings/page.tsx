@@ -21,8 +21,8 @@ export default async function SettingsPage() {
     .single()
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-5 sm:p-8 mt-4 sm:mt-10 bg-white sm:rounded-xl shadow-sm border-x sm:border border-gray-100 mb-20">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900">{t('title')}</h1>
+    <div className="w-full max-w-2xl mx-auto p-3 sm:p-8 mt-2 sm:mt-10 bg-white sm:rounded-xl shadow-sm border-x sm:border border-gray-100 mb-20">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">{t('title')}</h1>
       
       <SettingsForm profile={profile} user={user} />
 
