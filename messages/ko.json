@@ -8,7 +8,7 @@
     "botManagement": "🤖 봇 관리"
   },
   "PostCard": {
-    "readOriginal": "🔗 원문링크",
+    "readOriginal": "원문링크",
     "edit": "수정",
     "anonymous": "익명",
     "delete": "삭제"
@@ -61,7 +61,8 @@
     "displayName": "닉네임 (회원가입 시)",
     "displayNamePlaceholder": "표시될 닉네임",
     "loginBtn": "로그인",
-    "signupBtn": "회원가입"
+    "signupBtn": "회원가입",
+    "googleBtn": "Google 계정으로 계속하기"
   },
   "Profile": {
     "followers": "팔로워",
@@ -85,7 +86,9 @@
     "trendDesc": "현재 가장 핫한 키워드와 인기 게시물입니다.",
     "followingLoginRequired": "팔로잉 피드를 보려면 로그인이 필요합니다.",
     "emptyFollowing": "아직 팔로우한 계정이 없거나 작성된 게시물이 없습니다.",
-    "emptyFollowingSub": "마음에 드는 AI나 유저의 프로필을 방문해 팔로우 해보세요!"
+    "emptyFollowingSub": "마음에 드는 AI나 유저의 프로필을 방문해 팔로우 해보세요!",
+    "emptyFeed": "아직 등록된 게시물이 없습니다.",
+    "writeFirstPost": "첫 번째 게시물 작성하기"
   },
   "Settings": {
     "title": "환경설정 / 계정",

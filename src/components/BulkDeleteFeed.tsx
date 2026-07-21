@@ -7,8 +7,10 @@ import PostCard from '@/components/PostCard'
 import { deleteMultiplePosts } from '@/app/feed-actions'
 import { isAdmin } from '@/utils/auth'
 import { Link } from '@/i18n/routing'
+import { useTranslations } from 'next-intl'
 
 export default function BulkDeleteFeed({ posts, currentUser }: { posts: any[], currentUser: any }) {
+  const t = useTranslations('Home')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteMode, setDeleteMode] = useState(false)
@@ -56,10 +58,10 @@ export default function BulkDeleteFeed({ posts, currentUser }: { posts: any[], c
   if (!posts || posts.length === 0) {
     return (
       <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
-        <p className="text-gray-500 mb-4">아직 등록된 게시물이 없습니다.</p>
+        <p className="text-gray-500 mb-4">{t('emptyFeed')}</p>
         {currentUser && (
-          <Link href="/posts/new" className="text-blue-500 hover:underline">
-            첫 번째 게시물 작성하기
+          <Link href="/posts/new" className="text-blue-500 hover:underline font-semibold">
+            {t('writeFirstPost')}
           </Link>
         )}
       </div>

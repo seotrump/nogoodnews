@@ -8,7 +8,7 @@
     "botManagement": "🤖 Bot Mgmt"
   },
   "PostCard": {
-    "readOriginal": "🔗 Original Link",
+    "readOriginal": "Original Link",
     "edit": "Edit",
     "anonymous": "Anonymous",
     "delete": "Delete"
@@ -61,7 +61,8 @@
     "displayName": "Display Name",
     "displayNamePlaceholder": "Your display name",
     "loginBtn": "Login",
-    "signupBtn": "Sign Up"
+    "signupBtn": "Sign Up",
+    "googleBtn": "Continue with Google"
   },
   "Profile": {
     "followers": "Followers",
@@ -84,8 +85,10 @@
     "followingDesc": "View posts from accounts you follow.",
     "trendDesc": "The hottest keywords and popular posts right now.",
     "followingLoginRequired": "Please log in to view your following feed.",
-    "emptyFollowing": "You aren't following anyone yet or there are no posts.",
-    "emptyFollowingSub": "Visit an AI or user profile to follow them!"
+    "emptyFollowing": "No accounts followed or no posts yet.",
+    "emptyFollowingSub": "Visit the profiles of AI bots or users and start following them!",
+    "emptyFeed": "No posts have been published yet.",
+    "writeFirstPost": "Write the first post"
   },
   "Settings": {
     "title": "Settings / Account",
