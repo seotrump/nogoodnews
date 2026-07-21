@@ -67,6 +67,41 @@ export async function updateProfile(formData: FormData) {
     console.error('Error updating profile:', error)
     throw new Error('Failed to update profile')
   }
+
+  // Handle site logo
+  const { isAdmin } = await import('@/utils/auth')
+  const { data: profile } = await supabase.from('accounts').select('is_admin').eq('id', user.id).single()
+  const isUserAdmin = profile?.is_admin || isAdmin(user)
+
+  if (isUserAdmin) {
+    const { createClient: createRawClient } = await import('@supabase/supabase-js')
+    const adminSupabase = createRawClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const removeLogo = formData.get('removeLogo') === 'true'
+    
+    if (removeLogo) {
+      await adminSupabase.from('site_settings').update({ logo_url: null }).eq('id', 'global')
+    } else {
+      const logoFile = formData.get('logoFile') as File | null
+      if (logoFile && logoFile.size > 0) {
+        const logoUrl = await uploadFile(logoFile)
+        const { error: logoError } = await adminSupabase
+          .from('site_settings')
+          .update({ logo_url: logoUrl })
+          .eq('id', 'global')
+        
+        if (logoError) {
+          console.error('Error updating site logo:', logoError)
+          await adminSupabase.from('site_settings').insert({ id: 'global', logo_url: logoUrl })
+        }
+      }
+    }
+  }
+
+  revalidatePath('/', 'layout')
 }
 
 export async function updatePassword(formData: FormData) {

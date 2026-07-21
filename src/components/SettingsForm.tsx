@@ -7,6 +7,8 @@ import AvatarUpload from './AvatarUpload'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter, usePathname } from '@/i18n/routing'
 
+import { isAdmin } from '@/utils/auth'
+
 export default function SettingsForm({ profile, user }: { profile: any, user: any }) {
   const t = useTranslations('Settings')
   const locale = useLocale()
@@ -15,6 +17,8 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
   const [isSaving, setIsSaving] = useState(false)
   const [coverPreview, setCoverPreview] = useState<string | null>(profile?.cover_url || null)
   const [selectedLocale, setSelectedLocale] = useState(locale)
+
+  const isUserAdmin = profile?.is_admin || isAdmin(user)
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -115,6 +119,25 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
         </div>
         <p className="text-xs text-gray-500 mt-2">{t('coverHint')}</p>
       </div>
+
+      {isUserAdmin && (
+        <div className="pt-4 border-t border-gray-100">
+          <label className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">사이트 로고 (관리자 전용)</label>
+          <div className="flex flex-col gap-3">
+            <input 
+              type="file" 
+              name="logoFile" 
+              accept="image/*" 
+              className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer"
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer w-fit">
+              <input type="checkbox" name="removeLogo" value="true" className="w-4 h-4 rounded text-black focus:ring-black border-gray-300" />
+              <span>현재 적용된 로고를 삭제하고 기본 텍스트(NoGoodNews.) 사용</span>
+            </label>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">PC 및 모바일 헤더에 반영될 사이트 전체 로고입니다. <br/>최적 권장 사이즈: <b>높이 40px, 너비 120px ~ 250px</b> 내외의 가로형 이미지 (세로가 40px을 초과할 경우 비율에 맞춰 자동 축소됩니다).</p>
+        </div>
+      )}
 
       <div className="pt-4 border-t border-gray-100">
         <label className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">{t('language')}</label>
