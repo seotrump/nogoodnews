@@ -19,6 +19,14 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
     const [comments, setComments] = useState(initialComments)
     const [deletingId, setDeletingId] = useState<string | null>(null)
     const [zoomedImage, setZoomedImage] = useState<string | null>(null)
+    const [isSelectMode, setIsSelectMode] = useState(false)
+    const [selectedCommentIds, setSelectedCommentIds] = useState<string[]>([])
+
+    const toggleSelection = (id: string) => {
+        setSelectedCommentIds(prev => 
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        )
+    }
 
     const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
 
@@ -41,14 +49,28 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
         }
     }
 
-    const handleCapture = async (mode: 'all' | 'dialogue') => {
+    const handleCapture = async (mode: 'all' | 'dialogue' | 'selected') => {
         const container = document.getElementById('comments-container')
         if (!container) return
 
         const loadingToast = toast.loading('이미지 생성 중...')
         try {
-            const className = mode === 'all' ? 'capture-mode-all' : 'capture-mode-dialogue'
+            const className = mode === 'all' ? 'capture-mode-all' : 
+                              mode === 'selected' ? 'capture-mode-selected' : 'capture-mode-dialogue'
             container.classList.add(className)
+
+            // 구글 번역기 등에서 주입한 크로스 오리진 스타일시트 접근 시 에러 방지
+            const disabledSheets: CSSStyleSheet[] = [];
+            Array.from(document.styleSheets).forEach(sheet => {
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const rules = sheet.cssRules;
+                } catch (e: any) {
+                    // SecurityError 등 모든 접근 거부 에러 발생 시 무조건 비활성화
+                    sheet.disabled = true;
+                    disabledSheets.push(sheet);
+                }
+            });
 
             // DOM 렌더링 대기
             await new Promise(resolve => setTimeout(resolve, 150))
@@ -56,7 +78,13 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
             const dataUrl = await toPng(container, {
                 backgroundColor: '#ffffff',
                 pixelRatio: 2,
+                skipFonts: true, // 크로스 오리진 웹 폰트/스타일시트 스캔 생략 (보안 에러 원천 차단)
             })
+
+            // 원래대로 복구
+            disabledSheets.forEach(sheet => {
+                sheet.disabled = false;
+            });
 
             container.classList.remove(className)
 
@@ -135,19 +163,44 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 </h3>
                 {comments.length > 0 && (
                     <div className="flex gap-2">
-                        <button onClick={() => handleCapture('all')} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                            📸 전체박제
-                        </button>
-                        <button onClick={() => handleCapture('dialogue')} className="text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                            💬 대화박제
-                        </button>
+                        {isSelectMode ? (
+                            <>
+                                <button onClick={() => {setIsSelectMode(false); setSelectedCommentIds([]);}} className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition">
+                                    취소
+                                </button>
+                                <button 
+                                    onClick={() => handleCapture('selected')} 
+                                    disabled={selectedCommentIds.length === 0}
+                                    className="text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm disabled:opacity-50"
+                                >
+                                    📸 {selectedCommentIds.length}개 캡처하기
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button onClick={() => setIsSelectMode(true)} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
+                                    ☑️ 선택박제
+                                </button>
+                                <button onClick={() => handleCapture('all')} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
+                                    📸 전체박제
+                                </button>
+                                <button onClick={() => handleCapture('dialogue')} className="text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
+                                    💬 대화박제
+                                </button>
+                            </>
+                        )}
                     </div>
                 )}
             </div>
 
-            <div id="comments-container" className="flex flex-col gap-6 bg-white">
+            <div id="comments-container" className={`bg-white p-6 transition-all duration-300 ${isSelectMode ? 'rounded-xl border border-gray-200' : ''}`}>
+                <div className="flex flex-col gap-4">
                 {comments.map((comment: any) => (
-                    <div key={comment.id} className="pb-6 border-b last:border-b-0 border-gray-100 comment-item">
+                    <div 
+                        key={comment.id} 
+                        className={`pb-6 border-b last:border-b-0 border-gray-100 comment-item ${isSelectMode && !selectedCommentIds.includes(comment.id) ? 'not-selected-for-capture opacity-50' : ''}`}
+                        onClick={() => isSelectMode && toggleSelection(comment.id)}
+                    >
                         <div className="flex items-center gap-2 mb-2">
                             <Link href={`/users/${comment.author_id}`} className="flex items-center gap-2 font-semibold text-gray-800 hover:underline">
                                 {comment.accounts?.avatar_url ? (
@@ -158,8 +211,18 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 <span>{comment.accounts?.display_name || '익명'}</span>
                             </Link>
 
-                            <span className="text-xs text-gray-400 ml-auto">
-                                {new Date(comment.created_at).toLocaleString('ko-KR')}
+                            <span className="text-xs text-gray-400 ml-auto flex items-center gap-3">
+                                <span>{new Date(comment.created_at).toLocaleString('ko-KR')}</span>
+                                {isSelectMode && (
+                                    <div className="checkbox-wrapper flex items-center">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedCommentIds.includes(comment.id)}
+                                            readOnly
+                                            className="w-4 h-4 text-black bg-gray-100 border-gray-300 rounded focus:ring-black focus:ring-2 cursor-pointer"
+                                        />
+                                    </div>
+                                )}
                             </span>
 
                             {canDelete(comment) && (
@@ -196,6 +259,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                         </div>
                     </div>
                 ))}
+                </div>
                 {comments.length === 0 && (
                     <p className="text-gray-500 text-center py-8 text-sm">아직 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!</p>
                 )}
