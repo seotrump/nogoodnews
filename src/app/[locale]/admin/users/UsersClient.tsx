@@ -159,6 +159,7 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
       <div className="flex flex-col gap-1.5">
         {filteredAccounts.map(acc => {
           const isSuperAdmin = acc.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+          const effectiveLevel = isSuperAdmin ? 10 : (acc.level || 1)
           const statusBadge = getUserStatus(acc.created_at, acc.last_sign_in_at)
           return (
             <div key={acc.id} className="border-b border-gray-100 py-1.5 flex flex-col sm:flex-row gap-2 sm:items-center justify-between bg-white hover:bg-gray-50 transition">
@@ -166,7 +167,7 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
                 <div className="flex flex-col w-full">
                   <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
                     <span className="font-semibold text-gray-900 text-sm">
-                      <span className="mr-1">{LEVEL_EMOJIS[(acc.level || 1) - 1] || '1️⃣'}</span>
+                      <span className="mr-1">{LEVEL_EMOJIS[effectiveLevel - 1] || '1️⃣'}</span>
                       {acc.display_name}
                     </span>
                     {acc.is_admin && <span className="bg-black text-white text-[10px] px-1.5 py-0.5 rounded font-bold">Admin</span>}
@@ -190,7 +191,7 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
               <div className="flex items-center gap-2 mt-2 sm:mt-0 overflow-x-auto pb-1 sm:pb-0">
                 <select
                   disabled={isPending || isSuperAdmin}
-                  value={acc.level || 1}
+                  value={effectiveLevel}
                   onChange={(e) => handleLevelChange(acc.id, Number(e.target.value))}
                   className="text-xs font-medium px-2 py-1 rounded border border-gray-300 bg-white text-gray-600 outline-none"
                 >
