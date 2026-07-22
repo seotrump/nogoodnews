@@ -17,7 +17,8 @@ export default function PasswordForm() {
     e.preventDefault()
     setErrorMsg('')
     
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     const newPwd = formData.get('newPassword') as string
     const confirmPwd = formData.get('confirmPassword') as string
 
@@ -35,7 +36,6 @@ export default function PasswordForm() {
         toast.error(res.error)
       } else {
         toast.success(t('pwSuccess'))
-        const form = e.currentTarget
         form.reset() // clear the password fields
       }
     } catch (error: any) {
