@@ -45,6 +45,7 @@ export default async function Header() {
               userManagement: t('userManagement'),
               write: t('write'),
               settings: t('settings'),
+              account: t('account'),
               logout: t('logout'),
               login: t('login')
             }} 
