@@ -2,9 +2,10 @@
   "Header": {
     "login": "Login",
     "logout": "Logout",
-    "write": "Feed",
+    "write": "Post",
     "search": "Search",
     "settings": "Settings",
+    "account": "Account",
     "botManagement": "Robot",
     "userManagement": "Human"
   },

@@ -57,6 +57,9 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
             <Link onClick={closeMenu} href="/posts/new" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
               {t.write}
             </Link>
+            <Link onClick={closeMenu} href={`/users/${user.id}`} className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+              {t.account}
+            </Link>
             <Link onClick={closeMenu} href="/settings" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
               {t.settings}
             </Link>
