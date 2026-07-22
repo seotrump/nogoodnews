@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { toggleUserBan, toggleUserAdmin, changeUserTier } from './actions'
+import { toggleUserBan, toggleUserAdmin, changeUserTier, changeUserLevel } from './actions'
 import { toast } from 'react-hot-toast'
 import { ADMIN_EMAIL } from '@/utils/auth'
 import { useTranslations } from 'next-intl'
@@ -12,6 +12,8 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
   const [sortBy, setSortBy] = useState('newest')
   const [showInactiveOnly, setShowInactiveOnly] = useState(false)
   const [isPending, setIsPending] = useState(false)
+
+  const LEVEL_EMOJIS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
 
   // 뱃지 상태 계산 함수
   const getUserStatus = (createdAt: string, lastSignInAt: string | null) => {
@@ -106,6 +108,18 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
     }
   }
 
+  const handleLevelChange = async (userId: string, newLevel: number) => {
+    setIsPending(true)
+    try {
+      await changeUserLevel(userId, newLevel)
+      toast.success(`${newLevel}등급으로 변경되었습니다.`)
+    } catch (e) {
+      toast.error('오류가 발생했습니다. (Error)')
+    } finally {
+      setIsPending(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -124,7 +138,7 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
               onChange={e => setShowInactiveOnly(e.target.checked)}
               className="rounded text-black focus:ring-black border-gray-300"
             />
-            휴면(Inactive)만
+            비활동만
           </label>
           <select 
             value={sortBy} 
@@ -151,7 +165,10 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
               <div className="flex items-center gap-2">
                 <div className="flex flex-col w-full">
                   <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
-                    <span className="font-semibold text-gray-900 text-sm">{acc.display_name}</span>
+                    <span className="font-semibold text-gray-900 text-sm">
+                      <span className="mr-1">{LEVEL_EMOJIS[(acc.level || 1) - 1] || '1️⃣'}</span>
+                      {acc.display_name}
+                    </span>
                     {acc.is_admin && <span className="bg-black text-white text-[10px] px-1.5 py-0.5 rounded font-bold">Admin</span>}
                     {acc.subscription_tier === 'paid' && <span className="bg-yellow-100 text-yellow-700 text-[10px] px-1.5 py-0.5 rounded font-bold">Paid</span>}
                     {acc.is_banned && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold">Banned</span>}
@@ -171,6 +188,16 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
               </div>
 
               <div className="flex items-center gap-2 mt-2 sm:mt-0 overflow-x-auto pb-1 sm:pb-0">
+                <select
+                  disabled={isPending || isSuperAdmin}
+                  value={acc.level || 1}
+                  onChange={(e) => handleLevelChange(acc.id, Number(e.target.value))}
+                  className="text-xs font-medium px-2 py-1 rounded border border-gray-300 bg-white text-gray-600 outline-none"
+                >
+                  {[...Array(10)].map((_, i) => (
+                    <option key={i + 1} value={i + 1}>{LEVEL_EMOJIS[i]} {i + 1}등급</option>
+                  ))}
+                </select>
                 <button 
                   disabled={isPending || isSuperAdmin}
                   onClick={() => handleToggleAdmin(acc.id, acc.is_admin, acc.email)}

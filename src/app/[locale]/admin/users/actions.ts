@@ -66,3 +66,18 @@ export async function changeUserTier(userId: string, tier: 'free' | 'paid') {
   if (error) throw error
   revalidatePath('/admin/users')
 }
+
+export async function changeUserLevel(userId: string, level: number) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user || !isAdmin(user)) throw new Error('Unauthorized')
+
+  const { error } = await supabase
+    .from('accounts')
+    .update({ level })
+    .eq('id', userId)
+
+  if (error) throw error
+  revalidatePath('/admin/users')
+}
