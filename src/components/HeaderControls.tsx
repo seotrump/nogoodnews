@@ -58,11 +58,20 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
             <Link onClick={closeMenu} href="/settings" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
               {t.settings}
             </Link>
-            <form action="/auth/signout" method="post" className="w-full sm:w-auto" onSubmit={closeMenu}>
-              <button className="w-full sm:w-auto text-left text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+            <div className="w-full sm:w-auto">
+              <button 
+                onClick={async () => {
+                  closeMenu();
+                  const { createClient } = await import('@/utils/supabase/client');
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                  window.location.href = '/';
+                }}
+                className="w-full sm:w-auto text-left text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
+              >
                 {t.logout}
               </button>
-            </form>
+            </div>
           </div>
         </div>
       ) : (
