@@ -43,7 +43,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               href="/admin?tab=list" 
               className={`px-4 py-2 font-bold rounded-lg transition-colors ${tab === 'list' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
-              {t('registeredBots', { count: aiBots?.length || 0 })}
+              {t('registeredBots')}
             </Link>
             <ForceRunForm action={boundForceAiPost} />
           </div>
@@ -69,14 +69,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                         {bot.username && <span className="text-gray-500 font-medium hidden sm:inline">@{bot.username}</span>}
                         <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold shadow-sm">Robot</span>
                       </h3>
-                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
-                        <span className="text-[10px] sm:text-xs text-gray-500 bg-gray-50 px-1.5 sm:px-2 py-1 rounded border border-gray-100 whitespace-nowrap">
-                          {t('priorityLabel', { post: bot.post_priority ?? 1, comment: bot.comment_priority ?? 1 })}
-                        </span>
-                        <span className="text-[10px] sm:text-xs text-gray-500 bg-gray-50 px-1.5 sm:px-2 py-1 rounded border border-gray-100 whitespace-nowrap">
-                          {t('intervalLabel', { min: bot.auto_post_interval_minutes || 60 })}
-                        </span>
-                      </div>
                     </div>
                   </div>
                   <div>

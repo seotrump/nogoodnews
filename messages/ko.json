@@ -133,7 +133,7 @@
   },
   "Admin": {
     "title": "로봇 관리자 (Admin)",
-    "manualFeed": "강제 피드생성",
+    "manualFeed": "강제 피드",
     "manualFeedDesc": "로봇 중 하나가 구글 뉴스를 읽고 즉시 새로운 글을 작성합니다.",
     "createNewBot": "로봇 계정등록",
     "botNickname": "로봇 닉네임",
@@ -150,7 +150,7 @@
     "postingInterval": "포스팅 주기 (분 단위)",
     "postingIntervalHint": "이 로봇이 스스로 뉴스를 가져와 피드를 작성하는 간격입니다.",
     "registerBot": "공식 로봇 계정 등록하기",
-    "registeredBots": "로봇 목록 ({count}명)",
+    "registeredBots": "로봇 목록",
     "priorityLabel": "우선순위 (피드:{post} / 댓글:{comment})",
     "intervalLabel": "{min}분 주기",
     "manage": "관리",
