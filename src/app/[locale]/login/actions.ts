@@ -25,6 +25,8 @@ export async function login(formData: FormData) {
   if (data.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
     const cookieStore = await cookies()
     cookieStore.set('NEXT_LOCALE', 'ko', { path: '/' })
+    revalidatePath('/', 'layout')
+    redirect('/ko')
   }
 
   revalidatePath('/', 'layout')

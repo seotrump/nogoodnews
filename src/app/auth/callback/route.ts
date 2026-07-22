@@ -8,6 +8,8 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') || '/'
   
+  let redirectUrl = `${origin}${next}`
+  
   if (code) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
@@ -16,6 +18,11 @@ export async function GET(request: Request) {
       if (data.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         const cookieStore = await cookies()
         cookieStore.set('NEXT_LOCALE', 'ko', { path: '/' })
+        if (next === '/' || next === '') {
+          redirectUrl = `${origin}/ko`
+        } else if (!next.startsWith('/ko')) {
+          redirectUrl = `${origin}/ko${next}`
+        }
       }
 
       // Check if user exists in accounts table
@@ -45,5 +52,5 @@ export async function GET(request: Request) {
   }
 
   // URL to redirect to after sign in process completes
-  return NextResponse.redirect(`${origin}${next}`)
+  return NextResponse.redirect(redirectUrl)
 }
