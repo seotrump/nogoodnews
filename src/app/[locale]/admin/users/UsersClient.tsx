@@ -9,13 +9,59 @@ import { useTranslations } from 'next-intl'
 export default function UsersClient({ accounts, currentUserEmail }: { accounts: any[], currentUserEmail?: string }) {
   const t = useTranslations('Admin')
   const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState('newest')
+  const [showInactiveOnly, setShowInactiveOnly] = useState(false)
   const [isPending, setIsPending] = useState(false)
 
-  const filteredAccounts = accounts.filter(acc => 
-    (acc.display_name?.toLowerCase().includes(search.toLowerCase()) || '') ||
-    (acc.username?.toLowerCase().includes(search.toLowerCase()) || '') ||
-    (acc.email?.toLowerCase().includes(search.toLowerCase()) || '')
-  )
+  // 뱃지 상태 계산 함수
+  const getUserStatus = (createdAt: string, lastSignInAt: string | null) => {
+    const now = new Date()
+    const created = new Date(createdAt)
+    const lastSignIn = lastSignInAt ? new Date(lastSignInAt) : null
+
+    const daysSinceCreated = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
+    if (daysSinceCreated <= 3) return { type: 'New', color: 'bg-green-100 text-green-700' }
+
+    if (!lastSignIn) return { type: 'Inactive', color: 'bg-red-100 text-red-700' }
+    const daysSinceSignIn = (now.getTime() - lastSignIn.getTime()) / (1000 * 60 * 60 * 24)
+    
+    if (daysSinceSignIn <= 7) return { type: 'Active', color: 'bg-blue-100 text-blue-700' }
+    if (daysSinceSignIn <= 30) return { type: 'Slipping', color: 'bg-yellow-100 text-yellow-700' }
+    return { type: 'Inactive', color: 'bg-red-100 text-red-700' }
+  }
+
+  // 날짜 포맷 함수
+  const formatTimeAgo = (dateStr: string | null) => {
+    if (!dateStr) return '기록 없음'
+    const days = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24))
+    if (days === 0) return '오늘'
+    return `${days}일 전`
+  }
+
+  const filteredAccounts = accounts
+    .filter(acc => 
+      (acc.display_name?.toLowerCase().includes(search.toLowerCase()) || '') ||
+      (acc.username?.toLowerCase().includes(search.toLowerCase()) || '') ||
+      (acc.email?.toLowerCase().includes(search.toLowerCase()) || '')
+    )
+    .filter(acc => {
+      if (!showInactiveOnly) return true
+      const status = getUserStatus(acc.created_at, acc.last_sign_in_at)
+      return status.type === 'Inactive'
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'recent_login':
+          return new Date(b.last_sign_in_at || 0).getTime() - new Date(a.last_sign_in_at || 0).getTime()
+        case 'most_posts':
+          return (b.posts?.[0]?.count || 0) - (a.posts?.[0]?.count || 0)
+        case 'most_comments':
+          return (b.comments?.[0]?.count || 0) - (a.comments?.[0]?.count || 0)
+        case 'newest':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      }
+    })
 
   const handleToggleBan = async (userId: string, currentBanStatus: boolean) => {
     if (!confirm(currentBanStatus ? '정지 해제하시겠습니까? (Unban?)' : '정지하시겠습니까? (Ban?)')) return
@@ -62,31 +108,65 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <input 
           type="text" 
           placeholder={t('searchUsersPlaceholder')} 
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full sm:w-1/2 border border-gray-200 p-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-black"
+          className="w-full sm:w-1/3 border border-gray-200 p-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-black"
         />
-        <span className="text-sm text-gray-500 font-medium whitespace-nowrap">{t('totalUsers', { count: filteredAccounts.length })}</span>
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <label className="flex items-center gap-2 text-sm text-gray-600 font-medium whitespace-nowrap cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={showInactiveOnly} 
+              onChange={e => setShowInactiveOnly(e.target.checked)}
+              className="rounded text-black focus:ring-black border-gray-300"
+            />
+            휴면(Inactive)만
+          </label>
+          <select 
+            value={sortBy} 
+            onChange={e => setSortBy(e.target.value)}
+            className="w-full sm:w-auto border border-gray-200 p-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-black bg-white"
+          >
+            <option value="newest">최신 가입순</option>
+            <option value="recent_login">최근 접속순</option>
+            <option value="most_posts">피드 많은 순</option>
+            <option value="most_comments">댓글 많은 순</option>
+          </select>
+        </div>
+      </div>
+      <div className="text-sm text-gray-500 font-medium whitespace-nowrap text-right mb-2">
+        {t('totalUsers', { count: filteredAccounts.length })}
       </div>
 
       <div className="flex flex-col gap-1.5">
         {filteredAccounts.map(acc => {
           const isSuperAdmin = acc.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+          const statusBadge = getUserStatus(acc.created_at, acc.last_sign_in_at)
           return (
             <div key={acc.id} className="border-b border-gray-100 py-1.5 flex flex-col sm:flex-row gap-2 sm:items-center justify-between bg-white hover:bg-gray-50 transition">
               <div className="flex items-center gap-2">
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
+                <div className="flex flex-col w-full">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
                     <span className="font-semibold text-gray-900 text-sm">{acc.display_name}</span>
                     {acc.is_admin && <span className="bg-black text-white text-[10px] px-1.5 py-0.5 rounded font-bold">Admin</span>}
                     {acc.subscription_tier === 'paid' && <span className="bg-yellow-100 text-yellow-700 text-[10px] px-1.5 py-0.5 rounded font-bold">Paid</span>}
-                    {acc.is_banned && <span className="bg-red-100 text-red-600 text-[10px] px-1.5 py-0.5 rounded font-bold">Banned</span>}
+                    {acc.is_banned && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold">Banned</span>}
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${statusBadge.color}`}>{statusBadge.type}</span>
                   </div>
-                  <span className="text-xs text-gray-500">{acc.email}</span>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                    <span className="truncate max-w-[150px]">{acc.email}</span>
+                    <span className="text-gray-300">|</span>
+                    <span>접속: {formatTimeAgo(acc.last_sign_in_at)}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-500 font-medium mt-1.5 bg-gray-50 px-2 py-1 rounded w-fit border border-gray-100">
+                    <span>📝 {acc.posts?.[0]?.count || 0}</span>
+                    <span>💬 {acc.comments?.[0]?.count || 0}</span>
+                    <span>💖 {acc.reactions?.[0]?.count || 0}</span>
+                  </div>
                 </div>
               </div>
 
