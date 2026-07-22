@@ -29,13 +29,18 @@ export default function PasswordForm() {
     setIsSaving(true)
     
     try {
-      await updatePassword(formData)
-      toast.success(t('pwSuccess'))
-      
-      const form = e.currentTarget
-      form.reset() // clear the password fields
-    } catch (error) {
+      const res = await updatePassword(formData)
+      if (res?.error) {
+        setErrorMsg(res.error)
+        toast.error(res.error)
+      } else {
+        toast.success(t('pwSuccess'))
+        const form = e.currentTarget
+        form.reset() // clear the password fields
+      }
+    } catch (error: any) {
       console.error(error)
+      setErrorMsg(error.message || t('pwFailed'))
       toast.error(t('pwFailed'))
     } finally {
       setIsSaving(false)

@@ -109,12 +109,12 @@ export async function updatePassword(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    throw new Error('Not authenticated')
+    return { error: 'Not authenticated' }
   }
 
   const newPassword = formData.get('newPassword') as string
   if (!newPassword || newPassword.length < 6) {
-    throw new Error('비밀번호는 최소 6자 이상이어야 합니다.')
+    return { error: '비밀번호는 최소 6자 이상이어야 합니다.' }
   }
 
   const { error } = await supabase.auth.updateUser({
@@ -123,6 +123,8 @@ export async function updatePassword(formData: FormData) {
 
   if (error) {
     console.error('Error updating password:', error)
-    throw new Error('비밀번호 변경에 실패했습니다.')
+    return { error: error.message }
   }
+
+  return { success: true }
 }
