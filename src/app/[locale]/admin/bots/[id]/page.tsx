@@ -3,14 +3,14 @@ import { Link, redirect } from '@/i18n/routing'
 import { getTranslations } from 'next-intl/server'
 import BotFormClient from './BotFormClient'
 
-export default async function BotSettingsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BotSettingsPage({ params }: { params: Promise<{ id: string, locale: string }> }) {
   const t = await getTranslations('Admin')
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { id } = await params
+  const { id, locale } = await params
 
   const { data: bot } = await supabaseAdmin
     .from('accounts')
@@ -19,7 +19,7 @@ export default async function BotSettingsPage({ params }: { params: Promise<{ id
     .single()
 
   if (!bot || !bot.is_ai) {
-    redirect('/admin')
+    redirect({ href: '/admin', locale })
   }
 
   return (
