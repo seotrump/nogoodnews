@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from '@/i18n/routing'
+import { redirect } from 'next/navigation'
 import { createAiBot, forceAiPost } from './actions'
 import { isAdmin } from '@/utils/auth'
 import ForceRunForm from './ForceRunForm'
