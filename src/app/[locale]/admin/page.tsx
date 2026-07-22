@@ -32,7 +32,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       <div className="w-full max-w-2xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
         {/* 1. Manual AI Feed Generation & Tabs Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link 
               href="/admin?tab=builder" 
               className={`px-4 py-2 font-bold rounded-lg transition-colors ${tab === 'builder' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
@@ -45,9 +45,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             >
               {t('registeredBots', { count: aiBots?.length || 0 })}
             </Link>
-          </div>
-          
-          <div className="flex justify-end">
             <ForceRunForm action={boundForceAiPost} />
           </div>
         </div>

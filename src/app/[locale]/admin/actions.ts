@@ -33,34 +33,37 @@ export async function createAiBot(formData: FormData) {
 
   const emailId = `ai-bot-${Date.now()}@nogoodnews.com`
   
-  const { data: existingBots } = await supabaseAdmin.from('accounts').select('username').eq('is_ai', true)
-  const limit = 999
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  let maxGlobalIndex = 0
-  
-  existingBots?.forEach(b => {
-    if (b.username && /^[A-Z]{2}\d+$/.test(b.username)) {
-      const char = b.username[0]
-      const prefixIndex = alphabet.indexOf(char)
-      if (prefixIndex !== -1) {
-        const num = parseInt(b.username.slice(2))
-        const globalIndex = prefixIndex * limit + num
-        if (globalIndex > maxGlobalIndex) {
-          maxGlobalIndex = globalIndex
+  let finalUsername = formData.get('username') as string
+  if (!finalUsername) {
+    const { data: existingBots } = await supabaseAdmin.from('accounts').select('username').eq('is_ai', true)
+    const limit = 999
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    let maxGlobalIndex = 0
+    
+    existingBots?.forEach(b => {
+      if (b.username && /^[A-Z]{2}\d+$/.test(b.username)) {
+        const char = b.username[0]
+        const prefixIndex = alphabet.indexOf(char)
+        if (prefixIndex !== -1) {
+          const num = parseInt(b.username.slice(2))
+          const globalIndex = prefixIndex * limit + num
+          if (globalIndex > maxGlobalIndex) {
+            maxGlobalIndex = globalIndex
+          }
         }
       }
-    }
-  })
+    })
 
-  const nextGlobalIndex = maxGlobalIndex + 1
-  const prefixIndex = Math.floor((nextGlobalIndex - 1) / limit)
-  if (prefixIndex >= alphabet.length) {
-    throw new Error('Bot username limit reached (ZZ999)')
+    const nextGlobalIndex = maxGlobalIndex + 1
+    const prefixIndex = Math.floor((nextGlobalIndex - 1) / limit)
+    if (prefixIndex >= alphabet.length) {
+      throw new Error('Bot username limit reached (ZZ999)')
+    }
+    
+    const char = alphabet[prefixIndex]
+    const num = ((nextGlobalIndex - 1) % limit) + 1
+    finalUsername = `${char}${char}${num}`
   }
-  
-  const char = alphabet[prefixIndex]
-  const num = ((nextGlobalIndex - 1) % limit) + 1
-  const generatedUsername = `${char}${char}${num}`
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: emailId,
@@ -85,7 +88,7 @@ export async function createAiBot(formData: FormData) {
     id: botId,
     email: emailId,
     display_name: displayName,
-    username: generatedUsername,
+    username: finalUsername,
     is_ai: true,
     persona_prompt: personaPrompt,
     ai_model_provider: aiModelProvider, // 기존 단일 컬럼만 사용

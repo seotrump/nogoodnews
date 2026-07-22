@@ -99,7 +99,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     
     const formData = new FormData()
     formData.append('displayName', displayName)
-    if (initialData?.username) formData.append('username', username)
+    formData.append('username', username)
     formData.append('aiModelProvider', model)
     formData.append('category', category)
     formData.append('personaPrompt', compiledPrompt)
@@ -147,16 +147,14 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
         {activeTab === 'basic' && (
           <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-1">
                 <label className="block text-sm font-bold mb-1.5">{t('botNickname')} *</label>
                 <input value={displayName} onChange={e => setDisplayName(e.target.value)} type="text" placeholder={t('botNicknamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none" />
               </div>
-              {initialData && (
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-bold mb-1.5">{t('botUsername')} (자동 생성)</label>
-                  <input value={username} disabled type="text" className="w-full border border-gray-200 p-2.5 rounded-lg bg-gray-50 text-gray-500 outline-none cursor-not-allowed" />
-                </div>
-              )}
+              <div className="sm:col-span-1">
+                <label className="block text-sm font-bold mb-1.5">{t('botUsername')} (자동 생성 가능)</label>
+                <input value={username} onChange={e => setUsername(e.target.value)} type="text" pattern="^[a-zA-Z0-9_]*$" placeholder={t('botUsernamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
