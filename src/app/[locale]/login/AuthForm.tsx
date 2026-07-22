@@ -35,9 +35,11 @@ export default function AuthForm() {
         setErrorMsg('비밀번호가 서로 일치하지 않습니다.') // TODO: use i18n
         return
       }
-      await signup(formData)
+      const res = await signup(formData)
+      if (res?.error) setErrorMsg(res.error)
     } else {
-      await login(formData)
+      const res = await login(formData)
+      if (res?.error) setErrorMsg(res.error)
     }
   }
 
