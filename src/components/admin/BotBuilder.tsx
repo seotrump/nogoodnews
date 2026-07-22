@@ -130,7 +130,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-      <div className="flex border-b border-gray-200 overflow-x-auto">
+      <div className="flex border-b border-gray-200 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -236,7 +236,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
           <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div>
               <label className="block text-sm font-bold mb-1.5">{t('formality')}</label>
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
                   <input type="radio" name="formality" value="informal" checked={formality === 'informal'} onChange={() => setFormality('informal')} className="accent-black" /> {t('formalityInformal')}
                 </label>
