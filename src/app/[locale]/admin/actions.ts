@@ -43,6 +43,15 @@ export async function createAiBot(formData: FormData) {
   if (authError) throw new Error('Failed to create AI auth user')
 
   const botId = authData.user!.id
+  const category = formData.get('category') as string || null
+  
+  let advancedSettings = {}
+  try {
+    const rawSettings = formData.get('advancedSettings') as string
+    if (rawSettings) advancedSettings = JSON.parse(rawSettings)
+  } catch (e) {
+    console.error('Failed to parse advanced settings', e)
+  }
 
   const { error: accountError } = await supabaseAdmin.from('accounts').insert({
     id: botId,
@@ -55,7 +64,9 @@ export async function createAiBot(formData: FormData) {
     auto_post_interval_minutes: interval,
     post_priority: postPriority,
     comment_priority: commentPriority,
-    avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${botId}`
+    avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${botId}`,
+    category: category,
+    advanced_settings: advancedSettings
   })
 
   if (accountError) throw new Error('Failed to update AI account')
@@ -115,6 +126,15 @@ export async function updateAiBotSettings(formData: FormData) {
     aiModelProvider = 'base-gemma-4-26b' // 수정 시에도 기본값 강제 적용
   }
 
+  const category = formData.get('category') as string || null
+  let advancedSettings = undefined
+  try {
+    const rawSettings = formData.get('advancedSettings') as string
+    if (rawSettings) advancedSettings = JSON.parse(rawSettings)
+  } catch (e) {
+    console.error('Failed to parse advanced settings', e)
+  }
+
   const updateData: any = {
     username: formData.get('username') || null,
     display_name: formData.get('displayName'),
@@ -124,6 +144,9 @@ export async function updateAiBotSettings(formData: FormData) {
     post_priority: parseInt((formData.get('postPriority') as string) || '1'),
     comment_priority: parseInt((formData.get('commentPriority') as string) || '1')
   }
+
+  if (category) updateData.category = category
+  if (advancedSettings) updateData.advanced_settings = advancedSettings
 
   const { error } = await supabaseAdmin.from('accounts').update(updateData).eq('id', botId)
   if (error) {

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createAiBot, forceAiPost } from './actions'
 import { isAdmin } from '@/utils/auth'
 import ForceRunForm from './ForceRunForm'
+import BotBuilder from '@/components/admin/BotBuilder'
 import { getTranslations, getLocale } from 'next-intl/server'
 
 export default async function AdminPage() {
@@ -72,54 +73,12 @@ export default async function AdminPage() {
       {/* 3. Create New Bot (Collapsible, closed by default) */}
       <details className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 group">
         <summary className="text-lg sm:text-xl font-medium cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex justify-between items-center">
-          {t('createNewBot')}
+          {t('botRegister')}
           <span className="transition-transform group-open:rotate-180">▼</span>
         </summary>
-        <form action={createAiBot} className="flex flex-col gap-4 mt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-normal mb-1">{t('botNickname')}</label>
-              <input name="displayName" type="text" required placeholder={t('botNicknamePlaceholder')} className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-normal mb-1">{t('botUsername')}</label>
-              <input name="username" type="text" required pattern="^[a-zA-Z0-9_]+$" placeholder={t('botUsernamePlaceholder')} className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-normal mb-1">{t('selectModel')}</label>
-            <select name="aiModelProvider" className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
-              <option value="base-gemma-4-26b">Local (base-gemma-4-26b)</option>
-              <option value="gemma-4-31b">Local (gemma-4-31b)</option>
-              <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
-            </select>
-            <p className="text-xs text-gray-500 mt-1">{t('modelFallbackHint')}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-normal mb-1">{t('personaPrompt')}</label>
-            <textarea name="personaPrompt" required rows={3} placeholder={t('personaPlaceholder')} className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none"></textarea>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-normal mb-1">{t('postPriority')}</label>
-              <input name="postPriority" type="number" defaultValue="1" required min="0" max="10" className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none" />
-              <p className="text-xs text-gray-500 mt-1">{t('priorityHint')}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-normal mb-1">{t('commentPriority')}</label>
-              <input name="commentPriority" type="number" defaultValue="1" required min="0" max="10" className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none" />
-              <p className="text-xs text-gray-500 mt-1">{t('priorityHint')}</p>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-normal mb-1">{t('postingInterval')}</label>
-            <input name="interval" type="number" defaultValue="60" required min="1" className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none" />
-            <p className="text-xs text-gray-500 mt-1">{t('postingIntervalHint')}</p>
-          </div>
-          <button type="submit" className="bg-gray-800 text-white font-medium py-3 rounded-lg hover:bg-gray-900 transition">
-            {t('registerBot')}
-          </button>
-        </form>
+        <div className="mt-6">
+          <BotBuilder onSubmit={createAiBot} />
+        </div>
       </details>
 
     </div>
