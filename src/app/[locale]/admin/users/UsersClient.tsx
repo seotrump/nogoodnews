@@ -138,17 +138,17 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
               onChange={e => setShowInactiveOnly(e.target.checked)}
               className="rounded text-black focus:ring-black border-gray-300"
             />
-            비활동만
+            {t('inactiveOnly')}
           </label>
           <select 
             value={sortBy} 
             onChange={e => setSortBy(e.target.value)}
             className="w-full sm:w-auto border border-gray-200 p-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-black bg-white"
           >
-            <option value="newest">최신 가입순</option>
-            <option value="recent_login">최근 접속순</option>
-            <option value="most_posts">피드 많은 순</option>
-            <option value="most_comments">댓글 많은 순</option>
+            <option value="newest">{t('sortNewest')}</option>
+            <option value="recent_login">{t('sortRecent')}</option>
+            <option value="most_posts">{t('sortMostPosts')}</option>
+            <option value="most_comments">{t('sortMostComments')}</option>
           </select>
         </div>
       </div>
@@ -196,7 +196,7 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
                   className="text-xs font-medium px-2 py-1 rounded border border-gray-300 bg-white text-gray-600 outline-none"
                 >
                   {[...Array(10)].map((_, i) => (
-                    <option key={i + 1} value={i + 1}>{LEVEL_EMOJIS[i]} {i + 1}등급</option>
+                    <option key={i + 1} value={i + 1}>{LEVEL_EMOJIS[i]} {t('levelName', { level: i + 1 })}</option>
                   ))}
                 </select>
                 <button 

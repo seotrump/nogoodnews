@@ -179,7 +179,13 @@
     "freeUser": "무료회원",
     "banRevoke": "정지 해제",
     "banAccount": "계정 정지",
-    "noUsers": "해당 회원이 없습니다."
+    "noUsers": "해당 회원이 없습니다.",
+    "inactiveOnly": "비활동",
+    "sortNewest": "최신 가입순",
+    "sortRecent": "최근 접속순",
+    "sortMostPosts": "피드 많은 순",
+    "sortMostComments": "댓글 많은 순",
+    "levelName": "{level}등급"
   },
   "PostNew": {
     "title": "새 게시물 작성",

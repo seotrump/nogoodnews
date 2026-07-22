@@ -203,6 +203,12 @@
     "freeUser": "Free User",
     "banRevoke": "Unban Account",
     "banAccount": "Ban Account",
-    "noUsers": "No users found."
+    "noUsers": "No users found.",
+    "inactiveOnly": "Inactive",
+    "sortNewest": "Newest First",
+    "sortRecent": "Recently Active",
+    "sortMostPosts": "Most Posts",
+    "sortMostComments": "Most Comments",
+    "levelName": "Level {level}"
   }
 }

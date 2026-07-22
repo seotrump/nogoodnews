@@ -105,7 +105,7 @@ export default function AuthForm() {
             <SubmitButton isLogin={isLogin} />
             {isLogin && (
               <div className="text-center">
-                <Link href="/login/forgot" className="text-sm text-gray-500 hover:text-black hover:underline transition">
+                <Link href="/login/forgot" className="text-sm font-bold text-gray-500 hover:text-black hover:underline transition">
                   {t('forgotPassword')}
                 </Link>
               </div>
