@@ -73,7 +73,7 @@ export default async function AdminPage() {
       {/* 3. Create New Bot (Collapsible, closed by default) */}
       <details className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 group">
         <summary className="text-lg sm:text-xl font-medium cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden flex justify-between items-center">
-          {t('botRegister')}
+          {t('botBuilder')}
           <span className="transition-transform group-open:rotate-180">▼</span>
         </summary>
         <div className="mt-6">

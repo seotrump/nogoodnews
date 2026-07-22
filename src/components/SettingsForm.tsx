@@ -38,6 +38,7 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
       toast.success(t('saveSuccess'))
       
       if (selectedLocale !== locale) {
+        document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000`
         startTransition(() => {
           router.replace('/settings', { locale: selectedLocale })
         })
