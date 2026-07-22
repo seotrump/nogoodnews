@@ -128,3 +128,8 @@ export async function updatePassword(formData: FormData) {
 
   return { success: true }
 }
+
+export async function updateLocaleCookie(locale: string) {
+  const cookieStore = await cookies()
+  cookieStore.set('NEXT_LOCALE', locale, { path: '/' })
+}

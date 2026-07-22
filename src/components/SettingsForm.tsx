@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'react-hot-toast'
-import { updateProfile } from '@/app/[locale]/settings/actions'
+import { updateProfile, updateLocaleCookie } from '@/app/[locale]/settings/actions'
 import AvatarUpload from './AvatarUpload'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter, usePathname } from '@/i18n/routing'
@@ -39,6 +39,7 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
       
       if (selectedLocale !== locale) {
         document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000`
+        await updateLocaleCookie(selectedLocale)
         startTransition(() => {
           router.replace('/settings', { locale: selectedLocale })
         })
