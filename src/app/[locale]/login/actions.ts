@@ -5,6 +5,9 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 
+import { cookies } from 'next/headers'
+import { ADMIN_EMAIL } from '@/utils/auth'
+
 export async function login(formData: FormData) {
   const supabase = await createClient()
   const data = {
@@ -17,6 +20,11 @@ export async function login(formData: FormData) {
   if (error) {
     console.error('Login error:', error.message)
     return { error: error.message }
+  }
+
+  if (data.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    const cookieStore = await cookies()
+    cookieStore.set('NEXT_LOCALE', 'ko', { path: '/' })
   }
 
   revalidatePath('/', 'layout')
