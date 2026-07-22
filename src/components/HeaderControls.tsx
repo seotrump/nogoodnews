@@ -33,16 +33,14 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
           <input type="checkbox" id="mobile-menu" className="hidden peer" />
 
           <div className="hidden peer-checked:flex sm:flex flex-col sm:flex-row absolute sm:static top-16 left-0 w-full sm:w-auto bg-white sm:bg-transparent border-b sm:border-none p-4 sm:p-0 gap-3 sm:gap-4 shadow-md sm:shadow-none z-40 items-start sm:items-center text-sm font-medium">
-            {!isHiddenPage && (
-              <Link onClick={closeMenu} href={`/users/${user.id}`} className="flex items-center gap-2 text-gray-700 font-medium hover:underline w-full sm:w-auto p-2 sm:p-0">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full object-cover border" />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gray-200 border flex items-center justify-center text-xs text-gray-400">?</div>
-                )}
-                <span>{profile?.display_name}</span>
-              </Link>
-            )}
+            <Link onClick={closeMenu} href={`/users/${user.id}`} className="flex items-center gap-2 text-gray-700 font-medium hover:underline w-full sm:w-auto p-2 sm:p-0">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full object-cover border" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gray-200 border flex items-center justify-center text-xs text-gray-400">?</div>
+              )}
+              <span>{profile?.display_name}</span>
+            </Link>
 
             {hasAdmin && (
               <>
@@ -56,9 +54,6 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
             )}
             <Link onClick={closeMenu} href="/posts/new" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
               {t.write}
-            </Link>
-            <Link onClick={closeMenu} href={`/users/${user.id}`} className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-              {t.account}
             </Link>
             <Link onClick={closeMenu} href="/settings" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
               {t.settings}
