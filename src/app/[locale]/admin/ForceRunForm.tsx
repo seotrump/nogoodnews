@@ -23,10 +23,10 @@ export default function ForceRunForm({ action }: { action: () => Promise<void> }
             <button
                 type="submit"
                 disabled={isPending}
-                className={`font-medium py-1.5 px-4 text-sm sm:text-base rounded-lg transition ${isPending ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                className={`w-fit font-bold py-2.5 px-6 text-sm sm:text-base rounded-xl shadow-sm transition ${isPending ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-900 hover:bg-blue-950 text-white'
                     }`}
             >
-                {isPending ? t('aiWriting') : t('forceRun')}
+                {isPending ? t('aiWriting') : t('manualFeed')}
             </button>
         </form>
     )

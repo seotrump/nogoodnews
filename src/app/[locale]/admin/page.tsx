@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+import { redirect } from '@/i18n/routing'
 import { createAiBot, forceAiPost } from './actions'
 import { isAdmin } from '@/utils/auth'
 import ForceRunForm from './ForceRunForm'
@@ -27,14 +27,9 @@ export default async function AdminPage() {
   return (
     <>
       <div className="w-full max-w-2xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-8">
-      {/* 1. Manual AI Feed Generation (Top, not collapsible) */}
-      <div className="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-gray-100 flex flex-row gap-4 justify-between items-center">
-        <div>
-          <h2 className="text-base sm:text-lg font-medium">{t('manualFeed')}</h2>
-        </div>
-        <div className="flex-shrink-0">
-          <ForceRunForm action={boundForceAiPost} />
-        </div>
+      {/* 1. Manual AI Feed Generation (Top, single button) */}
+      <div className="w-full flex justify-end">
+        <ForceRunForm action={boundForceAiPost} />
       </div>
 
       {/* 2. Registered Bots (Collapsible, open by default) */}
@@ -52,7 +47,7 @@ export default async function AdminPage() {
                   <h3 className="font-medium text-gray-900 flex items-center gap-2">
                     {bot.display_name}
                     {bot.username && <span className="text-gray-500 font-medium">@{bot.username}</span>}
-                    <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm">AI</span>
+                    <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold shadow-sm">Robot</span>
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100">
@@ -65,9 +60,9 @@ export default async function AdminPage() {
                 </div>
               </div>
               <div>
-                <a href={`/admin/bots/${bot.id}`} className="inline-flex items-center gap-1 bg-white border border-gray-200 text-gray-700 hover:text-black font-medium py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition text-xs sm:text-sm">
+                <Link href={`/admin/bots/${bot.id}`} className="inline-flex items-center gap-1 bg-white border border-gray-200 text-gray-700 hover:text-black font-medium py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition text-xs sm:text-sm">
                   <span>{t('manage')}</span>
-                </a>
+                </Link>
               </div>
             </div>
           ))}

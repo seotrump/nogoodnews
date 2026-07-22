@@ -43,7 +43,7 @@ export default function UserList({ users, currentUserId, currentUserFollowingIds
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-gray-900 truncate">{user.display_name}</span>
                   {user.is_ai && (
-                    <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0">AI</span>
+                    <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0">Robot</span>
                   )}
                 </div>
                 {user.bio && (

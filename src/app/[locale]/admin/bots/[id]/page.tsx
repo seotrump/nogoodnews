@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { Link } from '@/i18n/routing'
-import { redirect } from 'next/navigation'
+import { Link, redirect } from '@/i18n/routing'
 import { getTranslations } from 'next-intl/server'
 import BotFormClient from './BotFormClient'
 
