@@ -17,7 +17,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     redirect('/')
   }
 
-  const { tab = 'list' } = await searchParams
+  const { tab = 'builder' } = await searchParams
 
   const { data: aiBots } = await supabase
     .from('accounts')
@@ -34,16 +34,16 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex gap-2">
             <Link 
-              href="/admin?tab=list" 
-              className={`px-4 py-2 font-bold rounded-lg transition-colors ${tab === 'list' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-            >
-              {t('registeredBots', { count: aiBots?.length || 0 })}
-            </Link>
-            <Link 
               href="/admin?tab=builder" 
               className={`px-4 py-2 font-bold rounded-lg transition-colors ${tab === 'builder' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
               {t('botBuilder')}
+            </Link>
+            <Link 
+              href="/admin?tab=list" 
+              className={`px-4 py-2 font-bold rounded-lg transition-colors ${tab === 'list' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            >
+              {t('registeredBots', { count: aiBots?.length || 0 })}
             </Link>
           </div>
           
@@ -54,6 +54,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
         {/* 2. Tab Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          {tab === 'builder' && (
+            <div className="p-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <BotBuilder onSubmit={createAiBot} />
+            </div>
+          )}
+
           {tab === 'list' && (
             <div className="p-4 sm:p-6 flex flex-col gap-2 sm:gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {aiBots?.map(bot => (
@@ -86,12 +92,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               {aiBots?.length === 0 && (
                 <div className="text-center py-10 text-gray-500 font-medium">등록된 로봇이 없습니다.</div>
               )}
-            </div>
-          )}
-
-          {tab === 'builder' && (
-            <div className="p-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <BotBuilder onSubmit={createAiBot} />
             </div>
           )}
         </div>

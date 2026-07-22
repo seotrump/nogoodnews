@@ -84,8 +84,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!displayName || !username || !coreIdentity) {
-      toast.error('기본 설정의 필수 항목을 모두 입력해주세요.')
+    if (!displayName || !coreIdentity) {
+      toast.error('로봇 빌더 필수 조건(닉네임, 핵심 정체성)을 모두 입력해주세요.')
       return
     }
 
@@ -99,7 +99,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     
     const formData = new FormData()
     formData.append('displayName', displayName)
-    formData.append('username', username)
+    if (initialData?.username) formData.append('username', username)
     formData.append('aiModelProvider', model)
     formData.append('category', category)
     formData.append('personaPrompt', compiledPrompt)
@@ -147,14 +147,16 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
         {activeTab === 'basic' && (
           <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-bold mb-1.5">{t('botNickname')} *</label>
                 <input value={displayName} onChange={e => setDisplayName(e.target.value)} type="text" placeholder={t('botNicknamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none" />
               </div>
-              <div>
-                <label className="block text-sm font-bold mb-1.5">{t('botUsername')} *</label>
-                <input value={username} onChange={e => setUsername(e.target.value)} type="text" pattern="^[a-zA-Z0-9_]+$" placeholder={t('botUsernamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none" />
-              </div>
+              {initialData && (
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-bold mb-1.5">{t('botUsername')} (자동 생성)</label>
+                  <input value={username} disabled type="text" className="w-full border border-gray-200 p-2.5 rounded-lg bg-gray-50 text-gray-500 outline-none cursor-not-allowed" />
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
