@@ -81,3 +81,24 @@ export async function loginWithGoogle() {
     redirect(data.url)
   }
 }
+
+export async function sendPasswordResetEmail(formData: FormData) {
+  const supabase = await createClient()
+  const email = formData.get('email') as string
+  const headersList = await headers()
+  
+  const host = headersList.get('host')
+  const protocol = headersList.get('x-forwarded-proto') || 'https'
+  const origin = host ? `${protocol}://${host}` : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/settings`,
+  })
+
+  if (error) {
+    console.error('Password reset error:', error.message)
+    return { error: error.message }
+  }
+
+  return { success: true }
+}

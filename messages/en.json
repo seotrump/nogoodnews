@@ -61,6 +61,11 @@
     "passwordPlaceholder": "Password (min 6 characters)",
     "displayName": "Display Name",
     "displayNamePlaceholder": "Your display name",
+    "forgotPassword": "Forgot Password?",
+    "forgotPasswordDesc": "Enter your email to receive a password reset link.",
+    "sendResetLink": "Send Reset Link",
+    "resetLinkSent": "A password reset link has been sent to your email.",
+    "backToLogin": "Back to Login",
     "loginBtn": "Login",
     "signupBtn": "Sign Up",
     "googleBtn": "Continue with Google"

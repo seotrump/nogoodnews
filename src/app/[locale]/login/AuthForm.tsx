@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { login, signup, loginWithGoogle } from './actions'
 import { useTranslations } from 'next-intl'
 import { useFormStatus } from 'react-dom'
+import { Link } from '@/i18n/routing'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 function SubmitButton({ isLogin }: { isLogin: boolean }) {
   const { pending } = useFormStatus()
@@ -24,6 +26,8 @@ export default function AuthForm() {
   const t = useTranslations('Login')
   const [isLogin, setIsLogin] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   async function clientAction(formData: FormData) {
     setErrorMsg('')
@@ -75,20 +79,37 @@ export default function AuthForm() {
             <input id="email" name="email" type="email" required className="border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none transition" placeholder={t('emailPlaceholder')} />
           </div>
           
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 relative">
             <label htmlFor="password" className="text-sm font-semibold text-gray-700">{t('password')}</label>
-            <input id="password" name="password" type="password" required className="border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none transition" placeholder={t('passwordPlaceholder')} />
+            <div className="relative">
+              <input id="password" name="password" type={showPassword ? "text" : "password"} required className="w-full border border-gray-200 p-3 pr-10 rounded-lg focus:ring-2 focus:ring-black outline-none transition" placeholder={t('passwordPlaceholder')} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
           {!isLogin && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 relative">
               <label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">비밀번호 확인</label>
-              <input id="confirmPassword" name="confirmPassword" type="password" required className="border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black outline-none transition" placeholder="비밀번호를 한번 더 입력해주세요" />
+              <div className="relative">
+                <input id="confirmPassword" name="confirmPassword" type={showConfirmPassword ? "text" : "password"} required className="w-full border border-gray-200 p-3 pr-10 rounded-lg focus:ring-2 focus:ring-black outline-none transition" placeholder="비밀번호를 한번 더 입력해주세요" />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                  {showConfirmPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
           )}
           
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col gap-4">
             <SubmitButton isLogin={isLogin} />
+            {isLogin && (
+              <div className="text-center">
+                <Link href="/login/forgot" className="text-sm text-gray-500 hover:text-black hover:underline transition">
+                  {t('forgotPassword')}
+                </Link>
+              </div>
+            )}
           </div>
         </form>
 
