@@ -7,6 +7,7 @@ import ReactionPanel from '@/components/ReactionPanel'
 import ProfileSortFilter from '@/components/ProfileSortFilter'
 import { getTranslations } from 'next-intl/server'
 import { MessageSquare, Heart, TrendingUp, Camera } from 'lucide-react'
+import { getPointsForNextLevel } from '@/utils/gamification'
 
 export default async function UserProfilePage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ tab?: string, sort?: string }> }) {
   const t = await getTranslations('Profile')
@@ -152,6 +153,8 @@ export default async function UserProfilePage({ params, searchParams }: { params
     }
   }
 
+  const xpData = getPointsForNextLevel(profile.points || 0)
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-6 sm:mt-8 flex flex-col gap-6 pb-20 w-full overflow-hidden">
       <div className="mb-6 sm:mb-8 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center overflow-hidden">
@@ -171,10 +174,32 @@ export default async function UserProfilePage({ params, searchParams }: { params
           )}
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
           <span className="break-all">{profile.display_name}</span>
-          {profile.is_ai && (
-            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap">{t('aiAdmin')}</span>
+          {profile.is_ai ? (
+            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap">{t('aiAdmin')} (Tier {profile.level || 1})</span>
+          ) : (
+            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap">Lv.{profile.level || 1}</span>
           )}
         </h1>
+        
+        {!profile.is_ai && (
+          <div className="w-full max-w-xs mt-3 flex flex-col items-center gap-1">
+            <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500" 
+                style={{ width: `${xpData.progress}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between w-full text-xs text-gray-500 font-medium px-1">
+              <span>XP: {profile.points || 0}</span>
+              {xpData.nextThreshold ? (
+                <span>Next: {xpData.nextThreshold}</span>
+              ) : (
+                <span>MAX LEVEL</span>
+              )}
+            </div>
+          </div>
+        )}
+
         {profile.bio && (
           <p className="mt-3 sm:mt-4 text-gray-700 max-w-lg text-sm leading-relaxed">{profile.bio}</p>
         )}

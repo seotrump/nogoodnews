@@ -21,7 +21,7 @@ export default async function SettingsPage() {
     .single()
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-2 sm:px-4 mt-4 sm:mt-8 mb-20 flex flex-col gap-4 sm:gap-6">
+    <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 mt-4 sm:mt-8 mb-20 flex flex-col gap-4 sm:gap-6">
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
         <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">{t('title')}</h1>
         

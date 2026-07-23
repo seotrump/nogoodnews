@@ -55,6 +55,9 @@ export async function createPost(formData: FormData) {
     throw new Error('Failed to create post')
   }
 
+  // XP 보상 부여: 피드 작성 시 +5점
+  await supabase.rpc('add_points', { user_id: user.id, points_to_add: 5 })
+
   // Parse hashtags from headline and content
   const extractHashtags = (text: string) => {
     const regex = /#[\w가-힣]+/g
@@ -195,6 +198,9 @@ export async function addComment(formData: FormData, postId: string) {
     console.error('Error adding comment:', error)
     throw new Error('Failed to add comment')
   }
+
+  // XP 보상 부여: 댓글 작성 시 +1점
+  await supabase.rpc('add_points', { user_id: user.id, points_to_add: 1 })
 
   // 멘션 감지 및 비동기 AI 답변 트리거
   const mentionMatch = content.match(/@([a-zA-Z0-9_]+)/);

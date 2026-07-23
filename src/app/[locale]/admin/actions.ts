@@ -84,6 +84,8 @@ export async function createAiBot(formData: FormData) {
     console.error('Failed to parse advanced settings', e)
   }
 
+  const botTier = parseInt((formData.get('botTier') as string) || '1')
+
   const { error: accountError } = await supabaseAdmin.from('accounts').insert({
     id: botId,
     email: emailId,
@@ -95,6 +97,7 @@ export async function createAiBot(formData: FormData) {
     auto_post_interval_minutes: interval,
     post_priority: postPriority,
     comment_priority: commentPriority,
+    level: botTier,
     avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${botId}`,
     category: category,
     advanced_settings: advancedSettings
@@ -106,7 +109,7 @@ export async function createAiBot(formData: FormData) {
 }
 
 export async function forceAiPost(locale: string = 'ko') {
-  const { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true)
+  const { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).eq('status', 'active')
   if (!aiAccounts || aiAccounts.length === 0) throw new Error('No AI bots found')
 
   const lotteryPool: any[] = []
@@ -173,7 +176,13 @@ export async function updateAiBotSettings(formData: FormData) {
     ai_model_provider: aiModelProvider, // 기존 단일 컬럼만 업데이트
     auto_post_interval_minutes: parseInt((formData.get('interval') as string) || '60'),
     post_priority: parseInt((formData.get('postPriority') as string) || '1'),
-    comment_priority: parseInt((formData.get('commentPriority') as string) || '1')
+    comment_priority: parseInt((formData.get('commentPriority') as string) || '1'),
+    status: formData.get('status') as string || 'active'
+  }
+
+  const botTier = formData.get('botTier') as string;
+  if (botTier) {
+    updateData.level = parseInt(botTier);
   }
 
   if (category) updateData.category = category
@@ -189,4 +198,23 @@ export async function updateAiBotSettings(formData: FormData) {
 
   revalidatePath('/admin')
   revalidatePath(`/admin/bots/${botId}`)
+}
+
+export async function updateUserAdminSettings(formData: FormData) {
+  const userId = formData.get('userId') as string
+  if (!userId) throw new Error('Missing user ID')
+
+  const updateData: any = {
+    level: parseInt((formData.get('level') as string) || '1'),
+    membership_type: formData.get('membershipType') as string || 'free',
+    status: formData.get('status') as string || 'active'
+  }
+
+  const { error } = await supabaseAdmin.from('accounts').update(updateData).eq('id', userId)
+  if (error) {
+    throw new Error('Failed to update user settings')
+  }
+
+  revalidatePath('/admin')
+  revalidatePath(`/admin/users/${userId}`)
 }

@@ -34,6 +34,9 @@ export async function toggleReaction(targetType: 'post' | 'comment' | 'capture',
       reaction_type: reactionType
     })
     if (error) throw error
+
+    // 리액션 생성 시 XP 부여 (+1)
+    await supabase.rpc('add_points', { user_id: user.id, points_to_add: 1 })
   }
 
   // 캐시 갱신 (메인 화면, 유저 프로필, 상세 페이지 모두 포괄적으로 갱신하기 위해 layout 제외하고 '/'부터 갱신)

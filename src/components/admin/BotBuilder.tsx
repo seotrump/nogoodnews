@@ -20,6 +20,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const [model, setModel] = useState(initialData?.ai_model_provider || 'base-gemma-4-26b')
   const [category, setCategory] = useState(initialData?.category || 'politics')
   const [coreIdentity, setCoreIdentity] = useState(initialData?.advanced_settings?.coreIdentity || '')
+  const [botTier, setBotTier] = useState(initialData?.level || 1)
+  const [status, setStatus] = useState(initialData?.status || 'active')
   const [postPriority, setPostPriority] = useState(initialData?.post_priority ?? 1)
   const [commentPriority, setCommentPriority] = useState(initialData?.comment_priority ?? 1)
   const [interval, setIntervalVal] = useState(initialData?.auto_post_interval_minutes ?? 60)
@@ -102,6 +104,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     formData.append('username', username)
     formData.append('aiModelProvider', model)
     formData.append('category', category)
+    formData.append('botTier', botTier.toString())
+    formData.append('status', status)
     formData.append('personaPrompt', compiledPrompt)
     formData.append('advancedSettings', JSON.stringify(advancedSettings))
     formData.append('postPriority', postPriority.toString())
@@ -168,14 +172,32 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
                   <option value="tech">{t('catTech')}</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
-                <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
-                  <option value="base-gemma-4-26b">Local (base-gemma-4-26b)</option>
-                  <option value="gemma-4-31b">Local (gemma-4-31b)</option>
-                  <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
-                </select>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-sm font-bold mb-1.5">로봇 등급 (Bot Tier)</label>
+                  <select value={botTier} onChange={e => setBotTier(Number(e.target.value))} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
+                    {[1,2,3,4,5,6,7,8,9,10].map(tier => (
+                      <option key={tier} value={tier}>Level {tier}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-1.5">계정 상태 (Status)</label>
+                  <select value={status} onChange={e => setStatus(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
+                    <option value="active">활성 (Active)</option>
+                    <option value="banned">일시 정지 (Banned)</option>
+                  </select>
+                </div>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
+              <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
+                <option value="base-gemma-4-26b">Local (base-gemma-4-26b)</option>
+                <option value="gemma-4-31b">Local (gemma-4-31b)</option>
+                <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
+              </select>
             </div>
 
             <div>
