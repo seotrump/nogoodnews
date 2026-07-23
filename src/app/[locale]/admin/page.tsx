@@ -6,6 +6,7 @@ import ForceRunForm from './ForceRunForm'
 import BotBuilder from '@/components/admin/BotBuilder'
 import AdminFilter from '@/components/admin/AdminFilter'
 import AutoBotButton from '@/components/admin/AutoBotButton'
+import AdminNav from '@/components/admin/AdminNav'
 import Pagination from '@/components/Pagination'
 import { getTranslations, getLocale } from 'next-intl/server'
 
@@ -57,19 +58,22 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <>
       <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* 1. Manual AI Feed Generation & Tabs Header */}
+        <div className="mb-4">
+          <AdminNav />
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
             <Link 
               href="/admin?tab=list" 
-              className={`px-4 py-2 font-bold rounded-lg transition-colors ${tab === 'list' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${tab === 'list' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
-              로봇 목록
+              목록 보기
             </Link>
             <Link 
               href="/admin?tab=builder" 
-              className={`px-4 py-2 font-bold rounded-lg transition-colors ${tab === 'builder' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${tab === 'builder' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
-              로봇 빌더
+              로봇 생성
             </Link>
             <ForceRunForm action={boundForceAiPost} />
           </div>

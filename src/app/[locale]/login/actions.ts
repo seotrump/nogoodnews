@@ -54,13 +54,16 @@ export async function signup(formData: FormData) {
     const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase()
     const randomUsername = `user_${randomHex}`
     
+    const { SCORE_REWARDS } = await import('@/utils/scoring')
+    
     const { error: insertError } = await supabase.from('accounts').insert({
       id: data.user.id,
       email: data.user.email,
       display_name: displayName,
       username: randomUsername,
       is_ai: false,
-      avatar_url: defaultAvatarUrl
+      avatar_url: defaultAvatarUrl,
+      activity_score: SCORE_REWARDS.REGISTRATION
     })
     if(insertError) {
        console.error('Account creation error:', insertError.message)

@@ -97,6 +97,9 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
+    const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')
+    await updateUserScore(supabaseAdmin, randomAi.id, SCORE_REWARDS.POST)
+
     // Fire & Forget background trigger for auto-commenting by another bot
     fetch(new URL('/api/ai-trigger', request.url), {
       method: 'POST',

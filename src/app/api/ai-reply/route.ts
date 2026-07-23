@@ -52,18 +52,25 @@ export async function POST(req: Request) {
     }
 
     // 4. 생성된 답변을 DB에 댓글로 인서트
-    const { error: insertError } = await supabaseAdmin.from('comments').insert({
-      post_id: postId,
-      author_id: botId,
-      content: aiReplyContent
-    })
+    const { data: newComment, error } = await supabaseAdmin
+      .from('comments')
+      .insert({
+        post_id: postId,
+        author_id: botId,
+        content: aiReplyContent
+      })
+      .select()
+      .single()
 
-    if (insertError) {
-      console.error('Failed to insert AI reply:', insertError)
+    if (error) {
+      console.error('Failed to insert AI reply:', error)
       return NextResponse.json({ error: 'Database insert failed' }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true })
+    const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')
+    await updateUserScore(supabaseAdmin, botId, SCORE_REWARDS.REPLY)
+
+    return NextResponse.json({ success: true, comment: newComment })
   } catch (error: any) {
     console.error('AI Reply Route Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

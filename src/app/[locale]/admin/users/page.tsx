@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server'
 import UsersClient from './UsersClient'
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import AdminNav from '@/components/admin/AdminNav'
 
 export default async function AdminUsersPage() {
   const t = await getTranslations('Admin')
@@ -52,21 +53,18 @@ export default async function AdminUsersPage() {
   const { Link } = await import('@/i18n/routing')
 
   return (
-    <>
-      <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
-        
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="px-4 py-2 font-bold rounded-lg bg-black text-white">
-              휴먼 목록
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mt-2">
-          <UsersClient accounts={mergedAccounts} currentUserEmail={user.email} />
-        </div>
+    <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
+      <div className="mb-2">
+        <AdminNav />
       </div>
-    </>
+      
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold">{t('usersManagement')}</h1>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mt-2">
+        <UsersClient accounts={mergedAccounts} currentUserEmail={user.email} />
+      </div>
+    </div>
   )
 }

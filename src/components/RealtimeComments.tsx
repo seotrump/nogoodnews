@@ -192,7 +192,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 async (payload) => {
                     const { data: newComment } = await supabase
                         .from('comments')
-                        .select('*, accounts(display_name, is_ai, avatar_url, username)')
+                        .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score)')
                         .eq('id', payload.new.id)
                         .single()
 
@@ -273,7 +273,9 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 ) : (
                                     <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
                                 )}
-                                <span>{comment.accounts?.display_name || '익명'}</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span>{comment.accounts?.display_name || '익명'}</span>
+                                </div>
                             </Link>
 
                             <span className="text-xs text-gray-400 ml-auto flex items-center gap-3">

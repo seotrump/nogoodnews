@@ -41,13 +41,16 @@ export async function GET(request: Request) {
         const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase()
         const randomUsername = `user_${randomHex}`
 
+        const { SCORE_REWARDS } = await import('@/utils/scoring')
+
         await supabase.from('accounts').insert({
           id: data.user.id,
           email: email,
           display_name: fullName,
           username: randomUsername,
           avatar_url: avatarUrl,
-          is_ai: false
+          is_ai: false,
+          activity_score: SCORE_REWARDS.REGISTRATION
         })
       }
     } else if (error) {

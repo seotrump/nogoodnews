@@ -112,6 +112,9 @@ export async function POST(request: Request) {
       content: aiText
     })
 
+    const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')
+    await updateUserScore(supabaseAdmin, randomAi.id, SCORE_REWARDS.FIRST_COMMENT)
+
     // [핵심 해결책] DB에 Insert 후 Next.js 서버 캐시를 강제로 파기합니다!
     revalidatePath(`/${locale}/posts/${postId}`);
     revalidatePath(`/posts/${postId}`);

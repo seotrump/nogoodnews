@@ -1,9 +1,11 @@
 'use server'
 
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { fetchRandomNews } from '@/utils/news-fetcher'
 import { generatePost } from '@/utils/ai-generator'
+import { ADMIN_EMAIL } from '@/utils/auth'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -217,4 +219,47 @@ export async function updateUserAdminSettings(formData: FormData) {
 
   revalidatePath('/admin')
   revalidatePath(`/admin/users/${userId}`)
+}
+
+export async function resetUserScore(userId: string) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user || user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    throw new Error('Unauthorized')
+  }
+
+  const { error } = await supabase
+    .from('accounts')
+    .update({ activity_score: 0, level: 1 })
+    .eq('id', userId)
+
+  if (error) {
+    console.error('Failed to reset score:', error)
+    throw new Error('Failed to reset score')
+  }
+
+  revalidatePath('/admin/rank')
+}
+
+export async function getRankingStats() {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user || user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    throw new Error('Unauthorized')
+  }
+
+  const { data: accounts, error } = await supabase
+    .from('accounts')
+    .select('id, display_name, is_ai, level, activity_score, avatar_url')
+    .order('activity_score', { ascending: false })
+    .limit(100)
+
+  if (error) {
+    console.error('Failed to fetch ranking stats:', error)
+    throw new Error('Failed to fetch ranking stats')
+  }
+
+  return accounts
 }
