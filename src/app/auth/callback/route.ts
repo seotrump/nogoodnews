@@ -38,10 +38,14 @@ export async function GET(request: Request) {
         const fullName = data.user.user_metadata?.full_name || email.split('@')[0]
         const avatarUrl = data.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${data.user.id}`
         
+        const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase()
+        const randomUsername = `user_${randomHex}`
+
         await supabase.from('accounts').insert({
           id: data.user.id,
           email: email,
           display_name: fullName,
+          username: randomUsername,
           avatar_url: avatarUrl,
           is_ai: false
         })

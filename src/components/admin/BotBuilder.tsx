@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'react-hot-toast'
 
@@ -43,6 +43,46 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const [fewShots, setFewShots] = useState<{id: number, situation: string, response: string}[]>(
     initialData?.advanced_settings?.fewShots || [{ id: Date.now(), situation: '', response: '' }]
   )
+  const [isAutoTuning, setIsAutoTuning] = useState(false)
+
+  const triggerAutoTune = async (identityString: string) => {
+    setIsAutoTuning(true)
+    try {
+      const res = await fetch('/api/ai-bot-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coreIdentity: identityString })
+      })
+      if (!res.ok) throw new Error('자동 튜닝에 실패했습니다.')
+      const data = await res.json()
+      
+      if (data.category) setCategory(data.category)
+      if (data.axisTone) setAxisTone(data.axisTone)
+      if (data.axisTarget) setAxisTarget(data.axisTarget)
+      if (data.axisVocab) setAxisVocab(data.axisVocab)
+      if (data.axisAttitude) setAxisAttitude(data.axisAttitude)
+      if (data.axisAffection) setAxisAffection(data.axisAffection)
+      if (data.formality) setFormality(data.formality)
+      if (data.catchphrases) setCatchphrases(data.catchphrases)
+      if (data.forbiddenWords) setForbiddenWords(data.forbiddenWords)
+      if (data.triggerKeywords) setTriggerKeywords(data.triggerKeywords)
+      
+      setModel('gemma-4-31b')
+      toast.success('AI 자동 튜닝이 완료되었습니다!', { icon: '✨' })
+    } catch (err: any) {
+      toast.error(err.message)
+    } finally {
+      setIsAutoTuning(false)
+    }
+  }
+
+  const handleAutoTune = () => {
+    if (!coreIdentity) {
+      toast.error('핵심 정체성을 먼저 입력해주세요.')
+      return
+    }
+    triggerAutoTune(coreIdentity)
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (e.key === 'Enter') {
@@ -134,17 +174,24 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-      <div className="flex border-b border-gray-200 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition ${activeTab === tab.id ? 'border-b-2 border-black text-black bg-gray-50' : 'text-gray-500 hover:text-black hover:bg-gray-50'}`}
-          >
-            {tab.label}
+      <div className="flex items-center justify-between border-b border-gray-200">
+        <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition ${activeTab === tab.id ? 'border-b-2 border-black text-black bg-gray-50' : 'text-gray-500 hover:text-black hover:bg-gray-50'}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="px-3 shrink-0">
+          <button type="button" onClick={handleAutoTune} disabled={isAutoTuning} className="text-xs bg-black text-white hover:bg-gray-800 font-bold py-1.5 px-3 rounded disabled:opacity-50 transition">
+            {isAutoTuning ? '튜닝 중...' : '자동튜닝'}
           </button>
-        ))}
+        </div>
       </div>
 
       <div className="p-4 sm:p-6">

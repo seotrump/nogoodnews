@@ -55,25 +55,23 @@ ${recentComments || '(이전 댓글 없음)'}
     console.log("🚨 [디버그-댓글] OpenAI 생성 성공!");
     return text.trim()
   } else {
-    console.log("🚨 [디버그-댓글] Gemini 모델(3단 방어벽)로 생성을 시도합니다.");
+    console.log("🚨 [디버그-댓글] 지정된 모델(3단 방어벽)로 생성을 시도합니다.");
     try {
-      console.log("🚨 [디버그-댓글] 1순위: gemini-3.1-flash-lite 호출 중...");
-      const model1 = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
-      const result = await model1.generateContent(prompt)
+      console.log("🚨 [디버그-댓글] 1순위: base-gemma-4-26b 호출 중...");
+      const { text } = await generateText({ model: openai('base-gemma-4-26b'), prompt })
       console.log("🚨 [디버그-댓글] 1순위 생성 성공!");
-      return result.response.text().trim()
+      return text.trim()
     } catch (error1) {
       console.warn('🚨 [디버그-댓글] 1순위 실패! 2순위로 우회합니다.', error1)
       try {
-        console.log("🚨 [디버그-댓글] 2순위: gemini-2.5-flash 호출 중...");
-        const model2 = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-        const result = await model2.generateContent(prompt)
+        console.log("🚨 [디버그-댓글] 2순위: gemma-4-31b 호출 중...");
+        const { text } = await generateText({ model: openai('gemma-4-31b'), prompt })
         console.log("🚨 [디버그-댓글] 2순위 생성 성공!");
-        return result.response.text().trim()
+        return text.trim()
       } catch (error2) {
         console.warn('🚨 [디버그-댓글] 2순위 실패! 최후의 3순위로 우회합니다.', error2)
-        console.log("🚨 [디버그-댓글] 3순위: gemini-3.5-flash 호출 중...");
-        const model3 = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' })
+        console.log("🚨 [디버그-댓글] 3순위: gemini-3.1-flash-lite 호출 중...");
+        const model3 = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
         const result = await model3.generateContent(prompt)
         console.log("🚨 [디버그-댓글] 3순위 생성 성공!");
         return result.response.text().trim()
@@ -131,20 +129,18 @@ ${userComment}
     console.log("🚨 [디버그-멘션] OpenAI 생성 성공!");
     return text.trim()
   } else {
-    console.log("🚨 [디버그-멘션] Gemini 모델(3단 방어벽)로 생성을 시도합니다.");
+    console.log("🚨 [디버그-멘션] 지정된 모델(3단 방어벽)로 생성을 시도합니다.");
     try {
-      const model1 = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
-      const result = await model1.generateContent(prompt)
-      return result.response.text().trim()
+      const { text } = await generateText({ model: openai('base-gemma-4-26b'), prompt })
+      return text.trim()
     } catch (error1) {
       console.warn('🚨 [디버그-멘션] 1순위 실패! 2순위로 우회합니다.', error1)
       try {
-        const model2 = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-        const result = await model2.generateContent(prompt)
-        return result.response.text().trim()
+        const { text } = await generateText({ model: openai('gemma-4-31b'), prompt })
+        return text.trim()
       } catch (error2) {
         console.warn('🚨 [디버그-멘션] 2순위 실패! 3순위로 우회합니다.', error2)
-        const model3 = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' })
+        const model3 = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
         const result = await model3.generateContent(prompt)
         return result.response.text().trim()
       }
@@ -195,25 +191,23 @@ ${personaPrompt}
     console.log("🚨 [디버그-피드] OpenAI 생성 성공!");
     return text.trim()
   } else {
-    console.log("🚨 [디버그-피드] Gemini 모델(3단 방어벽)로 생성을 시도합니다.");
+    console.log("🚨 [디버그-피드] 지정된 모델(3단 방어벽)로 생성을 시도합니다.");
     try {
-      console.log("🚨 [디버그-피드] 1순위: gemini-3.1-flash-lite 호출 중...");
-      const model1 = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
-      const result = await model1.generateContent(prompt)
+      console.log("🚨 [디버그-피드] 1순위: base-gemma-4-26b 호출 중...");
+      const { text } = await generateText({ model: openai('base-gemma-4-26b'), prompt })
       console.log("🚨 [디버그-피드] 1순위 생성 성공!");
-      return result.response.text().trim()
+      return text.trim()
     } catch (error1) {
       console.warn('🚨 [디버그-피드] 1순위 실패! 2순위로 우회합니다.', error1)
       try {
-        console.log("🚨 [디버그-피드] 2순위: gemini-2.5-flash 호출 중...");
-        const model2 = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
-        const result = await model2.generateContent(prompt)
+        console.log("🚨 [디버그-피드] 2순위: gemma-4-31b 호출 중...");
+        const { text } = await generateText({ model: openai('gemma-4-31b'), prompt })
         console.log("🚨 [디버그-피드] 2순위 생성 성공!");
-        return result.response.text().trim()
+        return text.trim()
       } catch (error2) {
         console.warn('🚨 [디버그-피드] 2순위 실패! 최후의 3순위로 우회합니다.', error2)
-        console.log("🚨 [디버그-피드] 3순위: gemini-3.5-flash 호출 중...");
-        const model3 = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' })
+        console.log("🚨 [디버그-피드] 3순위: gemini-3.1-flash-lite 호출 중...");
+        const model3 = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
         const result = await model3.generateContent(prompt)
         console.log("🚨 [디버그-피드] 3순위 생성 성공!");
         return result.response.text().trim()

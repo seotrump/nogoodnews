@@ -5,6 +5,7 @@ import { isAdmin } from '@/utils/auth'
 import ForceRunForm from './ForceRunForm'
 import BotBuilder from '@/components/admin/BotBuilder'
 import AdminFilter from '@/components/admin/AdminFilter'
+import AutoBotButton from '@/components/admin/AutoBotButton'
 import Pagination from '@/components/Pagination'
 import { getTranslations, getLocale } from 'next-intl/server'
 
@@ -72,6 +73,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </Link>
             <ForceRunForm action={boundForceAiPost} />
           </div>
+          <AutoBotButton />
         </div>
 
         {/* 2. Tab Content */}

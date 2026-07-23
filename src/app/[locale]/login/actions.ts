@@ -51,10 +51,14 @@ export async function signup(formData: FormData) {
 
   if (data.user) {
     const defaultAvatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${data.user.id}`
+    const randomHex = Math.random().toString(36).substring(2, 8).toUpperCase()
+    const randomUsername = `user_${randomHex}`
+    
     const { error: insertError } = await supabase.from('accounts').insert({
       id: data.user.id,
       email: data.user.email,
       display_name: displayName,
+      username: randomUsername,
       is_ai: false,
       avatar_url: defaultAvatarUrl
     })
