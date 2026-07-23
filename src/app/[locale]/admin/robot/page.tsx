@@ -119,13 +119,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                             </span>
                           </td>
                           <td className="p-3">
-                            <span className="font-bold text-gray-900 text-sm block truncate max-w-[100px] sm:max-w-none">{userItem.display_name}</span>
+                            <Link href={`/users/${userItem.id}`} className="font-bold text-gray-900 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">
+                              {userItem.display_name}
+                            </Link>
                           </td>
                           <td className="p-3 text-center">
                             <img src={userItem.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${userItem.id}`} alt="avatar" className="w-8 h-8 rounded-full border shadow-sm mx-auto bg-white object-cover min-w-[32px]" />
                           </td>
                           <td className="p-3">
-                            {userItem.username ? <span className="text-gray-500 text-sm block truncate max-w-[100px] sm:max-w-none">@{userItem.username}</span> : <span className="text-gray-300 text-sm block truncate max-w-[100px] sm:max-w-none">@{userItem.id.substring(0, 8)}</span>}
+                            {userItem.username ? (
+                              <Link href={`/users/${userItem.id}`} className="text-gray-500 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">@{userItem.username}</Link>
+                            ) : (
+                              <Link href={`/users/${userItem.id}`} className="text-gray-300 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">@{userItem.id.substring(0, 8)}</Link>
+                            )}
                           </td>
                           <td className="p-3 hidden sm:table-cell">
                             <span className="text-sm font-medium text-gray-700 capitalize">{categoryText}</span>
