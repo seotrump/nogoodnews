@@ -11,7 +11,6 @@ export default async function AdminRankingPage() {
 
   return (
     <div className="p-8 bg-white min-h-screen max-w-7xl mx-auto">
-      <AdminNav />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">통합 랭킹 대시보드</h1>

@@ -54,12 +54,8 @@ export default async function AdminUsersPage() {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
-      <div className="mb-2">
-        <AdminNav />
-      </div>
-      
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold">{t('usersManagement')}</h1>
+        <h1 className="text-3xl font-bold">휴먼 유저 목록</h1>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mt-2">

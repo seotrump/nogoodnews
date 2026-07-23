@@ -44,20 +44,30 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
 
             {hasAdmin && (
               <>
-                <Link onClick={closeMenu} href="/admin/users" className={`w-full sm:w-auto flex items-center transition font-medium px-3 py-2 rounded-lg ${pathname === '/admin/users' || pathname === '/ko/admin/users' ? 'bg-gray-200 text-black' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
-                  {t.userManagement}
+                <Link onClick={closeMenu} href="/admin/users" className={`w-full sm:w-auto flex items-center transition font-medium px-3 py-2 rounded-lg ${pathname.includes('/admin/users') ? 'bg-gray-800 text-white' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
+                  휴먼
                 </Link>
-                <Link onClick={closeMenu} href="/admin" className={`w-full sm:w-auto flex items-center transition font-medium px-3 py-2 rounded-lg ${pathname === '/admin' || pathname === '/ko/admin' ? 'bg-gray-200 text-black' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
-                  {t.botManagement}
+                <Link onClick={closeMenu} href="/admin/robot" className={`w-full sm:w-auto flex items-center transition font-medium px-3 py-2 rounded-lg ${pathname.includes('/admin/robot') ? 'bg-gray-800 text-white' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
+                  로봇
+                </Link>
+                <Link onClick={closeMenu} href="/admin/rank" className={`w-full sm:w-auto flex items-center transition font-medium px-3 py-2 rounded-lg ${pathname.includes('/admin/rank') ? 'bg-gray-800 text-white' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
+                  랭크
+                </Link>
+                <Link onClick={closeMenu} href="/admin" className={`w-full sm:w-auto flex items-center transition font-medium px-3 py-2 rounded-lg ${pathname === '/admin' || pathname === '/ko/admin' ? 'bg-gray-800 text-white' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
+                  설정
                 </Link>
               </>
             )}
-            <Link onClick={closeMenu} href="/posts/new" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-              {t.write}
-            </Link>
-            <Link onClick={closeMenu} href="/settings" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-              {t.settings}
-            </Link>
+            {!hasAdmin && (
+              <>
+                <Link onClick={closeMenu} href="/posts/new" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                  {t.write}
+                </Link>
+                <Link onClick={closeMenu} href="/settings" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                  {t.settings}
+                </Link>
+              </>
+            )}
             <div className="w-full sm:w-auto">
               <button 
                 onClick={async () => {

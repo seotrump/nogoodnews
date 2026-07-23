@@ -8,10 +8,9 @@ export default function AdminNav() {
 
   const tabs = [
     { name: '휴먼', href: '/admin/users' },
-    { name: '로봇', href: '/admin' },
+    { name: '로봇', href: '/admin/robot' },
     { name: '랭크', href: '/admin/rank' },
-    { name: '피드', href: '/' },
-    { name: '설정', href: '/settings' },
+    { name: '설정', href: '/admin' },
   ]
 
   // For `/admin`, exact match is usually better since everything else is under `/admin/...`
