@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -8,13 +9,11 @@ function isNameTargeted(comment: string, name: string): boolean {
   const c = comment.toLowerCase();
   const n = name.toLowerCase().trim();
 
-  // 1. 이름이 댓글에 포함되어 있으면 즉시 성공
   if (c.includes(n)) return true;
 
-  // 2. 포함되지 않았다면 유사도 분석 (문장 내 단어 단위로 쪼개어 비교 시도)
   const t = comment.toLowerCase();
   const commonChars = [...n].filter(char => t.includes(char)).length;
-  return (commonChars / n.length) >= 0.6; // 봇 이름 글자 수 기준으로 60% 이상 매칭
+  return (commonChars / n.length) >= 0.6;
 }
 
 export async function POST(request: Request) {
@@ -23,7 +22,7 @@ export async function POST(request: Request) {
     const { postId, locale = 'ko' } = body
     if (!postId) return NextResponse.json({ error: 'Missing postId' }, { status: 400 })
 
-    // [수정된 핵심 로직] 조건 없이 호출될 때마다 무조건 15초 대기 시작
+    // 브라우저 지연이 아닌 서버 자체 지연으로 롤백 (클라이언트 언마운트 시 취소 방지 및 완벽한 동기화)
     console.log(`🚨 [ai-trigger] 15초 대기 시작... (Post: ${postId})`);
     await delay(15000);
 
@@ -53,8 +52,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No AI bots found' }, { status: 404 })
     }
 
-    // [지목 및 등급 필터링 적용]
-    // 1. 유저 정보 식별 (마지막 댓글 작성자 또는 게시글 작성자)
     let triggerUserId = post.author_id;
     let latestComment = '';
     
@@ -63,14 +60,12 @@ export async function POST(request: Request) {
       latestComment = comments[comments.length - 1].content;
     }
 
-    // 2. 유저 레벨 및 팔로우 목록 조회
     const { data: userData } = await supabaseAdmin.from('accounts').select('level').eq('id', triggerUserId).single();
     const userLevel = userData?.level || 1;
 
     const { data: followsData } = await supabaseAdmin.from('follows').select('following_id').eq('follower_id', triggerUserId);
     const followedBotIds = new Set(followsData?.map(f => f.following_id) || []);
 
-    // 3. 허용된 봇 후보군 (Pool) 필터링
     const allowedBots = aiAccounts.filter(bot => {
       const botTier = bot.level || 1;
       return botTier <= userLevel || followedBotIds.has(bot.id);
@@ -83,17 +78,13 @@ export async function POST(request: Request) {
     let randomAi = null;
     
     if (latestComment) {
-      console.log(`🔍 [ai-trigger] 지목 분석 대상: "${latestComment}"`);
-      // 허용된 봇 풀 내에서만 지목 가능
       const targetedBot = allowedBots.find(bot => {
-        // 기존 이름 기반 유사도 또는 @username 멘션 확인
         const mentioned = latestComment.includes(`@${bot.username}`);
         return mentioned || isNameTargeted(latestComment, bot.display_name);
       });
       
       if (targetedBot) {
         randomAi = targetedBot;
-        console.log(`🎯 [ai-trigger] 지목된 봇: ${randomAi.display_name} (Tier: ${randomAi.level || 1})`);
       }
     }
 
@@ -120,6 +111,11 @@ export async function POST(request: Request) {
       author_id: randomAi.id,
       content: aiText
     })
+
+    // [핵심 해결책] DB에 Insert 후 Next.js 서버 캐시를 강제로 파기합니다!
+    revalidatePath(`/${locale}/posts/${postId}`);
+    revalidatePath(`/posts/${postId}`);
+    revalidatePath('/', 'layout'); // 만약을 위해 전체 레이아웃 라우터 캐시 힌트 갱신
 
     return NextResponse.json({ success: true, aiName: randomAi.display_name })
   } catch (error: any) {

@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from 'react'
 import { useLocale } from 'next-intl'
-// router(새로고침) 기능은 이제 Realtime이 대신하므로 제거했습니다.
+import { useRouter } from 'next/navigation'
 
 export default function AiTrigger({ postId, commentCount, lastCommentIsAi }: { postId: string, commentCount: number, lastCommentIsAi?: boolean }) {
   const locale = useLocale()
+  const router = useRouter()
   const lastTriggeredCommentCount = useRef(-1)
 
   useEffect(() => {
@@ -18,8 +19,8 @@ export default function AiTrigger({ postId, commentCount, lastCommentIsAi }: { p
     console.log(`[AI Trigger] 서버로 봇 호출 신호 즉시 발송! (Post: ${postId})`)
     lastTriggeredCommentCount.current = commentCount
 
-    // 프론트엔드의 15초 타이머를 삭제하고 즉시 서버로 알람을 쏩니다.
-    // (서버가 알아서 15초를 대기한 뒤 봇을 출동시킵니다)
+    // 프론트엔드의 불안정한 타이머를 제거하고 즉시 서버로 신호를 보냅니다.
+    // 서버가 알아서 15초를 대기하고 캐시를 갱신합니다.
     const triggerAi = async () => {
       try {
         const res = await fetch('/api/ai-trigger', {
@@ -41,7 +42,6 @@ export default function AiTrigger({ postId, commentCount, lastCommentIsAi }: { p
     }
 
     triggerAi()
-
   }, [postId, commentCount, lastCommentIsAi])
 
   return null

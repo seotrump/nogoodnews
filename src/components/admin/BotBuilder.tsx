@@ -44,6 +44,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     initialData?.advanced_settings?.fewShots || [{ id: Date.now(), situation: '', response: '' }]
   )
   const [isAutoTuning, setIsAutoTuning] = useState(false)
+  const [isBasicMode, setIsBasicMode] = useState(false)
 
   const triggerAutoTune = async (identityString: string) => {
     setIsAutoTuning(true)
@@ -99,8 +100,24 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     setter(prev => prev.filter((_, i) => i !== index))
   }
 
+  const handleResetTuning = () => {
+    setAxisTone(5)
+    setAxisTarget(5)
+    setAxisVocab(5)
+    setAxisAttitude(5)
+    setAxisAffection(5)
+    setFormality('informal')
+    setCatchphrases([])
+    setForbiddenWords([])
+    setFewShots([])
+    setIsBasicMode(true)
+    toast.success('튜닝이 초기화되었습니다. 순수 코어 정체성만 적용됩니다.', { icon: '🔄' })
+  }
+
   const compilePrompt = () => {
     let prompt = `# Core Identity\n${coreIdentity}\n\n`
+    if (isBasicMode) return prompt.trim()
+
     prompt += `# Personality Axes (Scale 1-10)\n`
     prompt += `- Tone (1: ${t('axisToneLeft')}, 10: ${t('axisToneRight')}): ${axisTone}\n`
     prompt += `- Target (1: ${t('axisTargetLeft')}, 10: ${t('axisTargetRight')}): ${axisTarget}\n`
@@ -187,7 +204,10 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
             </button>
           ))}
         </div>
-        <div className="px-3 shrink-0">
+        <div className="px-3 shrink-0 flex items-center gap-2">
+          <button type="button" onClick={handleResetTuning} className="text-xs bg-gray-200 text-gray-700 hover:bg-gray-300 font-bold py-1.5 px-3 rounded transition">
+            튜닝리셋
+          </button>
           <button type="button" onClick={handleAutoTune} disabled={isAutoTuning} className="text-xs bg-black text-white hover:bg-gray-800 font-bold py-1.5 px-3 rounded disabled:opacity-50 transition">
             {isAutoTuning ? '튜닝 중...' : '자동튜닝'}
           </button>
@@ -289,7 +309,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
                       <span>{item.label}</span>
                       <span className="text-black bg-gray-200 px-2 py-0.5 rounded text-xs">{item.val} / 10</span>
                     </div>
-                    <input type="range" min="1" max="10" step="1" value={item.val} onChange={e => item.set(Number(e.target.value))} className="w-full accent-black cursor-pointer" />
+                    <input type="range" min="1" max="10" step="1" value={item.val} onChange={e => { item.set(Number(e.target.value)); setIsBasicMode(false); }} className="w-full accent-black cursor-pointer" />
                     <div className="flex justify-between text-xs text-gray-500 font-medium">
                       <span>{item.left}</span>
                       <span>{item.right}</span>
@@ -390,6 +410,28 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
                 ))}
               </div>
               <input type="text" placeholder={t('catchphrasesHint')} onKeyDown={e => handleKeyDown(e, setTriggerKeywords)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm" />
+            </div>
+            {/* 규칙 가이드 */}
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mt-2">
+              <details className="group cursor-pointer">
+                <summary className="font-bold text-sm text-blue-800 flex items-center justify-between outline-none">
+                  <span>💡 규칙 가이드 (공통 규칙 & 예외 처리)</span>
+                  <span className="transition group-open:rotate-180">▼</span>
+                </summary>
+                <div className="mt-3 text-xs text-blue-900 space-y-2 leading-relaxed">
+                  <p><strong>[공통 앵무새 방지 규칙]</strong><br/>
+                  서버에는 기본적으로 모든 봇이 <strong>"똑같은 문장이나 유행어를 매번 똑같이 반복하지 말고 문맥에 맞게 다르게 변형하라"</strong>는 공통 규칙이 적용되어 있습니다.</p>
+                  
+                  <p><strong>[특정 유행어 반복 등 예외 적용 방법]</strong><br/>
+                  개그맨 봇처럼 특정 유행어를 매번 똑같이 쓰게 만들고 싶다면, <strong>'기본 설정' 탭의 [핵심 정체성(Core Identity)]</strong> 란 하단에 아래와 같이 명시적인 <strong>예외 규칙</strong>을 적어주세요.</p>
+                  
+                  <div className="bg-white p-2 rounded border border-blue-200 font-mono mt-1 mb-2">
+                    예시) [예외 규칙: 유행어 "ㅇㅇㅇ"는 매 댓글마다 토씨 하나 틀리지 말고 무조건 포함할 것. 공통 규칙보다 이 지시를 우선할 것.]
+                  </div>
+                  
+                  <p>이러한 명시적 지시가 있으면 봇은 공통 앵무새 방지 규칙을 무시하고 해당 유행어를 강력하게 유지합니다.</p>
+                </div>
+              </details>
             </div>
             
             {/* Future condition settings can be added here */}

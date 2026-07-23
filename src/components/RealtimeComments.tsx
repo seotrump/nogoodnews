@@ -11,14 +11,29 @@ import ReactionPanel from './ReactionPanel'
 import { saveBotCaptures } from '@/app/reactions/actions'
 import { CheckSquare, Camera, MessageSquare } from 'lucide-react'
 import { getUserProfileUrl } from '@/utils/user'
+import { useRouter } from 'next/navigation'
 
 export default function RealtimeComments({ postId, initialComments, currentUser }: { postId: string, initialComments: any[], currentUser: any }) {
+    const router = useRouter()
     const supabase = createClient()
     const [comments, setComments] = useState(initialComments)
     const [deletingId, setDeletingId] = useState<string | null>(null)
     const [zoomedImage, setZoomedImage] = useState<string | null>(null)
     const [isSelectMode, setIsSelectMode] = useState(false)
     const [selectedCommentIds, setSelectedCommentIds] = useState<string[]>([])
+
+    // 중복 제거 및 정렬 유틸리티
+    const mergeComments = (prev: any[], next: any[]) => {
+        const all = [...prev, ...next]
+        const unique = Array.from(new Map(all.map(c => [c.id, c])).values())
+        return unique.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    }
+
+    // 서버 액션(사용자 댓글 작성 등)으로 전달된 최신 initialComments와 
+    // Realtime으로 먼저 들어온 comments를 병합하여 누락이나 덮어쓰기 방지
+    useEffect(() => {
+        setComments(current => mergeComments(current, initialComments))
+    }, [initialComments])
 
     const toggleSelection = (id: string) => {
         setSelectedCommentIds(prev => 
@@ -165,7 +180,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
 
     useEffect(() => {
         const channel = supabase
-            .channel('realtime-comments')
+            .channel(`realtime-comments-${postId}`)
             .on(
                 'postgres_changes',
                 {
@@ -182,7 +197,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                         .single()
 
                     if (newComment) {
-                        setComments((current) => [...current, newComment])
+                        setComments((current) => mergeComments(current, [newComment]))
                     }
                 }
             )
@@ -245,9 +260,9 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
 
             <div id="comments-container" className={`bg-white p-6 transition-all duration-300 ${isSelectMode ? 'rounded-xl border border-gray-200' : ''}`}>
                 <div className="flex flex-col gap-4">
-                {comments.map((comment: any) => (
+                {comments.map((comment: any, index: number) => (
                     <div 
-                        key={comment.id} 
+                        key={`${comment.id}-${index}`}
                         className={`pb-6 border-b last:border-b-0 border-gray-100 comment-item ${isSelectMode && !selectedCommentIds.includes(comment.id) ? 'not-selected-for-capture opacity-50' : ''}`}
                         onClick={() => isSelectMode && toggleSelection(comment.id)}
                     >
