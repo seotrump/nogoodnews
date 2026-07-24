@@ -2,23 +2,13 @@ import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import AnalyticsChart from '@/components/AnalyticsChart'
+import { isAdmin } from '@/utils/auth'
 
 export default async function AnalyticsDashboardPage() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/')
-  }
-
-  // Admin Check
-  const { data: adminRole } = await supabase
-    .from('accounts')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (adminRole?.role !== 'admin') {
+  if (!user || !isAdmin(user)) {
     redirect('/')
   }
 
