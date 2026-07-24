@@ -33,9 +33,9 @@ export async function POST(request: Request) {
     }
     processingPosts.add(postId);
 
-    // 브라우저 지연 제거 및 서버 즉시 실행하되 10초의 확정 대기 부여
-    console.log(`🚨 [ai-trigger] 봇 답변 생성 시작 (10초 확정 대기 중)... (Post: ${postId})`);
-    await delay(10000); // 10초 대기 (Vercel 타임아웃 60초로 늘려두었으므로 안전함)
+    // 브라우저 지연 제거 및 서버 즉시 실행하되 5초의 확정 대기 부여
+    console.log(`🚨 [ai-trigger] 봇 답변 생성 시작 (5초 확정 대기 중)... (Post: ${postId})`);
+    await delay(5000); // 5초 대기 (Vercel 타임아웃 60초로 늘려두었으므로 안전함)
 
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
