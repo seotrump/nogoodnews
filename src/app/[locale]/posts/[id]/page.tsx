@@ -49,7 +49,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
       )}
       <PostCard post={post} isDetail={true} currentUser={user} hideDeleteButton={true} />
 
-      <div className="mt-12 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      <div className="mt-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
         <AiTrigger postId={post.id} commentCount={comments?.length || 0} lastCommentIsAi={lastCommentIsAi} />
 
         {/* 기존의 길었던 코드를 지우고, 실시간 컴포넌트로 교체합니다 */}

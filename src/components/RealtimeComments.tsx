@@ -226,35 +226,35 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
 
     return (
         <>
-            <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                    댓글 <span className="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded-full">{comments.length}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                    댓글 <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{comments.length}</span>
                 </h3>
                 {comments.length > 0 && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                         {isSelectMode ? (
                             <>
-                                <button onClick={() => {setIsSelectMode(false); setSelectedCommentIds([]);}} className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition">
+                                <button onClick={() => {setIsSelectMode(false); setSelectedCommentIds([]);}} className="whitespace-nowrap text-[11px] sm:text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition">
                                     취소
                                 </button>
                                 <button 
                                     onClick={() => handleCapture('selected')} 
                                     disabled={selectedCommentIds.length === 0}
-                                    className="text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm disabled:opacity-50"
+                                    className="whitespace-nowrap text-[11px] sm:text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm disabled:opacity-50"
                                 >
-                                    <Camera className="w-4 h-4" /> {selectedCommentIds.length}개 캡처하기
+                                    <Camera className="w-3.5 h-3.5" /> {selectedCommentIds.length}개 캡처하기
                                 </button>
                             </>
                         ) : (
                             <>
-                                <button onClick={() => setIsSelectMode(true)} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                                    <CheckSquare className="w-4 h-4" /> 선택박제
+                                <button onClick={() => setIsSelectMode(true)} className="whitespace-nowrap text-[11px] sm:text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-2.5 sm:px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
+                                    <CheckSquare className="w-3.5 h-3.5" /> 선택박제
                                 </button>
-                                <button onClick={() => handleCapture('all')} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                                    <Camera className="w-4 h-4" /> 전체박제
+                                <button onClick={() => handleCapture('all')} className="whitespace-nowrap text-[11px] sm:text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-2.5 sm:px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
+                                    <Camera className="w-3.5 h-3.5" /> 전체박제
                                 </button>
-                                <button onClick={() => handleCapture('dialogue')} className="text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                                    <MessageSquare className="w-4 h-4" /> 대화박제
+                                <button onClick={() => handleCapture('dialogue')} className="whitespace-nowrap text-[11px] sm:text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-2.5 sm:px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
+                                    <MessageSquare className="w-3.5 h-3.5" /> 대화박제
                                 </button>
                             </>
                         )}
@@ -262,12 +262,12 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 )}
             </div>
 
-            <div id="comments-container" className={`bg-white p-6 transition-all duration-300 ${isSelectMode ? 'rounded-xl border border-gray-200' : ''}`}>
-                <div className="flex flex-col gap-4">
+            <div id="comments-container" className={`bg-white transition-all duration-300 ${isSelectMode ? 'p-2 sm:p-4 rounded-xl border border-gray-200' : ''}`}>
+                <div className="flex flex-col gap-2">
                 {comments.map((comment: any, index: number) => (
                     <div 
                         key={`${comment.id}-${index}`}
-                        className={`pb-6 border-b last:border-b-0 border-gray-100 comment-item ${isSelectMode && !selectedCommentIds.includes(comment.id) ? 'not-selected-for-capture opacity-50' : ''}`}
+                        className={`pb-3 border-b last:border-b-0 border-gray-100 comment-item ${isSelectMode && !selectedCommentIds.includes(comment.id) ? 'not-selected-for-capture opacity-50' : ''}`}
                         onClick={() => isSelectMode && toggleSelection(comment.id)}
                     >
                         <div className="flex items-center gap-2 mb-2">
