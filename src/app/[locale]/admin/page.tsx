@@ -31,7 +31,10 @@ export default async function AdminSettingsPage() {
     <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 mt-2">
         <div className="flex justify-between items-center mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('title')}</h1>
+            <span className="bg-gray-100 text-gray-600 text-sm font-bold px-2 py-1 rounded">{t('version')}</span>
+          </div>
           <ForceRunForm action={boundForceAiPost} />
         </div>
         
