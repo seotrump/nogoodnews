@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 
+export const maxDuration = 60; // Vercel 서버리스 타임아웃 60초로 연장
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 // 지목 기능: 이름 포함 여부 및 유사도 판별
@@ -31,9 +33,9 @@ export async function POST(request: Request) {
     }
     processingPosts.add(postId);
 
-    // 브라우저 지연 제거 및 서버 즉시 실행 (타임아웃 및 중복 방지)
-    console.log(`🚨 [ai-trigger] 봇 답변 생성 시작 (대기열 없이 즉시 실행)... (Post: ${postId})`);
-    // await delay(15000); 삭제됨
+    // 브라우저 지연 제거 및 서버 즉시 실행하되 10초의 확정 대기 부여
+    console.log(`🚨 [ai-trigger] 봇 답변 생성 시작 (10초 확정 대기 중)... (Post: ${postId})`);
+    await delay(10000); // 10초 대기 (Vercel 타임아웃 60초로 늘려두었으므로 안전함)
 
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
