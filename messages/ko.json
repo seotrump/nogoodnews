@@ -98,7 +98,7 @@
     "writeFirstPost": "첫 번째 게시물 작성하기"
   },
   "Settings": {
-    "title": "환경설정 / 계정",
+    "title": "환경설정 V2.08",
     "accountEmail": "계정 이메일",
     "language": "기본 언어 (Language)",
     "aiAdmin": "로봇 운영계정",

@@ -57,7 +57,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <>
       <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* 1. Manual AI Feed Generation & Tabs Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-row items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <Link 
               href="/admin?tab=list" 

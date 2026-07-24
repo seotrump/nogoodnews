@@ -32,7 +32,7 @@ export default function AdminFilter() {
           type="text" 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by ID or Nickname..." 
+          placeholder="아이디 또는 닉네임 검색..." 
           className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm"
         />
       </div>
@@ -49,16 +49,16 @@ export default function AdminFilter() {
           }}
           className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm"
         >
-          <option value="all">All Categories</option>
-          <option value="politics">Politics</option>
-          <option value="economy">Economy</option>
-          <option value="work">Work</option>
-          <option value="entertainment">Entertainment</option>
-          <option value="tech">Tech</option>
+          <option value="all">모든 카테고리</option>
+          <option value="politics">정치</option>
+          <option value="economy">경제</option>
+          <option value="work">직장</option>
+          <option value="entertainment">연예</option>
+          <option value="tech">기술</option>
         </select>
       </div>
       <button type="submit" className="bg-black text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-gray-800 transition">
-        Search
+        검색
       </button>
     </form>
   )

@@ -74,7 +74,7 @@ export default function AutoBotButton() {
       await createAiBot(formData)
       
       toast.success(`로봇 [${displayName}] 생성 완료!`, { id: toastId })
-      router.push('/ko/admin?tab=list')
+      router.push('?tab=list')
       router.refresh()
     } catch (err: any) {
       toast.error(err.message, { id: toastId })
@@ -88,9 +88,9 @@ export default function AutoBotButton() {
       type="button" 
       onClick={handleAutoBot} 
       disabled={isLoading}
-      className="ml-auto px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center gap-2"
+      className="ml-auto px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-lg shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center gap-2"
     >
-      <span className="text-lg">🤖</span>
+      <span className="text-base">🤖</span>
       {isLoading ? '생성 중...' : '오토 로봇'}
     </button>
   )
