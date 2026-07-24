@@ -1,7 +1,6 @@
 import React from 'react'
 import { getRankingStats, resetUserScore } from '../actions'
 import RankingCharts from '@/components/admin/RankingCharts'
-import AdminNav from '@/components/admin/AdminNav'
 import ResetButton from '@/components/admin/ResetButton'
 
 import { Link } from '@/i18n/routing'
@@ -19,9 +18,6 @@ export default async function AdminRankingPage() {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
-      <div className="mb-2">
-        <AdminNav />
-      </div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">통합 랭킹 대시보드</h1>
