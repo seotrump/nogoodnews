@@ -8,8 +8,8 @@ import { generatePost } from '@/utils/ai-generator'
 import { ADMIN_EMAIL } from '@/utils/auth'
 
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://missing-url',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'missing-key'
 )
 
 // 확정된 3대 모델 라인업
@@ -225,13 +225,13 @@ export async function resetUserScore(userId: string) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user || user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+  if (!user || !isAdmin(user.email)) {
     throw new Error('Unauthorized')
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('accounts')
-    .update({ activity_score: 0, level: 1 })
+    .update({ activity_score: 0 })
     .eq('id', userId)
 
   if (error) {
@@ -239,14 +239,15 @@ export async function resetUserScore(userId: string) {
     throw new Error('Failed to reset score')
   }
 
-  revalidatePath('/admin/rank')
+  revalidatePath('/[locale]/admin/rank')
+  revalidatePath('/[locale]/admin/robot')
 }
 
 export async function getRankingStats() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user || user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+  if (!user || !isAdmin(user.email)) {
     throw new Error('Unauthorized')
   }
 
