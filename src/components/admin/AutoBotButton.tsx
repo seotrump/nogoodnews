@@ -91,7 +91,7 @@ export default function AutoBotButton() {
       type="button" 
       onClick={handleAutoBot} 
       disabled={isLoading}
-      className="ml-auto px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-lg shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center gap-2"
+      className="ml-auto px-4 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-lg shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
     >
       <span className="text-base">🤖</span>
       {isLoading ? '생성 중...' : '오토 로봇'}

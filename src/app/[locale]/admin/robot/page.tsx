@@ -60,14 +60,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <div className="flex flex-row items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <Link 
-              href="/admin?tab=list" 
-              className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${tab === 'list' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              href="/admin/robot?tab=list" 
+              className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'list' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
               로봇 목록
             </Link>
             <Link 
-              href="/admin?tab=builder" 
-              className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${tab === 'builder' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              href="/admin/robot?tab=builder" 
+              className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'builder' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
               로봇 빌더
             </Link>
@@ -105,7 +105,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                     {aiBots?.map(userItem => {
                       const advancedSettings = userItem.advanced_settings || {};
                       const identityText = userItem.is_ai ? (advancedSettings.coreIdentity || '-') : (userItem.bio || '-');
-                      const categoryText = userItem.is_ai ? (userItem.category || '-') : '일반 유저';
+                      const catMap: Record<string, string> = { politics: '정치', economy: '경제', work: '직장', entertainment: '연예', tech: '기술' };
+                      const categoryText = userItem.is_ai ? (userItem.category ? (catMap[userItem.category] || userItem.category) : '-') : '일반 유저';
                       const badgeClass = 'bg-purple-100 text-purple-700';
                       
                       return (

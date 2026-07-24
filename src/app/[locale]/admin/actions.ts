@@ -5,7 +5,7 @@ import { createClient as createServerClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { fetchRandomNews } from '@/utils/news-fetcher'
 import { generatePost } from '@/utils/ai-generator'
-import { ADMIN_EMAIL } from '@/utils/auth'
+import { isAdmin, ADMIN_EMAIL } from '@/utils/auth'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://missing-url',
@@ -225,7 +225,7 @@ export async function resetUserScore(userId: string) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user || !isAdmin(user.email)) {
+  if (!user || !isAdmin(user)) {
     throw new Error('Unauthorized')
   }
 
@@ -247,7 +247,7 @@ export async function getRankingStats() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user || !isAdmin(user.email)) {
+  if (!user || !isAdmin(user)) {
     throw new Error('Unauthorized')
   }
 
