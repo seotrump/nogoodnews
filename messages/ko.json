@@ -99,7 +99,7 @@
   },
   "Settings": {
     "title": "환경설정",
-    "version": "V2.08",
+    "version": "V2.09",
     "accountEmail": "계정 이메일",
     "language": "기본 언어 (Language)",
     "aiAdmin": "로봇 운영계정",
