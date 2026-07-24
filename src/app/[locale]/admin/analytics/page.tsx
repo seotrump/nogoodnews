@@ -89,9 +89,9 @@ export default async function AnalyticsDashboardPage() {
       <div className="mb-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">고도화된 PostHog 통합 대시보드</h2>
         {process.env.NEXT_PUBLIC_POSTHOG_DASHBOARD_URL ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full" style={{ height: '800px' }}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full h-[800px]">
             <iframe 
-              src={process.env.NEXT_PUBLIC_POSTHOG_DASHBOARD_URL}
+              src={process.env.NEXT_PUBLIC_POSTHOG_DASHBOARD_URL.replace('/shared/', '/embedded/')}
               width="100%" 
               height="100%" 
               frameBorder="0" 
