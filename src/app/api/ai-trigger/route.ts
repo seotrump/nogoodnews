@@ -31,9 +31,9 @@ export async function POST(request: Request) {
     }
     processingPosts.add(postId);
 
-    // 브라우저 지연이 아닌 서버 자체 지연으로 롤백 (클라이언트 언마운트 시 취소 방지 및 완벽한 동기화)
-    console.log(`🚨 [ai-trigger] 15초 대기 시작... (Post: ${postId})`);
-    await delay(15000);
+    // 브라우저 지연 제거 및 서버 즉시 실행 (타임아웃 및 중복 방지)
+    console.log(`🚨 [ai-trigger] 봇 답변 생성 시작 (대기열 없이 즉시 실행)... (Post: ${postId})`);
+    // await delay(15000); 삭제됨
 
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
