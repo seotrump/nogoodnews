@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { addComment } from '@/app/[locale]/posts/actions'
 import { createClient } from '@supabase/supabase-js'
 import { toast } from 'react-hot-toast'
+import posthog from 'posthog-js'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,6 +66,7 @@ export default function CommentForm({ postId }: { postId: string }) {
       formData.append('image_url', imageUrl)
     }
     await addComment(formData, postId)
+    posthog.capture('Comment Added', { postId, hasImage: !!imageUrl })
     formRef.current?.reset()
     setImageUrl(null)
   }

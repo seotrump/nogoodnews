@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { toggleReaction } from '@/app/reactions/actions'
 import { toast } from 'react-hot-toast'
 import { createClient } from '@/utils/supabase/client'
+import posthog from 'posthog-js'
 
 import { useTranslations } from 'next-intl'
 
@@ -93,6 +94,7 @@ export default function ReactionPanel({
       if (existingIndex > -1) {
         // Optimistically remove
         setReactions(prev => prev.filter((_, i) => i !== existingIndex))
+        posthog.capture('Reaction Clicked', { reactionType, targetType, targetId, action: 'removed' })
       } else {
         // Optimistically add
         setReactions(prev => [...prev, { 
@@ -101,6 +103,7 @@ export default function ReactionPanel({
           [column]: targetId, 
           reaction_type: reactionType 
         }])
+        posthog.capture('Reaction Clicked', { reactionType, targetType, targetId, action: 'added' })
       }
       
       await toggleReaction(targetType, targetId, reactionType)
