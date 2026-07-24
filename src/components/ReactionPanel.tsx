@@ -132,8 +132,12 @@ export default function ReactionPanel({
           <button
             key={rt}
             onClick={() => handleToggle(rt)}
-            disabled={loading && hasReacted}
-            className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-gray-500 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+            disabled={loading}
+            className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors border ${
+              hasReacted 
+                ? 'bg-black text-white border-black hover:bg-gray-800' 
+                : 'text-gray-500 bg-gray-50 border-gray-200 hover:bg-gray-100'
+            }`}
           >
             <span>{t(rt)}</span>
             {count > 0 && <span className="opacity-80 ml-0.5">{count}</span>}

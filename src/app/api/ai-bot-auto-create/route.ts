@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server'
-import { generateText } from 'ai'
-import { openai } from '@ai-sdk/openai'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@/utils/supabase/server'
-
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '')
+import { generateEnforcedAIContent } from '@/utils/ai-core'
 
 export async function POST() {
   try {
@@ -44,32 +40,7 @@ ${existingListStr}
 부연 설명이나 마크다운 백틱(\`\`\`)을 사용하지 말고 오직 유효한 JSON 문자열만 출력하세요.
 `
 
-    let jsonStr = ''
-
-    // 1순위: base-gemma-4-26b
-    try {
-      const { text } = await generateText({
-        model: openai('base-gemma-4-26b'),
-        prompt,
-      })
-      jsonStr = text.trim()
-    } catch (e1) {
-      // 2순위: gemma-4-31b
-      try {
-        const { text } = await generateText({
-          model: openai('gemma-4-31b'),
-          prompt,
-        })
-        jsonStr = text.trim()
-      } catch (e2) {
-        // 3순위: gemini-3.1-flash-lite
-        if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-          const model3 = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' })
-          const result = await model3.generateContent(prompt)
-          jsonStr = result.response.text().trim()
-        }
-      }
-    }
+    let jsonStr = await generateEnforcedAIContent(prompt)
 
     if (!jsonStr) {
       throw new Error('AI Provider failed to generate content')

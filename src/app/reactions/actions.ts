@@ -42,7 +42,7 @@ export async function toggleReaction(targetType: 'post' | 'comment' | 'capture',
 
     // 원작자(작성자)에게 RECEIVED_REACTION (+2) 포인트 부여
     const { data: targetData } = await supabase
-      .from(type === 'post' ? 'posts' : 'comments')
+      .from(targetType === 'post' ? 'posts' : 'comments')
       .select('author_id')
       .eq('id', targetId)
       .maybeSingle()

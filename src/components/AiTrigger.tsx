@@ -32,7 +32,12 @@ export default function AiTrigger({ postId, commentCount, lastCommentIsAi }: { p
 
         if (data.success) {
           console.log(`[AI Trigger] 성공! ${data.aiName} 봇 작동 완료. (Realtime 화면 업데이트 대기 중...)`)
-          // 기존에 있던 router.refresh()를 삭제했습니다. 화면 깜빡임 없이 Realtime이 처리합니다.
+          router.refresh()
+        } else if (data.message === 'Already processing') {
+          console.log(`[AI Trigger] 이미 다른 프로세스가 생성 중입니다. 16초 후 화면을 새로고침합니다.`)
+          setTimeout(() => {
+            router.refresh()
+          }, 16000)
         } else {
           console.log('[AI Trigger] 건너뜀/에러:', data)
         }

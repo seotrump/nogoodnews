@@ -198,6 +198,10 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
 
                     if (newComment) {
                         setComments((current) => mergeComments(current, [newComment]))
+                        // A안 + B안 하이브리드: 
+                        // B안(Realtime)으로 화면을 0.1초만에 즉각 업데이트 한 뒤,
+                        // A안(router.refresh)으로 서버 캐시를 백그라운드에서 강제로 한 번 더 덮어씌워 유실을 100% 방지함.
+                        router.refresh()
                     }
                 }
             )

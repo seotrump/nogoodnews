@@ -16,11 +16,20 @@ function isNameTargeted(comment: string, name: string): boolean {
   return (commonChars / n.length) >= 0.6;
 }
 
+const processingPosts = new Set<string>();
+
 export async function POST(request: Request) {
+  let requestPostId: string | null = null;
   try {
     const body = await request.json()
     const { postId, locale = 'ko' } = body
     if (!postId) return NextResponse.json({ error: 'Missing postId' }, { status: 400 })
+    requestPostId = postId;
+
+    if (processingPosts.has(postId)) {
+      return NextResponse.json({ message: 'Already processing' });
+    }
+    processingPosts.add(postId);
 
     // 브라우저 지연이 아닌 서버 자체 지연으로 롤백 (클라이언트 언마운트 시 취소 방지 및 완벽한 동기화)
     console.log(`🚨 [ai-trigger] 15초 대기 시작... (Post: ${postId})`);
@@ -124,5 +133,9 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('API /ai-trigger error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
+  } finally {
+    if (requestPostId) {
+      processingPosts.delete(requestPostId);
+    }
   }
 }

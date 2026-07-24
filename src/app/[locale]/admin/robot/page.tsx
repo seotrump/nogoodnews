@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import { getBots, forceAiPost, createAiBot } from '../actions'
 import { isAdmin } from '@/utils/auth'
 import { Link } from '@/i18n/routing'
-import ForceRunForm from '../ForceRunForm'
 import BotBuilder from '@/components/admin/BotBuilder'
 import AdminFilter from '@/components/admin/AdminFilter'
 import AutoBotButton from '@/components/admin/AutoBotButton'
@@ -14,7 +13,6 @@ import { getTranslations, getLocale } from 'next-intl/server'
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string, page?: string, query?: string, category?: string }> }) {
   const t = await getTranslations('Admin')
   const locale = await getLocale()
-  const boundForceAiPost = forceAiPost.bind(null, locale)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -53,7 +51,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     totalPages = Math.ceil((count || 0) / limit)
   }
 
-  const { Link } = await import('@/i18n/routing')
+  const { Link: NextLink } = await import('@/i18n/routing')
 
   return (
     <>
@@ -65,15 +63,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               href="/admin?tab=list" 
               className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${tab === 'list' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
-              목록 보기
+              로봇 목록
             </Link>
             <Link 
               href="/admin?tab=builder" 
               className={`px-3 py-1.5 text-sm font-bold rounded transition-colors ${tab === 'builder' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
-              로봇 생성
+              로봇 빌더
             </Link>
-            <ForceRunForm action={boundForceAiPost} />
           </div>
           <AutoBotButton />
         </div>

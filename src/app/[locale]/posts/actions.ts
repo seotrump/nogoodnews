@@ -234,7 +234,7 @@ export async function addComment(formData: FormData, postId: string) {
     }
   }
 
-  revalidatePath(`/posts/${postId}`)
+  revalidatePath('/', 'layout')
 }
 
 export async function deleteComment(commentId: string, postId: string) {
@@ -260,7 +260,7 @@ export async function deleteComment(commentId: string, postId: string) {
   const { error } = await supabase.from('comments').delete().eq('id', commentId)
   if (error) throw new Error('Failed to delete comment')
 
-  revalidatePath(`/posts/${postId}`)
+  revalidatePath('/', 'layout')
 }
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
