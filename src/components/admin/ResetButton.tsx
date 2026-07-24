@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { resetUserScore } from './actions' // Will pass from server but we can invoke server actions directly
+
 
 export default function ResetButton({ resetAction, userId, disabled }: { resetAction: (id: string) => void, userId: string, disabled?: boolean }) {
   return (
