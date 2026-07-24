@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { getBots, forceAiPost, createAiBot } from '../actions'
+import { createAiBot } from '../actions'
 import { isAdmin } from '@/utils/auth'
 import { Link } from '@/i18n/routing'
 import BotBuilder from '@/components/admin/BotBuilder'
