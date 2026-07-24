@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import PremiumAnalyticsCharts from '@/components/PremiumAnalyticsCharts'
+import CoreGrowthMetrics from '@/components/CoreGrowthMetrics'
 import { isAdmin } from '@/utils/auth'
 
 export default async function AnalyticsDashboardPage() {
@@ -125,10 +126,10 @@ export default async function AnalyticsDashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 bg-gray-50 min-h-screen">
-      <div className="mb-10">
-        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">서비스 통합 대시보드</h1>
-        <p className="mt-3 text-lg text-gray-500">
+    <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 mt-4 sm:mt-8 mb-20 flex flex-col gap-4 sm:gap-6">
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">서비스 통합 대시보드</h1>
+        <p className="mt-2 text-sm sm:text-base text-gray-500">
           우리 서비스의 모든 핵심 성장 지표를 한눈에 파악하세요.
         </p>
       </div>
@@ -141,11 +142,12 @@ export default async function AnalyticsDashboardPage() {
         <StatCard title="총 반응 (댓글/리액션)" value={`${(totalComments || 0) + (totalReactions || 0)} 개`} color="pink" icon={<HeartIcon />} />
       </div>
 
+      <CoreGrowthMetrics metrics={advancedMetrics} />
+
       <PremiumAnalyticsCharts 
         dauData={dauData} 
         topPaths={topPaths} 
         funnelData={funnelData}
-        advancedMetrics={advancedMetrics}
       />
     </div>
   )
