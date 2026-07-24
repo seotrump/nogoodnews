@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import PostCard from '@/components/PostCard'
@@ -9,13 +9,34 @@ import { isAdmin } from '@/utils/auth'
 import { Link } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 
-export default function BulkDeleteFeed({ posts, currentUser }: { posts: any[], currentUser: any }) {
+export default function BulkDeleteFeed({ 
+  posts, 
+  currentUser, 
+  sortFilter,
+  headerLeftContent,
+  headerBottomContent,
+  feedTopContent,
+  emptyFeedState,
+  externalDeleteMode,
+  hideInternalDeleteButton
+}: { 
+  posts: any[], 
+  currentUser: any, 
+  sortFilter?: React.ReactNode,
+  headerLeftContent?: React.ReactNode,
+  headerBottomContent?: React.ReactNode,
+  feedTopContent?: React.ReactNode,
+  emptyFeedState?: React.ReactNode,
+  externalDeleteMode?: boolean,
+  hideInternalDeleteButton?: boolean
+}) {
   const t = useTranslations('Home')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
-  const [deleteMode, setDeleteMode] = useState(false)
+  const [internalDeleteMode, setInternalDeleteMode] = useState(false)
   const router = useRouter()
   
+  const deleteMode = externalDeleteMode !== undefined ? externalDeleteMode : internalDeleteMode;
   const hasAdmin = isAdmin(currentUser)
 
   const toggleSelect = (id: string) => {
@@ -51,37 +72,117 @@ export default function BulkDeleteFeed({ posts, currentUser }: { posts: any[], c
   }
 
   const handleToggleDeleteMode = () => {
-    setDeleteMode(prev => !prev)
+    setInternalDeleteMode(prev => !prev)
     setSelectedIds([])
   }
 
+  // Effect to clear selection when external delete mode turns off
+  React.useEffect(() => {
+    if (externalDeleteMode === false) {
+      setSelectedIds([])
+    }
+  }, [externalDeleteMode])
+
   if (!posts || posts.length === 0) {
     return (
-      <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
-        <p className="text-gray-500 mb-4">{t('emptyFeed')}</p>
-        {currentUser && (
-          <Link href="/posts/new" className="text-blue-500 hover:underline font-semibold">
-            {t('writeFirstPost')}
-          </Link>
+      <div className="flex flex-col gap-6">
+        {(!hideInternalDeleteButton || sortFilter || headerLeftContent) && (
+          <div className="mb-2 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div className="w-full sm:w-auto">
+              <div className="flex gap-4 mb-2 border-b border-gray-200">
+                {headerLeftContent}
+              </div>
+              {headerBottomContent && (
+                <div className="min-h-[1.25rem] flex items-center">
+                  {headerBottomContent}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {hasAdmin && !hideInternalDeleteButton && (
+                <button
+                  onClick={handleToggleDeleteMode}
+                  className={`text-xs font-semibold px-2 py-1 rounded-md border transition whitespace-nowrap ${
+                    deleteMode
+                      ? 'bg-red-50 text-red-600 border-red-300 hover:bg-red-100'
+                      : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
+                  }`}
+                >
+                  {deleteMode ? '삭제 취소' : '삭제'}
+                </button>
+              )}
+              {sortFilter && (
+                <div>
+                  {sortFilter}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {feedTopContent && (
+          <div>
+            {feedTopContent}
+          </div>
+        )}
+        
+        {emptyFeedState ? (
+          emptyFeedState
+        ) : (
+          <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+            <p className="text-gray-500 mb-4">{t('emptyFeed')}</p>
+            {currentUser && (
+              <Link href="/posts/new" className="text-blue-500 hover:underline font-semibold">
+                {t('writeFirstPost')}
+              </Link>
+            )}
+          </div>
         )}
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {hasAdmin && (
-        <div className="flex justify-end">
-          <button
-            onClick={handleToggleDeleteMode}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition ${
-              deleteMode
-                ? 'bg-red-50 text-red-600 border-red-300 hover:bg-red-100'
-                : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
-            }`}
-          >
-            {deleteMode ? '삭제 모드 끄기' : '삭제 모드'}
-          </button>
+    <div className="flex flex-col gap-2">
+      {(!hideInternalDeleteButton || sortFilter || headerLeftContent) && (
+        <div className="mb-2 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="w-full sm:w-auto">
+            <div className="flex gap-4 mb-2 border-b border-gray-200">
+              {headerLeftContent}
+            </div>
+            {headerBottomContent && (
+              <div className="min-h-[1.25rem] flex items-center">
+                {headerBottomContent}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {hasAdmin && !hideInternalDeleteButton && (
+              <button
+                onClick={handleToggleDeleteMode}
+                className={`text-xs font-semibold px-2 py-1 rounded-md border transition whitespace-nowrap ${
+                  deleteMode
+                    ? 'bg-red-50 text-red-600 border-red-300 hover:bg-red-100'
+                    : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200'
+                }`}
+              >
+                {deleteMode ? '삭제 취소' : '삭제'}
+              </button>
+            )}
+            {sortFilter && (
+              <div>
+                {sortFilter}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {feedTopContent && (
+        <div>
+          {feedTopContent}
         </div>
       )}
 

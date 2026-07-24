@@ -173,11 +173,10 @@ export default async function UserProfilePage({ params, searchParams }: { params
             <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gray-100 border-4 border-white shadow-sm flex items-center justify-center text-gray-300 text-3xl font-bold mb-4 bg-white">?</div>
           )}
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+          <span className="text-2xl sm:text-3xl leading-none">{['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'][profile.level || 1] || `[${profile.level || 1}]`}</span>
           <span className="break-all">{profile.display_name}</span>
-          {profile.is_ai ? (
-            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap">{t('aiAdmin')} (Tier {profile.level || 1})</span>
-          ) : (
-            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap">Lv.{profile.level || 1}</span>
+          {profile.is_ai && (
+            <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap">{t('aiAdmin')}</span>
           )}
         </h1>
         
