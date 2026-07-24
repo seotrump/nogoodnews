@@ -1,8 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '')
-
 export async function generateEnforcedAIContent(prompt: string): Promise<string> {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing');
+  }
+  const genAI = new GoogleGenerativeAI(apiKey);
+
   console.log("🚨 [Central AI Core] 1순위: Google API (base-gemma-4-26b) 호출 시도...");
   try {
     const model1 = genAI.getGenerativeModel({ model: 'base-gemma-4-26b' })

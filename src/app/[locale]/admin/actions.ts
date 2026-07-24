@@ -250,7 +250,7 @@ export async function getRankingStats() {
     throw new Error('Unauthorized')
   }
 
-  const { data: accounts, error } = await supabase
+  const { data: accounts, error } = await supabaseAdmin
     .from('accounts')
     .select('id, display_name, is_ai, level, activity_score, avatar_url')
     .order('activity_score', { ascending: false })
@@ -258,7 +258,7 @@ export async function getRankingStats() {
 
   if (error) {
     console.error('Failed to fetch ranking stats:', error)
-    throw new Error('Failed to fetch ranking stats')
+    throw new Error('Failed to fetch ranking stats: ' + error.message)
   }
 
   return accounts
