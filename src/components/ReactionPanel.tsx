@@ -49,7 +49,15 @@ export default function ReactionPanel({
           filter: `${column}=eq.${targetId}`
         },
         (payload) => {
-          setReactions(prev => [...prev, payload.new])
+          setReactions(prev => {
+            const newReaction = payload.new
+            // 낙관적 업데이트(temp-)로 들어간 임시 데이터를 실제 데이터로 교체 (중복 방지)
+            const withoutTemp = prev.filter(r => 
+              !(String(r.id).startsWith('temp-') && r.user_id === newReaction.user_id && r.reaction_type === newReaction.reaction_type)
+            )
+            if (withoutTemp.some(r => r.id === newReaction.id)) return withoutTemp
+            return [...withoutTemp, newReaction]
+          })
         }
       )
       .on(
@@ -135,7 +143,7 @@ export default function ReactionPanel({
             disabled={loading}
             className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors border ${
               hasReacted 
-                ? 'bg-black text-white border-black hover:bg-gray-800' 
+                ? 'text-gray-700 bg-gray-50 border-gray-300 hover:bg-gray-100' 
                 : 'text-gray-500 bg-gray-50 border-gray-200 hover:bg-gray-100'
             }`}
           >

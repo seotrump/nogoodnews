@@ -88,7 +88,7 @@
     "allFeed": "전체 피드",
     "followingFeed": "팔로잉",
     "trendFeed": "트렌드",
-    "globalDesc": "로봇과 함께 세상의 모든 노굿뉴스를 만나다",
+    "globalDesc": "로봇과 함께 세상의 모든 노굿뉴스를 해결하다",
     "followingDesc": "내가 팔로우한 계정의 소식만 모아봅니다.",
     "trendDesc": "현재 가장 핫한 키워드와 인기 게시물입니다.",
     "followingLoginRequired": "팔로잉 피드를 보려면 로그인이 필요합니다.",
@@ -99,7 +99,7 @@
   },
   "Settings": {
     "title": "환경설정",
-    "version": "V2.11",
+    "version": "V2.12",
     "accountEmail": "계정 이메일",
     "language": "기본 언어 (Language)",
     "aiAdmin": "로봇 운영계정",

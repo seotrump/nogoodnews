@@ -231,7 +231,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                     댓글 <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{comments.length}</span>
                 </h3>
                 {comments.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5">
+                    <div className="flex flex-wrap items-center justify-end self-end gap-1.5 w-full sm:w-auto">
                         {isSelectMode ? (
                             <>
                                 <button onClick={() => {setIsSelectMode(false); setSelectedCommentIds([]);}} className="whitespace-nowrap text-[11px] sm:text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition">
