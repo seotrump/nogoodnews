@@ -65,7 +65,43 @@ export default async function AnalyticsDashboardPage() {
     .slice(0, 5)
     .map(([path, views]) => ({ path, views }))
 
-  // 4. 유저 활동 퍼널 (가입 -> 글쓰기 -> 댓글쓰기)
+  // 4. 고급 지표 계산을 위한 30일 데이터 패치
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  thirtyDaysAgo.setHours(0, 0, 0, 0)
+
+  // 모든 30일 방문 기록 가져오기
+  const { data: visits30d } = await supabaseAdmin
+    .from('site_visits')
+    .select('session_id, user_id, created_at')
+    .gte('created_at', thirtyDaysAgo.toISOString())
+
+  // MAU (30일 순방문자)
+  const uniqueMauSet = new Set(visits30d?.map(v => v.session_id))
+  const mau = uniqueMauSet.size || 1 // 0 나누기 방지
+
+  // 스티키니스 (DAU / MAU)
+  const dauAvg = (Object.values(dauMap).reduce((sum, set) => sum + set.size, 0) / 7) || 0
+  const stickiness = ((dauAvg / mau) * 100).toFixed(1)
+
+  // 파워 유저 (최근 30일 중 15일 이상 접속한 세션)
+  const sessionDaysMap: Record<string, Set<string>> = {}
+  visits30d?.forEach(v => {
+    const dateStr = v.created_at.split('T')[0]
+    if (!sessionDaysMap[v.session_id]) sessionDaysMap[v.session_id] = new Set()
+    sessionDaysMap[v.session_id].add(dateStr)
+  })
+  const powerUsersCount = Object.values(sessionDaysMap).filter(days => days.size >= 15).length
+
+  // 인게이지먼트 비율 (최근 30일 활동 유저 비율)
+  const { count: recentPosts } = await supabaseAdmin.from('posts').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString())
+  const { count: recentComments } = await supabaseAdmin.from('comments').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString())
+  const { count: recentReactions } = await supabaseAdmin.from('reactions').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString())
+  
+  const totalRecentActions = (recentPosts || 0) + (recentComments || 0) + (recentReactions || 0)
+  const actionsPerUser = (totalRecentActions / mau).toFixed(1)
+
+  // 퍼널 데이터
   const { data: postAuthors } = await supabaseAdmin.from('posts').select('author_id')
   const { data: commentAuthors } = await supabaseAdmin.from('comments').select('author_id')
   const { data: reactionAuthors } = await supabaseAdmin.from('reactions').select('user_id')
@@ -75,11 +111,18 @@ export default async function AnalyticsDashboardPage() {
   const uniqueReactionAuthors = new Set(reactionAuthors?.map(r => r.user_id)).size
 
   const funnelData = [
-    { name: '회원가입', value: totalUsers || 0 },
+    { name: '전체 유저(MAU)', value: mau },
     { name: '리액션 경험', value: uniqueReactionAuthors },
     { name: '댓글 작성', value: uniqueCommentAuthors },
     { name: '게시글 작성', value: uniquePostAuthors }
   ]
+
+  const advancedMetrics = {
+    stickiness,
+    powerUsersCount,
+    actionsPerUser,
+    mau
+  }
 
   return (
     <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 bg-gray-50 min-h-screen">
@@ -101,7 +144,8 @@ export default async function AnalyticsDashboardPage() {
       <PremiumAnalyticsCharts 
         dauData={dauData} 
         topPaths={topPaths} 
-        funnelData={funnelData} 
+        funnelData={funnelData}
+        advancedMetrics={advancedMetrics}
       />
     </div>
   )

@@ -20,10 +20,16 @@ type PremiumAnalyticsChartsProps = {
   dauData: { date: string; visits: number }[]
   topPaths: { path: string; views: number }[]
   funnelData: { name: string; value: number }[]
+  advancedMetrics?: {
+    stickiness: string
+    powerUsersCount: number
+    actionsPerUser: string
+    mau: number
+  }
 }
 
-export default function PremiumAnalyticsCharts({ dauData, topPaths, funnelData }: PremiumAnalyticsChartsProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'funnel' | 'paths'>('overview')
+export default function PremiumAnalyticsCharts({ dauData, topPaths, funnelData, advancedMetrics }: PremiumAnalyticsChartsProps) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'funnel' | 'paths' | 'advanced'>('overview')
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8">
@@ -44,6 +50,13 @@ export default function PremiumAnalyticsCharts({ dauData, topPaths, funnelData }
           onClick={() => setActiveTab('paths')}
           label="인기 방문 페이지"
         />
+        {advancedMetrics && (
+          <TabButton 
+            active={activeTab === 'advanced'} 
+            onClick={() => setActiveTab('advanced')}
+            label="고급 인사이트 👑"
+          />
+        )}
       </div>
 
       {/* 차트 영역 */}
@@ -118,6 +131,58 @@ export default function PremiumAnalyticsCharts({ dauData, topPaths, funnelData }
                 <Bar dataKey="views" name="조회수" fill="#10b981" barSize={32} radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        )}
+
+        {activeTab === 'advanced' && advancedMetrics && (
+          <div className="h-full flex flex-col space-y-6 overflow-y-auto pr-2 pb-4">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">프리미엄 핵심 성장 지표 (최근 30일 기준)</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gradient-to-br from-indigo-50 to-white p-5 rounded-2xl border border-indigo-100">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-indigo-800 font-semibold">스티키니스 (Stickiness)</h4>
+                  <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full font-bold">DAU / MAU</span>
+                </div>
+                <div className="text-4xl font-extrabold text-indigo-900 mb-2">{advancedMetrics.stickiness}%</div>
+                <p className="text-sm text-indigo-600/80">
+                  한 달 접속자 중 얼마나 많은 유저가 <strong>매일 습관처럼</strong> 접속하는지 보여줍니다. 통상 20%를 넘으면 대성공으로 평가받습니다.
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-pink-50 to-white p-5 rounded-2xl border border-pink-100">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-pink-800 font-semibold">광팬 지수 (Power Users)</h4>
+                  <span className="bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded-full font-bold">L30 &gt; 15</span>
+                </div>
+                <div className="text-4xl font-extrabold text-pink-900 mb-2">{advancedMetrics.powerUsersCount}명</div>
+                <p className="text-sm text-pink-600/80">
+                  최근 30일 중 <strong>절반(15일) 이상 출석</strong>한 핵심 유저 수입니다. 커뮤니티의 분위기를 주도하는 상위 1% VIP입니다.
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-emerald-50 to-white p-5 rounded-2xl border border-emerald-100">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-emerald-800 font-semibold">평균 인게이지먼트</h4>
+                  <span className="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-bold">Actions / MAU</span>
+                </div>
+                <div className="text-4xl font-extrabold text-emerald-900 mb-2">{advancedMetrics.actionsPerUser}회</div>
+                <p className="text-sm text-emerald-600/80">
+                  유저 1명당 평균적으로 발생시키는 글, 댓글, 리액션의 합계입니다. 단순히 눈팅만 하는지 활발히 참여하는지 알 수 있습니다.
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-amber-50 to-white p-5 rounded-2xl border border-amber-100">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-amber-800 font-semibold">월간 활성 유저</h4>
+                  <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-bold">MAU</span>
+                </div>
+                <div className="text-4xl font-extrabold text-amber-900 mb-2">{advancedMetrics.mau}명</div>
+                <p className="text-sm text-amber-600/80">
+                  최근 30일 동안 우리 서비스에 1번이라도 접속한 <strong>순수 활성 방문자</strong>의 총합입니다.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>
