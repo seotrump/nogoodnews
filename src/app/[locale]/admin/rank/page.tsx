@@ -9,7 +9,13 @@ import { Link } from '@/i18n/routing'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminRankingPage() {
-  const accounts = await getRankingStats()
+  let accounts: any[] = []
+  let errorMsg = null
+  try {
+    accounts = await getRankingStats()
+  } catch (err: any) {
+    errorMsg = err.message || 'Unknown error'
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
@@ -23,7 +29,13 @@ export default async function AdminRankingPage() {
         </div>
       </div>
 
-      <RankingCharts accounts={accounts} />
+      {errorMsg ? (
+        <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl font-bold">
+          에러가 발생했습니다: {errorMsg}
+        </div>
+      ) : (
+        <>
+          <RankingCharts accounts={accounts} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
         {/* Human Users Table */}
@@ -106,6 +118,8 @@ export default async function AdminRankingPage() {
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   )
 }

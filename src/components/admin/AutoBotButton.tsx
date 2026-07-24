@@ -15,7 +15,10 @@ export default function AutoBotButton() {
     try {
       // 1. 기획
       const res = await fetch('/api/ai-bot-auto-create', { method: 'POST' })
-      if (!res.ok) throw new Error('로봇 기획에 실패했습니다.')
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || '로봇 기획에 실패했습니다.');
+      }
       const { displayName, coreIdentity } = await res.json()
       
       // 2. 튜닝

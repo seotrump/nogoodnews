@@ -261,5 +261,5 @@ export async function getRankingStats() {
     throw new Error('Failed to fetch ranking stats: ' + error.message)
   }
 
-  return accounts
+  return accounts || []
 }
