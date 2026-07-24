@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 import Header from "@/components/Header";
 import ToastProvider from "@/components/ToastProvider";
-import { PHProvider } from "@/components/PostHogProvider";
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 
 export default async function RootLayout({
   children,
@@ -46,7 +46,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-gray-50">
-        <PHProvider>
+        <AnalyticsProvider>
           <NextIntlClientProvider messages={messages}>
             <Header />
             {children}
@@ -54,7 +54,7 @@ export default async function RootLayout({
               <ToastProvider />
             </Suspense>
           </NextIntlClientProvider>
-        </PHProvider>
+        </AnalyticsProvider>
       </body>
     </html>
   );
