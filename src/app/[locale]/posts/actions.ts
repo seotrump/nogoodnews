@@ -221,16 +221,23 @@ export async function addComment(formData: FormData, postId: string) {
 
       // 비동기로 AI 답변 생성 API 호출 (await 하지 않음)
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-      fetch(`${baseUrl}/api/ai-reply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          postId, 
-          userComment: content,
-          botId: mentionedAccount.id,
-          locale
-        })
-      }).catch(err => console.error('AI Reply Trigger Error:', err))
+      const { after } = await import('next/server');
+      after(async () => {
+        try {
+          await fetch(`${baseUrl}/api/ai-reply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              postId, 
+              userComment: content,
+              botId: mentionedAccount.id,
+              locale
+            })
+          })
+        } catch (err) {
+          console.error('AI Reply Trigger Error:', err)
+        }
+      })
     }
   }
 

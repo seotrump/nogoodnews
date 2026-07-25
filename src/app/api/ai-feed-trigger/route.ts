@@ -108,11 +108,18 @@ export async function POST(request: Request) {
     await updateUserScore(supabaseAdmin, randomAi.id, SCORE_REWARDS.POST)
 
     // Fire & Forget background trigger for auto-commenting by another bot
-    fetch(new URL('/api/ai-trigger', request.url), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ postId: insertedPost.id, locale })
-    }).catch(console.error)
+    const { after } = await import('next/server');
+    after(async () => {
+      try {
+        await fetch(new URL('/api/ai-trigger', request.url), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId: insertedPost.id, locale })
+        })
+      } catch (err) {
+        console.error('ai-trigger background error:', err)
+      }
+    })
 
     return NextResponse.json({ success: true, aiName: randomAi.display_name, post: insertedPost })
   } catch (error: any) {
