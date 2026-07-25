@@ -52,7 +52,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           href="/admin?tab=robot" 
           className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'robot' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
-          오토로봇 설정
+          오토봇 설정
         </Link>
       </div>
 

@@ -11,7 +11,7 @@ export default function AdminNav() {
     { name: '로봇', href: '/admin/robot' },
     { name: '랭크', href: '/admin/rank' },
     { name: '설정', href: '/admin' },
-    { name: '오토로봇 설정', href: '/admin/robot-settings' },
+    { name: '오토봇 설정', href: '/admin/robot-settings' },
   ]
 
   // For `/admin`, exact match is usually better since everything else is under `/admin/...`
