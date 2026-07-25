@@ -4,12 +4,14 @@ import { useState } from 'react'
 import { Link } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import { suspendAccount, deleteAccount } from '../actions'
+import BadgeManagementModal from '@/components/admin/BadgeManagementModal'
 
 export default function UsersClient({ accounts, currentUserEmail, currentTab = 'list' }: { accounts: any[], currentUserEmail?: string, currentTab?: string }) {
   const t = useTranslations('Admin')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedBadgeUser, setSelectedBadgeUser] = useState<any>(null)
   const limit = 15
 
   const filteredAccounts = accounts
@@ -137,6 +139,14 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
                           </button>
                         </>
                       )}
+                      {currentTab === 'badges' && (
+                        <button 
+                          onClick={() => setSelectedBadgeUser(userItem)}
+                          className={`inline-block border font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap ${(userItem.badges || []).length > 0 ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
+                        >
+                          뱃지 관리
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -168,6 +178,16 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
             ))}
           </div>
         </div>
+      )}
+
+      {selectedBadgeUser && (
+        <BadgeManagementModal
+          isOpen={!!selectedBadgeUser}
+          onClose={() => setSelectedBadgeUser(null)}
+          userId={selectedBadgeUser.id}
+          userName={selectedBadgeUser.display_name}
+          badges={selectedBadgeUser.badges || []}
+        />
       )}
     </div>
   )

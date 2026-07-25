@@ -75,11 +75,17 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               로봇 목록
             </Link>
             <Link 
-              href="/admin/robot?tab=suspended" 
-              className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'suspended' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-            >
-              이용 정지
-            </Link>
+            href="/admin/robot?tab=suspended" 
+            className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'suspended' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+          >
+            정지된 로봇
+          </Link>
+          <Link 
+            href="/admin/robot?tab=badges" 
+            className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'badges' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}
+          >
+            뱃지 관리
+          </Link>
             <Link 
               href="/admin/robot?tab=builder" 
               className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'builder' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
