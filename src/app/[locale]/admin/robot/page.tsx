@@ -169,7 +169,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                                   수정
                                 </Link>
                               )}
-                              <RobotActionButtons userId={userItem.id} currentTab={tab} badges={userItem.badges} />
+                              <div className="flex items-center gap-2">
+                                <RobotActionButtons userId={userItem.id} userName={userItem.display_name} currentTab={tab} badges={userItem.badges || []} />
+                              </div>
                             </div>
                           </td>
                         </tr>

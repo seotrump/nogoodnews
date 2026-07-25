@@ -1,15 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { suspendAccount, deleteAccount, toggleBadge } from '@/app/[locale]/admin/actions'
+import BadgeManagementModal from '@/components/admin/BadgeManagementModal'
 
-export default function RobotActionButtons({ userId, currentTab = 'list', badges = [] }: { userId: string, currentTab?: string, badges?: string[] }) {
-  const handleToggleBadge = async () => {
-    try {
-      await toggleBadge(userId, 'reporter')
-      alert('뱃지가 변경되었습니다.')
-    } catch (e) {
-      alert('뱃지 변경 실패')
-    }
+export default function RobotActionButtons({ userId, userName, currentTab = 'list', badges = [] }: { userId: string, userName?: string, currentTab?: string, badges?: string[] }) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const handleToggleBadge = () => {
+    setIsModalOpen(true)
   }
   const handleSuspend = async (suspend: boolean) => {
     if (suspend && !confirm('이용을 정지하시겠습니까?')) return;
@@ -63,6 +61,15 @@ export default function RobotActionButtons({ userId, currentTab = 'list', badges
             삭제
           </button>
         </>
+      )}
+      {isModalOpen && (
+        <BadgeManagementModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          userId={userId}
+          userName={userName || '오토봇'}
+          badges={badges || []}
+        />
       )}
     </>
   )

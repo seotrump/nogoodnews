@@ -7,12 +7,14 @@ import toast from 'react-hot-toast'
 import UserBadge from '@/components/UserBadge'
 import { useTranslations } from 'next-intl'
 import { suspendAccount, deleteAccount, toggleBadge } from '../actions'
+import BadgeManagementModal from '@/components/admin/BadgeManagementModal'
 
 export default function UsersClient({ accounts, currentUserEmail, currentTab = 'list' }: { accounts: any[], currentUserEmail?: string, currentTab?: string }) {
   const t = useTranslations('Admin')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedBadgeUser, setSelectedBadgeUser] = useState<any>(null)
   const limit = 15
 
   const filteredAccounts = accounts
@@ -120,15 +122,8 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
                             수정
                           </Link>
                           <button 
-                            onClick={async () => {
-                              try {
-                                await toggleBadge(userItem.id, 'reporter')
-                                toast.success('뱃지가 변경되었습니다.')
-                              } catch (e) {
-                                toast.error('뱃지 변경 실패')
-                              }
-                            }}
-                            className={`inline-block border font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap ${(userItem.badges || []).includes('reporter') ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
+                            onClick={() => setSelectedBadgeUser(userItem)}
+                            className={`inline-block border font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap ${(userItem.badges || []).length > 0 ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
                           >
                             뱃지 관리
                           </button>
@@ -187,6 +182,16 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
             ))}
           </div>
         </div>
+      )}
+
+      {selectedBadgeUser && (
+        <BadgeManagementModal
+          isOpen={!!selectedBadgeUser}
+          onClose={() => setSelectedBadgeUser(null)}
+          userId={selectedBadgeUser.id}
+          userName={selectedBadgeUser.display_name}
+          badges={selectedBadgeUser.badges || []}
+        />
       )}
     </div>
   )
