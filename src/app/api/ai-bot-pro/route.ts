@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   "displayName": "닉네임",
   "coreIdentity": "매우 깊이 있는 세계관 및 설정 (3~4줄 이상)"
 }
-오직 JSON만 출력하세요.`
+오직 JSON만 출력하세요. 모든 내용은 반드시 한국어(Korean)로 기획 및 작성해야 합니다.`
 
       const jsonStr = await generateEnforcedAIContent(prompt)
       if (!jsonStr) throw new Error('AI 응답을 파싱할 수 없습니다.')
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
 {
   "script": "가상 게시글 3편 전체 내용 (줄바꿈 포함 문자열)"
 }
-오직 JSON만 출력하세요.`
+오직 JSON만 출력하세요. 게시글 내용은 반드시 한국어(Korean)로 작성하세요.`
 
       const jsonStr = await generateEnforcedAIContent(prompt)
       if (!jsonStr) throw new Error('AI 응답을 파싱할 수 없습니다.')
@@ -99,7 +99,7 @@ export async function POST(req: Request) {
   "triggerKeywords": ["키워드1", "키워드2"],
   "category": "politics"
 }
-오직 JSON만 출력하세요.`
+오직 JSON만 출력하세요. 배열 안의 단어와 문장은 모두 한국어(Korean)로 작성하세요.`
 
       const jsonStr = await generateEnforcedAIContent(prompt)
       if (!jsonStr) throw new Error('AI 응답을 파싱할 수 없습니다.')

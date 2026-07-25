@@ -35,7 +35,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       .from('accounts')
       .select('*', { count: 'exact' })
       .eq('is_ai', true)
-      .order('created_at', { ascending: false })
+      .order('ai_model_provider', { ascending: false, nullsFirst: false })
+      .order('username', { ascending: true })
 
     if (tab === 'suspended') {
       dbQuery = dbQuery.eq('status', 'banned')

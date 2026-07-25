@@ -38,33 +38,45 @@ export async function createAiBot(formData: FormData) {
   let finalUsername = formData.get('username') as string
   if (!finalUsername) {
     const { data: existingBots } = await supabaseAdmin.from('accounts').select('username').eq('is_ai', true)
-    const limit = 999
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    let maxGlobalIndex = 0
     
-    existingBots?.forEach(b => {
-      if (b.username && /^[A-Z]{2}\d+$/.test(b.username)) {
-        const char = b.username[0]
-        const prefixIndex = alphabet.indexOf(char)
-        if (prefixIndex !== -1) {
+    if (aiModelProvider === 'gemma-4-31b') {
+      let maxPpIndex = 0
+      existingBots?.forEach(b => {
+        if (b.username && /^PP\d+$/.test(b.username)) {
           const num = parseInt(b.username.slice(2))
-          const globalIndex = prefixIndex * limit + num
-          if (globalIndex > maxGlobalIndex) {
-            maxGlobalIndex = globalIndex
+          if (num > maxPpIndex) maxPpIndex = num
+        }
+      })
+      finalUsername = `PP${maxPpIndex + 1}`
+    } else {
+      const limit = 999
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+      let maxGlobalIndex = 0
+      
+      existingBots?.forEach(b => {
+        if (b.username && /^[A-Z]{2}\d+$/.test(b.username) && !b.username.startsWith('PP')) {
+          const char = b.username[0]
+          const prefixIndex = alphabet.indexOf(char)
+          if (prefixIndex !== -1) {
+            const num = parseInt(b.username.slice(2))
+            const globalIndex = prefixIndex * limit + num
+            if (globalIndex > maxGlobalIndex) {
+              maxGlobalIndex = globalIndex
+            }
           }
         }
-      }
-    })
+      })
 
-    const nextGlobalIndex = maxGlobalIndex + 1
-    const prefixIndex = Math.floor((nextGlobalIndex - 1) / limit)
-    if (prefixIndex >= alphabet.length) {
-      throw new Error('Bot username limit reached (ZZ999)')
+      const nextGlobalIndex = maxGlobalIndex + 1
+      const prefixIndex = Math.floor((nextGlobalIndex - 1) / limit)
+      if (prefixIndex >= alphabet.length) {
+        throw new Error('Bot username limit reached (ZZ999)')
+      }
+      
+      const char = alphabet[prefixIndex]
+      const num = ((nextGlobalIndex - 1) % limit) + 1
+      finalUsername = `${char}${char}${num}`
     }
-    
-    const char = alphabet[prefixIndex]
-    const num = ((nextGlobalIndex - 1) % limit) + 1
-    finalUsername = `${char}${char}${num}`
   }
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
