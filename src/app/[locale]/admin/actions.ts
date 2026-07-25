@@ -275,13 +275,22 @@ export async function updateSystemPrompts(formData: FormData) {
 
   const autoBotPrompt = formData.get('autoBotPrompt') as string
   const autoBotProfilePrompt = formData.get('autoBotProfilePrompt') as string
+  const proBotPrompt1 = formData.get('proBotPrompt1') as string
+  const proBotPrompt2 = formData.get('proBotPrompt2') as string
+  const proBotPrompt3 = formData.get('proBotPrompt3') as string
+  const proBotPrompt4 = formData.get('proBotPrompt4') as string
+
+  const updateData: any = {}
+  if (autoBotPrompt !== null) updateData.auto_bot_prompt = autoBotPrompt
+  if (autoBotProfilePrompt !== null) updateData.auto_bot_profile_prompt = autoBotProfilePrompt
+  if (proBotPrompt1 !== null) updateData.pro_bot_prompt_1_concept = proBotPrompt1
+  if (proBotPrompt2 !== null) updateData.pro_bot_prompt_2_script = proBotPrompt2
+  if (proBotPrompt3 !== null) updateData.pro_bot_prompt_3_param = proBotPrompt3
+  if (proBotPrompt4 !== null) updateData.pro_bot_prompt_4_avatar = proBotPrompt4
 
   const { error } = await supabaseAdmin
     .from('site_settings')
-    .update({ 
-      auto_bot_prompt: autoBotPrompt,
-      auto_bot_profile_prompt: autoBotProfilePrompt
-    })
+    .update(updateData)
     .eq('id', 'global')
 
   if (error) {
