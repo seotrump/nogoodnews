@@ -116,7 +116,7 @@ export default function AutoBotButton() {
     const formData = new FormData()
     formData.append('displayName', displayName)
     formData.append('username', '') // 서버에서 자동 생성
-    formData.append('aiModelProvider', 'gemma-4-31b') // 오토튜닝시 모델 강제할당
+    formData.append('aiModelProvider', typeName === '라이트' ? 'gemma-4-26b' : 'gemma-4-31b') // 라이트는 26b, 프로는 31b 할당
     formData.append('category', data.category || 'politics')
     formData.append('botTier', '1')
     formData.append('status', 'active')
