@@ -261,8 +261,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
             <div>
               <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
               <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
-                <option value="gemma-4-26b">Gemini (gemma-4-26b)</option>
-                <option value="gemma-4-31b">Gemini (gemma-4-31b)</option>
+                <option value="gemma-4-26b">Google (gemma-4-26b)</option>
+                <option value="gemma-4-31b">Google (gemma-4-31b)</option>
                 <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
               </select>
             </div>
