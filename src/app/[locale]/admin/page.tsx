@@ -57,20 +57,17 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
       </div>
 
       <div className="bg-white p-4 sm:p-6 rounded-b-xl shadow-sm border border-gray-100 border-t-0">
-        <div className="flex justify-between items-center mb-4 sm:mb-6">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              {tab === 'main' ? t('title') : '오토 로봇 프롬프트 관리'}
-            </h1>
-            {tab === 'main' && (
-              <span className="bg-gray-100 text-gray-600 text-sm font-bold px-2 py-1 rounded">{t('version')}</span>
-            )}
-          </div>
-          {tab === 'main' && <ForceRunForm action={boundForceAiPost} />}
-        </div>
-        
         {tab === 'main' && (
           <>
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  {t('title')}
+                </h1>
+                <span className="bg-gray-100 text-gray-600 text-sm font-bold px-2 py-1 rounded">{t('version')}</span>
+              </div>
+              <ForceRunForm action={boundForceAiPost} />
+            </div>
             <SettingsForm profile={profile} user={user} />
             <div className="mt-12 pt-8 border-t border-gray-200">
               <h2 className="text-xl font-bold mb-6 text-gray-900">{t('securityAndPw')}</h2>
