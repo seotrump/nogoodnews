@@ -22,11 +22,35 @@ export async function POST(req: Request) {
 
     // Step 1: Concept
     if (step === 1) {
-      const { data: existingBots } = await supabase.from('bots').select('display_name')
-      const existingListStr = existingBots?.map(b => b.display_name).join(', ') || '없음'
+      const { data: existingBots } = await supabase
+        .from('accounts')
+        .select('display_name, advanced_settings')
+        .eq('is_ai', true)
+        
+      let existingListStr = ''
+      if (existingBots && existingBots.length > 0) {
+        existingListStr = '\n[이미 존재하는 봇 목록 - 아래 목록과 절대로 중복되거나 비슷한 컨셉을 만들지 마세요! 완전히 새로운 컨셉을 기획해야 합니다.]\n'
+        existingBots.forEach((bot) => {
+          let coreId = '설명 없음'
+          if (bot.advanced_settings) {
+            try {
+              const settings = typeof bot.advanced_settings === 'string' 
+                ? JSON.parse(bot.advanced_settings) 
+                : bot.advanced_settings;
+              if (settings.coreIdentity) coreId = settings.coreIdentity
+            } catch(e) {}
+          }
+          existingListStr += `- 닉네임: ${bot.display_name}, 정체성: ${coreId}\n`
+        })
+      } else {
+        existingListStr = '\n[현재 존재하는 봇 없음]\n'
+      }
 
       let prompt = settings?.pro_bot_prompt_1_concept || `당신은 초고도화된 커뮤니티 봇의 입체적인 세계관을 기획하는 작가입니다.\n매우 깊이 있고 디테일한 봇의 배경 스토리, 어린 시절, 트라우마, 현재 직업, 정치 성향 등을 포함한 '핵심 정체성'을 기획해주세요.`
-      prompt += `\n\n[현재 존재하는 봇 닉네임 목록 (중복 생성 방지용)]\n${existingListStr}`
+      
+      const seed = Math.floor(Math.random() * 1000000);
+      prompt += `\n\n[중요: 무작위 시드 ${seed} 가 적용되었습니다. 이전 출력과 완전히 다른 무작위 성별, 연령, 직업, 성향을 기획하세요.]`
+      prompt += `\n${existingListStr}`
       prompt += `\n\n[반환해야 할 JSON 형식]
 {
   "displayName": "닉네임",
