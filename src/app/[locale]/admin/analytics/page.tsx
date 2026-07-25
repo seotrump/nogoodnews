@@ -4,8 +4,13 @@ import { redirect } from 'next/navigation'
 import PremiumAnalyticsCharts from '@/components/PremiumAnalyticsCharts'
 import CoreGrowthMetrics from '@/components/CoreGrowthMetrics'
 import { isAdmin } from '@/utils/auth'
+import { Link } from '@/i18n/routing'
+import { getRankingStats, resetUserScore } from '../actions'
+import RankingCharts from '@/components/admin/RankingCharts'
+import ResetButton from '@/components/admin/ResetButton'
 
-export default async function AnalyticsDashboardPage() {
+export default async function AnalyticsDashboardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab = 'overview' } = await searchParams
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -13,6 +18,140 @@ export default async function AnalyticsDashboardPage() {
     redirect('/')
   }
 
+  // --- 랭킹보드 탭 로직 ---
+  if (tab === 'rank') {
+    let accounts: any[] = []
+    let errorMsg = null
+    try {
+      accounts = await getRankingStats()
+    } catch (err: any) {
+      errorMsg = err.message || 'Unknown error'
+    }
+
+    return (
+      <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        
+        {/* Inner Tabs */}
+        <div className="flex flex-row gap-2 border-b border-gray-200 pb-2">
+          <Link 
+            href="/admin/analytics?tab=overview" 
+            className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'overview' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+          >
+            이용현황
+          </Link>
+          <Link 
+            href="/admin/analytics?tab=rank" 
+            className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'rank' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+          >
+            랭킹보드
+          </Link>
+        </div>
+
+        <div className="bg-white p-4 sm:p-6 rounded-b-xl shadow-sm border border-gray-100 border-t-0 flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">통합 랭킹 대시보드</h1>
+              <p className="mt-2 text-sm sm:text-base text-gray-500">일반 사용자 및 AI 봇의 활동 점수와 랭킹 현황입니다.</p>
+            </div>
+          </div>
+
+          {errorMsg ? (
+            <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl font-bold">
+              에러가 발생했습니다: {errorMsg}
+            </div>
+          ) : (
+            <>
+              <RankingCharts accounts={accounts} />
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+                {/* Human Users Table */}
+                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
+                    <h3 className="font-bold text-gray-800">일반 유저 랭킹</h3>
+                  </div>
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
+                        <th className="p-3">순위</th>
+                        <th className="p-3">계정</th>
+                        <th className="p-3 text-center">레벨</th>
+                        <th className="p-3 text-right">점수</th>
+                        <th className="p-3 text-center">관리</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {accounts.filter(a => !a.is_ai).map((acc, index) => (
+                        <tr key={acc.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="p-3 font-bold text-gray-500">{index + 1}</td>
+                          <td className="p-3">
+                            <Link href={`/users/${acc.id}`} className="flex items-center gap-2 hover:underline">
+                              {acc.avatar_url ? (
+                                <img src={acc.avatar_url} alt="Avatar" className="w-6 h-6 rounded border bg-gray-100 object-cover" />
+                              ) : (
+                                <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">?</div>
+                              )}
+                              <span className="font-semibold text-gray-800 text-sm">{acc.display_name || '알 수 없음'}</span>
+                            </Link>
+                          </td>
+                          <td className="p-3 font-bold text-gray-700 text-sm text-center">{acc.level || 1}</td>
+                          <td className="p-3 text-right font-bold text-gray-700">{acc.activity_score || 0}</td>
+                          <td className="p-3 text-center">
+                            <ResetButton resetAction={resetUserScore} userId={acc.id} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* AI Bots Table */}
+                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
+                    <h3 className="font-bold text-gray-800">AI 봇 랭킹</h3>
+                  </div>
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
+                        <th className="p-3">순위</th>
+                        <th className="p-3">봇 이름</th>
+                        <th className="p-3 text-center">레벨</th>
+                        <th className="p-3 text-right">점수</th>
+                        <th className="p-3 text-center">관리</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {accounts.filter(a => a.is_ai).map((acc, index) => (
+                        <tr key={acc.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="p-3 font-bold text-gray-500">{index + 1}</td>
+                          <td className="p-3">
+                            <Link href={`/users/${acc.id}`} className="flex items-center gap-2 hover:underline">
+                              {acc.avatar_url ? (
+                                <img src={acc.avatar_url} alt="Avatar" className="w-6 h-6 rounded border bg-gray-100 object-cover" />
+                              ) : (
+                                <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">Bot</div>
+                              )}
+                              <span className="font-semibold text-gray-800 text-sm">{acc.display_name || '알 수 없음'}</span>
+                            </Link>
+                          </td>
+                          <td className="p-3 font-bold text-gray-700 text-sm text-center">{acc.level || 1}</td>
+                          <td className="p-3 text-right font-bold text-gray-700">{acc.activity_score || 0}</td>
+                          <td className="p-3 text-center">
+                            <ResetButton resetAction={resetUserScore} userId={acc.id} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // --- 이용현황 탭 로직 (Overview) ---
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -99,13 +238,13 @@ export default async function AnalyticsDashboardPage() {
   const { count: recentComments } = await supabaseAdmin.from('comments').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString())
   const { count: recentReactions } = await supabaseAdmin.from('reactions').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString())
   
-  const totalRecentActions = (recentPosts || 0) + (recentComments || 0) + (recentReactions || 0)
-  const actionsPerUser = (totalRecentActions / mau).toFixed(1)
+  const totalInteractions = (recentPosts || 0) + (recentComments || 0) + (recentReactions || 0)
+  const actionsPerUser = (totalInteractions / mau).toFixed(1)
 
-  // 퍼널 데이터
-  const { data: postAuthors } = await supabaseAdmin.from('posts').select('author_id')
-  const { data: commentAuthors } = await supabaseAdmin.from('comments').select('author_id')
-  const { data: reactionAuthors } = await supabaseAdmin.from('reactions').select('user_id')
+  // 작성 유저 중복 제거를 위한 데이터 패치
+  const { data: postAuthors } = await supabaseAdmin.from('posts').select('author_id').gte('created_at', thirtyDaysAgo.toISOString())
+  const { data: commentAuthors } = await supabaseAdmin.from('comments').select('author_id').gte('created_at', thirtyDaysAgo.toISOString())
+  const { data: reactionAuthors } = await supabaseAdmin.from('reactions').select('user_id').gte('created_at', thirtyDaysAgo.toISOString())
 
   const uniquePostAuthors = new Set(postAuthors?.map(p => p.author_id)).size
   const uniqueCommentAuthors = new Set(commentAuthors?.map(c => c.author_id)).size
@@ -136,29 +275,48 @@ export default async function AnalyticsDashboardPage() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 mt-4 sm:mt-8 mb-20 flex flex-col gap-4 sm:gap-6">
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">서비스 통합 대시보드</h1>
-        <p className="mt-2 text-sm sm:text-base text-gray-500">
-          우리 서비스의 모든 핵심 성장 지표를 한눈에 파악하세요.
-        </p>
+    <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      
+      {/* Inner Tabs */}
+      <div className="flex flex-row gap-2 border-b border-gray-200 pb-2">
+        <Link 
+          href="/admin/analytics?tab=overview" 
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'overview' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+        >
+          이용현황
+        </Link>
+        <Link 
+          href="/admin/analytics?tab=rank" 
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'rank' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+        >
+          랭킹보드
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-10">
-        {/* 요약 카드들 */}
-        <StatCard title="총 가입 유저" value={`${totalUsers || 0} 명`} color="blue" icon={<UserIcon />} />
-        <StatCard title="오늘 순방문자" value={`${uniqueTodayVisitors} 명`} color="green" icon={<EyeIcon />} />
-        <StatCard title="총 게시글" value={`${totalPosts || 0} 개`} color="purple" icon={<DocumentIcon />} />
-        <StatCard title="총 반응 (댓글/리액션)" value={`${(totalComments || 0) + (totalReactions || 0)} 개`} color="pink" icon={<HeartIcon />} />
+      <div className="bg-white p-4 sm:p-6 rounded-b-xl shadow-sm border border-gray-100 border-t-0 flex flex-col gap-6">
+        <div className="mb-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">서비스 이용현황</h1>
+          <p className="mt-2 text-sm sm:text-base text-gray-500">
+            우리 서비스의 모든 핵심 성장 지표를 한눈에 파악하세요.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+          {/* 요약 카드들 */}
+          <StatCard title="총 가입 유저" value={`${totalUsers || 0} 명`} color="blue" icon={<UserIcon />} />
+          <StatCard title="오늘 순방문자" value={`${uniqueTodayVisitors} 명`} color="green" icon={<EyeIcon />} />
+          <StatCard title="총 게시글" value={`${totalPosts || 0} 개`} color="purple" icon={<DocumentIcon />} />
+          <StatCard title="총 반응 (댓글/리액션)" value={`${(totalComments || 0) + (totalReactions || 0)} 개`} color="pink" icon={<HeartIcon />} />
+        </div>
+
+        <CoreGrowthMetrics metrics={advancedMetrics} />
+
+        <PremiumAnalyticsCharts 
+          dauData={dauData} 
+          topPaths={topPaths} 
+          funnelData={funnelData}
+        />
       </div>
-
-      <CoreGrowthMetrics metrics={advancedMetrics} />
-
-      <PremiumAnalyticsCharts 
-        dauData={dauData} 
-        topPaths={topPaths} 
-        funnelData={funnelData}
-      />
     </div>
   )
 }
