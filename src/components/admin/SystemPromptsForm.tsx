@@ -122,7 +122,6 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
           >
             기본값 복원
           </button>
-          
           <button
             type="submit"
             disabled={isPending}
@@ -131,10 +130,6 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             {isPending ? '저장 중...' : '프롬프트 저장'}
           </button>
         </div>
-      </div>
-
-      <div className="prose prose-sm text-gray-500 max-w-none mb-2">
-        <p>이곳에서 오토 로봇 생성 시 파이프라인 단계별로 사용되는 AI 프롬프트를 세밀하게 조정할 수 있습니다.</p>
       </div>
 
       {/* Top Level Tabs - Only show if in 'robot' context. Feed context handles its own display. */}
