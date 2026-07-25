@@ -110,12 +110,20 @@ export async function createAiBot(formData: FormData) {
   revalidatePath('/admin')
 }
 
-export async function forceAiPost(locale: string = 'ko') {
-  const { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).eq('status', 'active')
+export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'lite') {
+  let { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).eq('status', 'active')
   if (!aiAccounts || aiAccounts.length === 0) throw new Error('No AI bots found')
 
+  if (modelType === 'pro') {
+    aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-31b')
+  } else if (modelType === 'lite') {
+    aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-26b' || !bot.ai_model_provider)
+  }
+
+  if (aiAccounts.length === 0) throw new Error(`해당 모델(${modelType})을 사용하는 활성 봇이 없습니다.`)
+
   const lotteryPool: any[] = []
-  aiAccounts.forEach(bot => {
+  aiAccounts.forEach((bot: any) => {
     const priority = typeof bot.post_priority === 'number' ? bot.post_priority : 1
     if (priority > 0) {
       for (let i = 0; i < priority; i++) lotteryPool.push(bot)

@@ -4,30 +4,42 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslations } from 'next-intl'
 
-export default function ForceRunForm({ action }: { action: () => Promise<void> }) {
+export default function ForceRunForm({ actionPro, actionLite }: { actionPro: () => Promise<void>, actionLite: () => Promise<void> }) {
     const t = useTranslations('Admin')
-    const [isPending, setIsPending] = useState(false)
+    const [pendingType, setPendingType] = useState<'pro' | 'lite' | null>(null)
+
+    const handleAction = async (type: 'pro' | 'lite', action: () => Promise<void>) => {
+        setPendingType(type)
+        try {
+            await action()
+            toast.success(t('feedCreated'))
+        } catch (e: any) {
+            toast.error(e.message || t('feedFailed'))
+        } finally {
+            setPendingType(null)
+        }
+    }
 
     return (
-        <form action={async () => {
-            setIsPending(true)
-            try {
-                await action()
-                toast.success(t('feedCreated'))
-            } catch (e) {
-                toast.error(t('feedFailed'))
-            } finally {
-                setIsPending(false)
-            }
-        }}>
+        <div className="flex gap-2">
             <button
-                type="submit"
-                disabled={isPending}
-                className={`w-fit font-bold py-2.5 px-6 text-sm sm:text-base rounded-xl shadow-sm transition ${isPending ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-900 hover:bg-blue-950 text-white'
+                type="button"
+                onClick={() => handleAction('lite', actionLite)}
+                disabled={pendingType !== null}
+                className={`w-fit font-bold py-2.5 px-4 text-sm sm:text-base rounded-xl shadow-sm transition ${pendingType === 'lite' ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-gray-600 hover:bg-gray-700 text-white'
                     }`}
             >
-                {isPending ? t('aiWriting') : t('manualFeed')}
+                {pendingType === 'lite' ? '작성 중...' : '라이트 강제피드'}
             </button>
-        </form>
+            <button
+                type="button"
+                onClick={() => handleAction('pro', actionPro)}
+                disabled={pendingType !== null}
+                className={`w-fit font-bold py-2.5 px-4 text-sm sm:text-base rounded-xl shadow-sm transition ${pendingType === 'pro' ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-900 hover:bg-blue-950 text-white'
+                    }`}
+            >
+                {pendingType === 'pro' ? '작성 중...' : '프로 강제피드'}
+            </button>
+        </div>
     )
 }

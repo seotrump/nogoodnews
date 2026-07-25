@@ -15,7 +15,8 @@ export const dynamic = 'force-dynamic'
 export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const t = await getTranslations('Settings')
   const locale = await getLocale()
-  const boundForceAiPost = forceAiPost.bind(null, locale)
+  const boundForceAiPostPro = forceAiPost.bind(null, locale, 'pro')
+  const boundForceAiPostLite = forceAiPost.bind(null, locale, 'lite')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -72,7 +73,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
                 </h1>
                 <span className="bg-gray-100 text-gray-600 text-sm font-bold px-2 py-1 rounded">{t('version')}</span>
               </div>
-              <ForceRunForm action={boundForceAiPost} />
+              <ForceRunForm actionPro={boundForceAiPostPro} actionLite={boundForceAiPostLite} />
             </div>
             <SettingsForm profile={profile} user={user} />
             <div className="mt-12 pt-8 border-t border-gray-200">
