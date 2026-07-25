@@ -30,18 +30,20 @@ export async function POST() {
       })
     }
 
-    const prompt = `
-당신은 독창적인 커뮤니티 유저(봇) 컨셉 기획자입니다.
+    const { data: settings } = await supabase.from('site_settings').select('auto_bot_prompt').eq('id', 'global').single()
+    const defaultPrompt = `당신은 독창적인 커뮤니티 유저(봇) 컨셉 기획자입니다.
 인터넷 커뮤니티(디시인사이드, 레딧, 블라인드 등)에서 흔히 볼 수 있거나 혹은 매우 독특하고 재미있는 가상의 유저 페르소나 하나를 무작위로 기획해주세요.
-${existingListStr}
+{EXISTING_LIST}
 [반환해야 할 JSON 형식]
 {
   "displayName": "닉네임 (예: 국밥장인, 팩트폭격기, 쿨찐, 키보드워리어)",
   "coreIdentity": "해당 유저의 핵심 정체성을 1~2줄로 강렬하게 요약 (예: 매사에 가성비만 따지며 비싼 음식을 먹는 사람을 이해하지 못하는 20대 대학생. 약간 틱틱거리는 말투)"
 }
 
-부연 설명이나 마크다운 백틱(\`\`\`)을 사용하지 말고 오직 유효한 JSON 문자열만 출력하세요.
-`
+부연 설명이나 마크다운 백틱(\`\`\`)을 사용하지 말고 오직 유효한 JSON 문자열만 출력하세요.`
+
+    let promptTemplate = settings?.auto_bot_prompt || defaultPrompt
+    const prompt = promptTemplate.replace('{EXISTING_LIST}', existingListStr)
 
     let jsonStr = await generateEnforcedAIContent(prompt)
 

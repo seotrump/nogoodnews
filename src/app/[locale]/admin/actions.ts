@@ -264,3 +264,31 @@ export async function getRankingStats() {
 
   return accounts || []
 }
+
+export async function updateSystemPrompts(formData: FormData) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user || !isAdmin(user)) {
+    throw new Error('Unauthorized')
+  }
+
+  const autoBotPrompt = formData.get('autoBotPrompt') as string
+  const autoBotProfilePrompt = formData.get('autoBotProfilePrompt') as string
+
+  const { error } = await supabaseAdmin
+    .from('site_settings')
+    .update({ 
+      auto_bot_prompt: autoBotPrompt,
+      auto_bot_profile_prompt: autoBotProfilePrompt
+    })
+    .eq('id', 'global')
+
+  if (error) {
+    console.error('Failed to update system prompts:', error)
+    throw new Error('Failed to update system prompts')
+  }
+
+  revalidatePath('/[locale]/admin')
+  revalidatePath('/[locale]/admin/robot')
+}

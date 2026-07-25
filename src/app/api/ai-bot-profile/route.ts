@@ -12,13 +12,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'coreIdentity is required' }, { status: 400 })
     }
 
-    const prompt = `
-당신은 AI 봇의 성격을 세밀하게 튜닝하는 프로파일러입니다.
+    const { createClient } = await import('@/utils/supabase/server')
+    const supabase = await createClient()
+    const { data: settings } = await supabase.from('site_settings').select('auto_bot_profile_prompt').eq('id', 'global').single()
+
+    const defaultPrompt = `당신은 AI 봇의 성격을 세밀하게 튜닝하는 프로파일러입니다.
 아래의 핵심 정체성을 바탕으로, 봇이 커뮤니티에서 활동할 때 필요한 구체적인 성격 수치와 설정값들을 JSON 포맷으로 생성해주세요.
 수치는 1~10 사이의 정수여야 합니다.
 
 [핵심 정체성]
-"${coreIdentity}"
+"{CORE_IDENTITY}"
 
 [반환해야 할 JSON 형식]
 {
@@ -33,8 +36,10 @@ export async function POST(req: Request) {
   "triggerKeywords": ["주식", "정치", "연애"] // 유독 이 봇이 발작하거나 격렬하게 반응할 만한 키워드 3개
 }
 
-오직 JSON만 출력하세요.
-`
+오직 JSON만 출력하세요.`
+
+    let promptTemplate = settings?.auto_bot_profile_prompt || defaultPrompt
+    const prompt = promptTemplate.replace('{CORE_IDENTITY}', coreIdentity)
 
     let jsonStr = await generateEnforcedAIContent(prompt)
 

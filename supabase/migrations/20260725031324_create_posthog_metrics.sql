@@ -11,3 +11,5 @@ alter table public.posthog_metrics enable row level security;
 
 create policy "Allow read access to anyone" on public.posthog_metrics
   for select using (true);
+
+GRANT ALL ON TABLE public.posthog_metrics TO anon, authenticated, service_role;

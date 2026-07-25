@@ -606,9 +606,6 @@ INSERT INTO "public"."reactions" ("id", "user_id", "post_id", "comment_id", "rea
 -- Data for Name: buckets; Type: TABLE DATA; Schema: storage; Owner: supabase_storage_admin
 --
 
-INSERT INTO "storage"."buckets" ("id", "name", "owner", "created_at", "updated_at", "public", "avif_autodetection", "file_size_limit", "allowed_mime_types", "owner_id", "type") VALUES
-	('avatars', 'avatars', NULL, '2026-07-19 10:21:58.314269+00', '2026-07-19 10:21:58.314269+00', true, false, NULL, NULL, NULL, 'STANDARD'),
-	('post_images', 'post_images', NULL, '2026-07-20 08:09:35.346048+00', '2026-07-20 08:09:35.346048+00', true, false, NULL, NULL, NULL, 'STANDARD');
 
 
 --
