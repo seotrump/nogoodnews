@@ -35,13 +35,13 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
         <div className="flex flex-row gap-2 border-b border-gray-200 pb-2">
           <Link 
             href="/admin/analytics?tab=overview" 
-            className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'overview' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            className={`px-4 py-2 text-sm font-bold rounded-t-lg ${(tab as string) === 'overview' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
             이용현황
           </Link>
           <Link 
             href="/admin/analytics?tab=rank" 
-            className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'rank' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            className={`px-4 py-2 text-sm font-bold rounded-t-lg ${(tab as string) === 'rank' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
             랭킹보드
           </Link>
