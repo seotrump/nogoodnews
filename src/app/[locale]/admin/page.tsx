@@ -15,8 +15,8 @@ export const dynamic = 'force-dynamic'
 export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const t = await getTranslations('Settings')
   const locale = await getLocale()
-  const boundForceAiPostPro = async () => forceAiPost(locale, 'pro')
-  const boundForceAiPostLite = async () => forceAiPost(locale, 'lite')
+  const boundForceAiPostPro = forceAiPost.bind(null, locale, 'pro')
+  const boundForceAiPostLite = forceAiPost.bind(null, locale, 'lite')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 

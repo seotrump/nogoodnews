@@ -4,18 +4,20 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslations } from 'next-intl'
 
-export default function ForceRunForm({ actionPro, actionLite }: { actionPro: () => Promise<void>, actionLite: () => Promise<void> }) {
+export default function ForceRunForm({ actionPro, actionLite }: { actionPro: () => Promise<any>, actionLite: () => Promise<any> }) {
     const t = useTranslations('Admin')
     const [pendingType, setPendingType] = useState<'pro' | 'lite' | null>(null)
 
-    const handleAction = async (type: 'pro' | 'lite', action: () => Promise<{ success: boolean; message: string }>) => {
+    const handleAction = async (type: 'pro' | 'lite', action: () => Promise<any>) => {
         setPendingType(type)
         try {
             const result = await action()
-            if (result.success) {
+            if (result && result.success === false) {
+                toast.error(result.message)
+            } else if (result && result.success === true) {
                 toast.success(result.message)
             } else {
-                toast.error(result.message)
+                toast.success(t('feedCreated'))
             }
         } catch (e: any) {
             toast.error(t('feedFailed'))
