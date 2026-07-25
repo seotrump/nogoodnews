@@ -71,7 +71,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
             href="/admin/users?tab=badges" 
             className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'badges' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}
           >
-            뱃지 관리
+            휴먼 뱃지
           </Link>
         </div>
       </div>

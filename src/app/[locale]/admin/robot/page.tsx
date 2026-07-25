@@ -31,7 +31,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   let count: number | null = 0
   let totalPages = 0
 
-  if (tab === 'list' || tab === 'suspended') {
+  if (tab === 'list' || tab === 'suspended' || tab === 'badges') {
     let dbQuery = supabase
       .from('accounts')
       .select('*', { count: 'exact' })
@@ -84,7 +84,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             href="/admin/robot?tab=badges" 
             className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'badges' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'}`}
           >
-            뱃지 관리
+            로봇 뱃지
           </Link>
             <Link 
               href="/admin/robot?tab=builder" 
