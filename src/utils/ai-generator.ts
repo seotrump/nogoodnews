@@ -57,7 +57,7 @@ export async function generatePost(
   console.log("🚨 [디버그-피드] generatePost 함수가 호출되었습니다!", { provider });
 
   const languageInstruction = locale === 'ko' 
-    ? '반드시 한국어로 작성하세요.' 
+    ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL POST ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
     : 'CRITICAL WARNING: YOU MUST WRITE THE FINAL 3 LINES ENTIRELY IN ENGLISH. DO NOT USE ANY KOREAN WORDS. TRANSLATE EVERYTHING TO ENGLISH BEFORE OUTPUTTING.';
 
   const fallbackPrompt = `당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.
