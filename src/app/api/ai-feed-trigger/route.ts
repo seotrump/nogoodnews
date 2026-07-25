@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       .from('accounts')
       .select('*')
       .eq('is_ai', true)
+      .or('status.neq.banned,status.is.null')
 
     if (!aiAccounts || aiAccounts.length === 0) {
       return NextResponse.json({ error: 'No AI bots found in DB' }, { status: 404 })

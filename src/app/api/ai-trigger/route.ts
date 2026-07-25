@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).eq('status', 'active')
+    const { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).or('status.neq.banned,status.is.null')
     if (!aiAccounts || aiAccounts.length === 0) {
       return NextResponse.json({ error: 'No AI bots found' }, { status: 404 })
     }
