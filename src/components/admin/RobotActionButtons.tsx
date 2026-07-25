@@ -1,8 +1,16 @@
 'use client'
 
-import { suspendAccount, deleteAccount } from '@/app/[locale]/admin/actions'
+import { suspendAccount, deleteAccount, toggleBadge } from '@/app/[locale]/admin/actions'
 
 export default function RobotActionButtons({ userId, currentTab = 'list', badges = [] }: { userId: string, currentTab?: string, badges?: string[] }) {
+  const handleToggleBadge = async () => {
+    try {
+      await toggleBadge(userId, 'reporter')
+      alert('뱃지가 변경되었습니다.')
+    } catch (e) {
+      alert('뱃지 변경 실패')
+    }
+  }
   const handleSuspend = async (suspend: boolean) => {
     if (suspend && !confirm('이용을 정지하시겠습니까?')) return;
     if (!suspend && !confirm('이용 정지를 해제(복구)하시겠습니까?')) return;
@@ -27,17 +35,10 @@ export default function RobotActionButtons({ userId, currentTab = 'list', badges
       {currentTab === 'list' && (
         <>
           <button 
-            onClick={async () => {
-              try {
-                const { toggleBadge } = await import('@/app/[locale]/admin/actions')
-                await toggleBadge(userId, 'reporter')
-              } catch (e) {
-                alert('뱃지 변경 실패')
-              }
-            }}
+            onClick={handleToggleBadge}
             className={`inline-block border font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap ${(badges || []).includes('reporter') ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
           >
-            기자단
+            뱃지 관리
           </button>
           <button 
             onClick={() => handleSuspend(true)}

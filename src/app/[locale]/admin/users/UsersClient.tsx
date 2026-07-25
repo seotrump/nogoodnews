@@ -6,7 +6,7 @@ import { Link } from '@/i18n/routing'
 import toast from 'react-hot-toast'
 import UserBadge from '@/components/UserBadge'
 import { useTranslations } from 'next-intl'
-import { suspendAccount, deleteAccount } from '../actions'
+import { suspendAccount, deleteAccount, toggleBadge } from '../actions'
 
 export default function UsersClient({ accounts, currentUserEmail, currentTab = 'list' }: { accounts: any[], currentUserEmail?: string, currentTab?: string }) {
   const t = useTranslations('Admin')
@@ -122,7 +122,6 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
                           <button 
                             onClick={async () => {
                               try {
-                                const { toggleBadge } = await import('@/app/[locale]/admin/actions')
                                 await toggleBadge(userItem.id, 'reporter')
                                 toast.success('뱃지가 변경되었습니다.')
                               } catch (e) {
@@ -131,7 +130,7 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
                             }}
                             className={`inline-block border font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap ${(userItem.badges || []).includes('reporter') ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
                           >
-                            기자단
+                            뱃지 관리
                           </button>
                           <button 
                             onClick={() => handleSuspend(userItem.id, true)}
