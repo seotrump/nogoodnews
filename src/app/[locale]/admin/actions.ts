@@ -23,7 +23,10 @@ export async function toggleBadge(userId: string, badgeName: string = 'reporter'
   const { data: { user } } = await supabase.auth.getUser()
   if (!user || !isAdmin(user)) throw new Error('Unauthorized')
 
-  const { data: account } = await supabaseAdmin.from('accounts').select('badges').eq('id', userId).single()
+  const { data: account, error: accountError } = await supabaseAdmin.from('accounts').select('badges').eq('id', userId).single()
+  if (accountError) {
+    console.error('Error fetching account for toggleBadge:', accountError)
+  }
   if (!account) throw new Error('User not found')
 
   let currentBadges = account.badges || []

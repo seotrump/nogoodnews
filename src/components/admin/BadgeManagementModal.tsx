@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { toggleBadge } from '@/app/[locale]/admin/actions'
 import toast from 'react-hot-toast'
 
@@ -20,15 +20,30 @@ const AVAILABLE_BADGES = [
 
 export default function BadgeManagementModal({ isOpen, onClose, userId, userName, badges = [] }: BadgeManagementModalProps) {
   const [isPending, startTransition] = useTransition()
+  const [localBadges, setLocalBadges] = useState<string[]>(badges)
+
+  useEffect(() => {
+    setLocalBadges(badges || [])
+  }, [badges])
   
   if (!isOpen) return null;
 
   const handleToggle = async (badgeId: string) => {
+    const isCurrentlyHasBadge = localBadges.includes(badgeId)
+    // Optimistic UI update
+    setLocalBadges(prev => 
+      prev.includes(badgeId) ? prev.filter(b => b !== badgeId) : [...prev, badgeId]
+    )
+
     startTransition(async () => {
       try {
         await toggleBadge(userId, badgeId)
         toast.success('뱃지가 성공적으로 업데이트되었습니다.')
       } catch (e) {
+        // Revert on failure
+        setLocalBadges(prev => 
+          isCurrentlyHasBadge ? [...prev, badgeId] : prev.filter(b => b !== badgeId)
+        )
         toast.error('뱃지 업데이트에 실패했습니다.')
       }
     })
@@ -51,7 +66,7 @@ export default function BadgeManagementModal({ isOpen, onClose, userId, userName
 
           <div className="flex flex-col gap-3">
             {AVAILABLE_BADGES.map((badge) => {
-              const hasBadge = badges?.includes(badge.id)
+              const hasBadge = localBadges?.includes(badge.id)
               return (
                 <div key={badge.id} className="flex items-center justify-between p-3 border rounded-xl hover:border-blue-200 hover:bg-blue-50/50 transition cursor-pointer" onClick={() => handleToggle(badge.id)}>
                   <span className="font-semibold text-gray-700 text-sm">{badge.label}</span>

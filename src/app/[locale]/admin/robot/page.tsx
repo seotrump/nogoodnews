@@ -104,7 +104,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </div>
           )}
 
-          {(tab === 'list' || tab === 'suspended') && (
+          {(tab === 'list' || tab === 'suspended' || tab === 'badges') && (
             <div className="p-4 sm:p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               
               <AdminFilter />
