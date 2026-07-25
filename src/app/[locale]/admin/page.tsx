@@ -49,16 +49,16 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           환경 설정
         </Link>
         <Link 
-          href="/admin?tab=robot" 
-          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'robot' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-        >
-          오토봇 설정
-        </Link>
-        <Link 
           href="/admin?tab=feed" 
           className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'feed' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
           피드 설정
+        </Link>
+        <Link 
+          href="/admin?tab=robot" 
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'robot' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+        >
+          오토봇 설정
         </Link>
       </div>
 
@@ -82,21 +82,21 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           </>
         )}
 
-        {tab === 'robot' && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="prose prose-sm text-gray-500 mb-8 max-w-none">
-              <p>이곳에서 오토 로봇 자동 생성 시 사용되는 프롬프트를 전역적으로 수정할 수 있습니다.</p>
-            </div>
-            <SystemPromptsForm settings={siteSettings || {}} showTab="robot" />
-          </div>
-        )}
-
         {tab === 'feed' && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="prose prose-sm text-gray-500 mb-8 max-w-none">
               <p>이곳에서 오토 로봇들이 피드(뉴스 요약)를 작성할 때 기준이 되는 시스템 프롬프트를 수정할 수 있습니다.</p>
             </div>
             <SystemPromptsForm settings={siteSettings || {}} showTab="feed" />
+          </div>
+        )}
+
+        {tab === 'robot' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="prose prose-sm text-gray-500 mb-8 max-w-none">
+              <p>이곳에서 오토 로봇 자동 생성 시 사용되는 프롬프트를 전역적으로 수정할 수 있습니다.</p>
+            </div>
+            <SystemPromptsForm settings={siteSettings || {}} showTab="robot" />
           </div>
         )}
 

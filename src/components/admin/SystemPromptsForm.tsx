@@ -289,10 +289,10 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             {/* Feed Sub Tabs */}
             <div className="flex border-b border-gray-200 overflow-x-auto">
               <button type="button" onClick={() => setSubTab('lite')} className={`py-2 px-6 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'lite' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                라이트 (26b)
+                라이트
               </button>
               <button type="button" onClick={() => setSubTab('pro')} className={`py-2 px-6 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'pro' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                프로 (31b)
+                프로
               </button>
             </div>
 
@@ -329,14 +329,32 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       
       {/* Hidden inputs to ensure inactive tab data is still submitted */}
       <div className="hidden">
-        <input type="hidden" name="autoBotPrompt" value={prompt1} />
-        <input type="hidden" name="autoBotProfilePrompt" value={prompt2} />
-        <input type="hidden" name="proBotPrompt1" value={proPrompt1} />
-        <input type="hidden" name="proBotPrompt2" value={proPrompt2} />
-        <input type="hidden" name="proBotPrompt3" value={proPrompt3} />
-        <input type="hidden" name="proBotPrompt4" value={proPrompt4} />
-        <input type="hidden" name="feedPromptLite" value={feedPromptLite} />
-        <input type="hidden" name="feedPromptPro" value={feedPromptPro} />
+        {!(showTab === 'robot' && topTab === 'general' && subTab === 'concept') && (
+          <input type="hidden" name="autoBotPrompt" value={prompt1} />
+        )}
+        {!(showTab === 'robot' && topTab === 'general' && subTab === 'profile') && (
+          <input type="hidden" name="autoBotProfilePrompt" value={prompt2} />
+        )}
+        
+        {!(showTab === 'robot' && topTab === 'pro' && subTab === 'pro1') && (
+          <input type="hidden" name="proBotPrompt1" value={proPrompt1} />
+        )}
+        {!(showTab === 'robot' && topTab === 'pro' && subTab === 'pro2') && (
+          <input type="hidden" name="proBotPrompt2" value={proPrompt2} />
+        )}
+        {!(showTab === 'robot' && topTab === 'pro' && subTab === 'pro3') && (
+          <input type="hidden" name="proBotPrompt3" value={proPrompt3} />
+        )}
+        {!(showTab === 'robot' && topTab === 'pro' && subTab === 'pro4') && (
+          <input type="hidden" name="proBotPrompt4" value={proPrompt4} />
+        )}
+
+        {!(showTab === 'feed' && subTab === 'lite') && (
+          <input type="hidden" name="feedPromptLite" value={feedPromptLite} />
+        )}
+        {!(showTab === 'feed' && subTab === 'pro') && (
+          <input type="hidden" name="feedPromptPro" value={feedPromptPro} />
+        )}
       </div>
     </form>
   )
