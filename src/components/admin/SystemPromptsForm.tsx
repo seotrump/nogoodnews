@@ -51,9 +51,10 @@ interface Props {
     feed_prompt_lite?: string | null
     feed_prompt_pro?: string | null
   }
+  showTab?: 'robot' | 'feed'
 }
 
-export default function SystemPromptsForm({ settings }: Props) {
+export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props) {
   const [isPending, startTransition] = useTransition()
   
   // General
@@ -70,8 +71,8 @@ export default function SystemPromptsForm({ settings }: Props) {
   const [feedPromptLite, setFeedPromptLite] = useState(settings?.feed_prompt_lite || DEFAULT_FEED_PROMPT_LITE)
   const [feedPromptPro, setFeedPromptPro] = useState(settings?.feed_prompt_pro || DEFAULT_FEED_PROMPT_PRO)
 
-  const [topTab, setTopTab] = useState<'general' | 'pro' | 'feed'>('general')
-  const [subTab, setSubTab] = useState<string>('concept')
+  const [topTab, setTopTab] = useState<'general' | 'pro' | 'feed'>(showTab === 'feed' ? 'feed' : 'general')
+  const [subTab, setSubTab] = useState<string>(showTab === 'feed' ? 'lite' : 'concept')
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -136,31 +137,33 @@ export default function SystemPromptsForm({ settings }: Props) {
         <p>이곳에서 오토 로봇 생성 시 파이프라인 단계별로 사용되는 AI 프롬프트를 세밀하게 조정할 수 있습니다.</p>
       </div>
 
-      {/* Top Level Tabs */}
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => { setTopTab('general'); setSubTab('concept'); }}
-          className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all border ${
-            topTab === 'general'
-              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
-              : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-          }`}
-        >
-          오토봇 라이트
-        </button>
-        <button
-          type="button"
-          onClick={() => { setTopTab('pro'); setSubTab('pro1'); }}
-          className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all border ${
-            topTab === 'pro'
-              ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm'
-              : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-          }`}
-        >
-          오토봇 프로
-        </button>
-      </div>
+      {/* Top Level Tabs - Only show if in 'robot' context. Feed context handles its own display. */}
+      {showTab === 'robot' && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => { setTopTab('general'); setSubTab('concept'); }}
+            className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all border ${
+              topTab === 'general'
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            오토봇 라이트
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTopTab('pro'); setSubTab('pro1'); }}
+            className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all border ${
+              topTab === 'pro'
+                ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm'
+                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            오토봇 프로
+          </button>
+        </div>
+      )}
 
       <div className="mt-2">
         {topTab === 'general' && (
