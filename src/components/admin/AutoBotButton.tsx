@@ -13,7 +13,7 @@ export default function AutoBotButton() {
   const handleGeneralBot = async () => {
     setIsLoading(true)
     setLoadingType('general')
-    const toastId = toast.loading('[일반] 1/2: 봇 기획 중...')
+    const toastId = toast.loading('[라이트] 1/2: 봇 기획 중...')
     try {
       // 1. 기획
       const res = await fetch('/api/ai-bot-auto-create', { method: 'POST' })
@@ -24,7 +24,7 @@ export default function AutoBotButton() {
       const { displayName, coreIdentity } = await res.json()
       
       // 2. 튜닝
-      toast.loading('[일반] 2/2: 성격 튜닝 중...', { id: toastId })
+      toast.loading('[라이트] 2/2: 성격 튜닝 중...', { id: toastId })
       const tuneRes = await fetch('/api/ai-bot-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -33,7 +33,7 @@ export default function AutoBotButton() {
       if (!tuneRes.ok) throw new Error('로봇 튜닝에 실패했습니다.')
       const data = await tuneRes.json()
 
-      await saveBotToDb(displayName, coreIdentity, data, toastId, '일반')
+      await saveBotToDb(displayName, coreIdentity, data, toastId, '라이트')
     } catch (err: any) {
       toast.error(err.message, { id: toastId })
     } finally {
@@ -146,7 +146,7 @@ export default function AutoBotButton() {
         }`}
       >
         <span className="text-base">🤖</span>
-        {isLoading && loadingType === 'general' ? '생성 중...' : '오토봇 일반 (빠름)'}
+        {isLoading && loadingType === 'general' ? '생성 중...' : '오토봇 라이트 (기본형)'}
       </button>
 
       <button 

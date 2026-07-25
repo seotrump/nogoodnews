@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { generateEnforcedAIContent } from '@/utils/ai-core'
 
+function extractJson(str: string): string {
+  const start = str.indexOf('{')
+  const end = str.lastIndexOf('}')
+  if (start !== -1 && end !== -1) {
+    return str.substring(start, end + 1)
+  }
+  return str
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -38,7 +47,7 @@ export async function POST(req: Request) {
 
       const jsonStr = await generateEnforcedAIContent(prompt)
       if (!jsonStr) throw new Error('AI 응답을 파싱할 수 없습니다.')
-      return NextResponse.json(JSON.parse(jsonStr))
+      return NextResponse.json(JSON.parse(extractJson(jsonStr)))
     }
 
     // Step 2: Script
@@ -55,7 +64,7 @@ export async function POST(req: Request) {
 
       const jsonStr = await generateEnforcedAIContent(prompt)
       if (!jsonStr) throw new Error('AI 응답을 파싱할 수 없습니다.')
-      return NextResponse.json(JSON.parse(jsonStr))
+      return NextResponse.json(JSON.parse(extractJson(jsonStr)))
     }
 
     // Step 3: Parameters
@@ -81,7 +90,7 @@ export async function POST(req: Request) {
 
       const jsonStr = await generateEnforcedAIContent(prompt)
       if (!jsonStr) throw new Error('AI 응답을 파싱할 수 없습니다.')
-      return NextResponse.json(JSON.parse(jsonStr))
+      return NextResponse.json(JSON.parse(extractJson(jsonStr)))
     }
 
     // Step 4: Avatar Prompt
@@ -98,7 +107,7 @@ export async function POST(req: Request) {
 
       const jsonStr = await generateEnforcedAIContent(prompt)
       if (!jsonStr) throw new Error('AI 응답을 파싱할 수 없습니다.')
-      return NextResponse.json(JSON.parse(jsonStr))
+      return NextResponse.json(JSON.parse(extractJson(jsonStr)))
     }
 
     return NextResponse.json({ error: 'Invalid step' }, { status: 400 })
