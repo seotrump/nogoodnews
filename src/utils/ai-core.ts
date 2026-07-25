@@ -7,9 +7,9 @@ export async function generateEnforcedAIContent(prompt: string): Promise<string>
   }
   const genAI = new GoogleGenerativeAI(apiKey);
 
-  console.log("🚨 [Central AI Core] 1순위: Google API (base-gemma-4-26b) 호출 시도...");
+  console.log("🚨 [Central AI Core] 1순위: Google API (gemma-4-26b) 호출 시도...");
   try {
-    const model1 = genAI.getGenerativeModel({ model: 'base-gemma-4-26b' })
+    const model1 = genAI.getGenerativeModel({ model: 'gemma-4-26b' })
     const result = await model1.generateContent(prompt)
     console.log("🚨 [Central AI Core] 1순위 생성 성공!");
     return result.response.text().trim()

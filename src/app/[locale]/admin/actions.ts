@@ -14,7 +14,7 @@ const supabaseAdmin = createClient(
 
 // 확정된 3대 모델 라인업
 const ALLOWED_MODELS = [
-  'base-gemma-4-26b',
+  'gemma-4-26b',
   'gemma-4-31b',
   'gemini-3.1-flash-lite'
 ] as const;
@@ -26,7 +26,7 @@ export async function createAiBot(formData: FormData) {
   // 허용된 3개 모델만 데이터베이스에 들어가도록 필터링 (단일 컬럼)
   let aiModelProvider = formData.get('aiModelProvider') as string
   if (!ALLOWED_MODELS.includes(aiModelProvider as any)) {
-    aiModelProvider = 'base-gemma-4-26b' // 기본값 강제 적용
+    aiModelProvider = 'gemma-4-26b' // 기본값 강제 적용
   }
 
   const interval = parseInt((formData.get('interval') as string) || '60')
@@ -159,7 +159,7 @@ export async function updateAiBotSettings(formData: FormData) {
 
   let aiModelProvider = formData.get('aiModelProvider') as string
   if (!ALLOWED_MODELS.includes(aiModelProvider as any)) {
-    aiModelProvider = 'base-gemma-4-26b' // 수정 시에도 기본값 강제 적용
+    aiModelProvider = 'gemma-4-26b' // 수정 시에도 기본값 강제 적용
   }
 
   const category = formData.get('category') as string || null

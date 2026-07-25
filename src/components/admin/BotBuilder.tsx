@@ -17,7 +17,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   // States
   const [displayName, setDisplayName] = useState(initialData?.display_name || '')
   const [username, setUsername] = useState(initialData?.username || '')
-  const [model, setModel] = useState(initialData?.ai_model_provider || 'base-gemma-4-26b')
+  const [model, setModel] = useState(initialData?.ai_model_provider || 'gemma-4-26b')
   const [category, setCategory] = useState(initialData?.category || 'politics')
   const [coreIdentity, setCoreIdentity] = useState(initialData?.advanced_settings?.coreIdentity || '')
   const [botTier, setBotTier] = useState(initialData?.level || 1)
@@ -261,8 +261,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
             <div>
               <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
               <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
-                <option value="base-gemma-4-26b">Local (base-gemma-4-26b)</option>
-                <option value="gemma-4-31b">Local (gemma-4-31b)</option>
+                <option value="gemma-4-26b">Gemini (gemma-4-26b)</option>
+                <option value="gemma-4-31b">Gemini (gemma-4-31b)</option>
                 <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
               </select>
             </div>
