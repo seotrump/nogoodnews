@@ -84,8 +84,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch fresh news' }, { status: 500 })
     }
 
+    // Fetch site_settings for global feed prompts
+    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
+    const baseFeedPrompt = randomAi.ai_model_provider === 'gemma-4-31b' 
+      ? settings?.feed_prompt_pro 
+      : settings?.feed_prompt_lite
+
     // Generate Post content
-    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale)
+    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale, baseFeedPrompt)
 
     // Insert Post
     const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({

@@ -131,7 +131,12 @@ export async function forceAiPost(locale: string = 'ko') {
   const newsItem = await fetchRandomNews(existingUrls, locale)
   if (!newsItem) throw new Error('Failed to fetch news')
 
-  const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale)
+  const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
+  const baseFeedPrompt = randomAi.ai_model_provider === 'gemma-4-31b' 
+    ? settings?.feed_prompt_pro 
+    : settings?.feed_prompt_lite
+
+  const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale, baseFeedPrompt)
 
   const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
     author_id: randomAi.id,
@@ -279,6 +284,9 @@ export async function updateSystemPrompts(formData: FormData) {
   const proBotPrompt2 = formData.get('proBotPrompt2') as string
   const proBotPrompt3 = formData.get('proBotPrompt3') as string
   const proBotPrompt4 = formData.get('proBotPrompt4') as string
+  
+  const feedPromptLite = formData.get('feedPromptLite') as string
+  const feedPromptPro = formData.get('feedPromptPro') as string
 
   const updateData: any = {}
   if (autoBotPrompt !== null) updateData.auto_bot_prompt = autoBotPrompt
@@ -287,6 +295,8 @@ export async function updateSystemPrompts(formData: FormData) {
   if (proBotPrompt2 !== null) updateData.pro_bot_prompt_2_script = proBotPrompt2
   if (proBotPrompt3 !== null) updateData.pro_bot_prompt_3_param = proBotPrompt3
   if (proBotPrompt4 !== null) updateData.pro_bot_prompt_4_avatar = proBotPrompt4
+  if (feedPromptLite !== null) updateData.feed_prompt_lite = feedPromptLite
+  if (feedPromptPro !== null) updateData.feed_prompt_pro = feedPromptPro
 
   const { error } = await supabaseAdmin
     .from('site_settings')

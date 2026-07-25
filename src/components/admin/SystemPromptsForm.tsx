@@ -24,6 +24,22 @@ const DEFAULT_PRO_BOT_PROMPT_3 = `당신은 텍스트 분석 프로파일러입�
 const DEFAULT_PRO_BOT_PROMPT_4 = `당신은 이미지 프롬프트 엔지니어입니다.
 아래 제공된 유저의 정체성을 바탕으로, 이 유저의 프로필 사진으로 쓰일 완벽한 아바타를 생성하기 위한 Midjourney/DALL-E 영문 프롬프트를 작성해주세요.`
 
+const DEFAULT_FEED_PROMPT_LITE = `당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.
+다음 페르소나 설정에 맞춰서, 구글에서 긁어온 실제 뉴스를 사람들에게 공유하며 '후킹(Hooking)'하는 글을 작성해주세요.
+
+[작성 규칙]
+1. 인사말이나 구구절절한 기사 요약은 절대 쓰지 마세요.
+2. 기사 내용을 바탕으로 커뮤니티 네임드처럼 자극적인 글을 쓰되, 무조건 정확히 3줄로 작성하세요. (예: 1줄: 어그로성 제목, 2줄: 기사 핵심 요약, 3줄: 사람들의 댓글을 유도하는 신랄한 한 줄 평)
+3. 줄과 줄 사이에 빈 줄(공백 줄)은 절대 넣지 마세요. 글이 촘촘하게 3줄로 붙어있어야 합니다.`
+
+const DEFAULT_FEED_PROMPT_PRO = `당신은 커뮤니티에 상주하는 초고급 네임드 유저입니다.
+가져온 기사를 단순 요약하지 말고, 당신의 입체적인 세계관과 직업, 과거사 등을 섞어서 통찰력 있고 위트 있는 장문의 분석글(또는 어그로글)을 작성해주세요.
+
+[작성 규칙]
+1. 분량 제한 없이 자유롭게 당신의 세계관을 뽐내세요. 기사 내용과 당신의 컨셉이 절묘하게 맞아떨어져야 합니다.
+2. 짧게 끝내지 말고, 사람들이 몰입해서 읽을 수 있는 스토리텔링을 가미하세요.
+3. 뻔한 기사 요약은 피하고, 특정 인물이나 현상을 강하게 비판하거나 찬양하는 스탠스를 확실히 취하세요.`
+
 interface Props {
   settings: {
     auto_bot_prompt?: string | null
@@ -32,6 +48,8 @@ interface Props {
     pro_bot_prompt_2_script?: string | null
     pro_bot_prompt_3_param?: string | null
     pro_bot_prompt_4_avatar?: string | null
+    feed_prompt_lite?: string | null
+    feed_prompt_pro?: string | null
   }
 }
 
@@ -48,8 +66,12 @@ export default function SystemPromptsForm({ settings }: Props) {
   const [proPrompt3, setProPrompt3] = useState(settings?.pro_bot_prompt_3_param || DEFAULT_PRO_BOT_PROMPT_3)
   const [proPrompt4, setProPrompt4] = useState(settings?.pro_bot_prompt_4_avatar || DEFAULT_PRO_BOT_PROMPT_4)
 
-  const [topTab, setTopTab] = useState<'general' | 'pro'>('general')
-  const [subTab, setSubTab] = useState<string>('concept') // reused for both, but we reset it when topTab changes
+  // Feed
+  const [feedPromptLite, setFeedPromptLite] = useState(settings?.feed_prompt_lite || DEFAULT_FEED_PROMPT_LITE)
+  const [feedPromptPro, setFeedPromptPro] = useState(settings?.feed_prompt_pro || DEFAULT_FEED_PROMPT_PRO)
+
+  const [topTab, setTopTab] = useState<'general' | 'pro' | 'feed'>('general')
+  const [subTab, setSubTab] = useState<string>('concept')
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -58,7 +80,7 @@ export default function SystemPromptsForm({ settings }: Props) {
     startTransition(async () => {
       try {
         await updateSystemPrompts(formData)
-        toast.success('오토 로봇 프롬프트가 저장되었습니다.')
+        toast.success('로봇 프롬프트가 저장되었습니다.')
       } catch (err: any) {
         toast.error(err.message || '저장 실패')
       }
@@ -70,11 +92,14 @@ export default function SystemPromptsForm({ settings }: Props) {
       if (topTab === 'general') {
         setPrompt1(DEFAULT_AUTO_BOT_PROMPT)
         setPrompt2(DEFAULT_AUTO_BOT_PROFILE_PROMPT)
-      } else {
+      } else if (topTab === 'pro') {
         setProPrompt1(DEFAULT_PRO_BOT_PROMPT_1)
         setProPrompt2(DEFAULT_PRO_BOT_PROMPT_2)
         setProPrompt3(DEFAULT_PRO_BOT_PROMPT_3)
         setProPrompt4(DEFAULT_PRO_BOT_PROMPT_4)
+      } else if (topTab === 'feed') {
+        setFeedPromptLite(DEFAULT_FEED_PROMPT_LITE)
+        setFeedPromptPro(DEFAULT_FEED_PROMPT_PRO)
       }
     }
   }
@@ -255,24 +280,60 @@ export default function SystemPromptsForm({ settings }: Props) {
             </div>
           </div>
         )}
+
+        {topTab === 'feed' && (
+          <div className="flex flex-col gap-4 animate-in fade-in duration-300">
+            {/* Feed Sub Tabs */}
+            <div className="flex border-b border-gray-200 overflow-x-auto">
+              <button type="button" onClick={() => setSubTab('lite')} className={`py-2 px-6 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'lite' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                라이트 (26b)
+              </button>
+              <button type="button" onClick={() => setSubTab('pro')} className={`py-2 px-6 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'pro' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                프로 (31b)
+              </button>
+            </div>
+
+            {/* Feed Content */}
+            <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+              <div className="p-4 bg-gray-100 border-b border-gray-200">
+                <h3 className="font-bold text-gray-800 mb-1">
+                  {subTab === 'lite' && '오토봇 라이트 피드 작성 템플릿'}
+                  {subTab === 'pro' && '오토봇 프로 피드 작성 템플릿'}
+                </h3>
+                <p className="text-xs text-gray-500">
+                  {subTab === 'lite' && "가볍고 빠른 3줄 요약 어그로 포맷을 유지합니다."}
+                  {subTab === 'pro' && "봇의 설정과 세계관을 녹여낸 심층적이고 긴 호흡의 글쓰기를 유도합니다."}
+                </p>
+              </div>
+              <div className="p-4 bg-white">
+                <textarea
+                  name={subTab === 'lite' ? 'feedPromptLite' : 'feedPromptPro'}
+                  value={subTab === 'lite' ? feedPromptLite : feedPromptPro}
+                  onChange={e => {
+                    if (subTab === 'lite') setFeedPromptLite(e.target.value)
+                    if (subTab === 'pro') setFeedPromptPro(e.target.value)
+                  }}
+                  rows={12}
+                  className="w-full border-gray-300 rounded-md shadow-sm text-sm p-4 font-mono focus:border-blue-500 focus:ring-blue-500 resize-y"
+                  required
+                  placeholder="피드 작성 프롬프트를 입력하세요..."
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Hidden inputs to ensure inactive tab data is still submitted */}
       <div className="hidden">
-        {topTab !== 'general' && (
-          <>
-            <input type="hidden" name="autoBotPrompt" value={prompt1} />
-            <input type="hidden" name="autoBotProfilePrompt" value={prompt2} />
-          </>
-        )}
-        {topTab !== 'pro' && (
-          <>
-            <input type="hidden" name="proBotPrompt1" value={proPrompt1} />
-            <input type="hidden" name="proBotPrompt2" value={proPrompt2} />
-            <input type="hidden" name="proBotPrompt3" value={proPrompt3} />
-            <input type="hidden" name="proBotPrompt4" value={proPrompt4} />
-          </>
-        )}
+        <input type="hidden" name="autoBotPrompt" value={prompt1} />
+        <input type="hidden" name="autoBotProfilePrompt" value={prompt2} />
+        <input type="hidden" name="proBotPrompt1" value={proPrompt1} />
+        <input type="hidden" name="proBotPrompt2" value={proPrompt2} />
+        <input type="hidden" name="proBotPrompt3" value={proPrompt3} />
+        <input type="hidden" name="proBotPrompt4" value={proPrompt4} />
+        <input type="hidden" name="feedPromptLite" value={feedPromptLite} />
+        <input type="hidden" name="feedPromptPro" value={feedPromptPro} />
       </div>
     </form>
   )

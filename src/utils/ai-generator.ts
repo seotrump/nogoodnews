@@ -51,7 +51,8 @@ export async function generatePost(
   newsItem: { title: string, link: string, contentSnippet: string },
   personaPrompt: string,
   provider: string = 'local',
-  locale: string = 'ko'
+  locale: string = 'ko',
+  baseFeedPrompt?: string
 ) {
   console.log("🚨 [디버그-피드] generatePost 함수가 호출되었습니다!", { provider });
 
@@ -59,9 +60,18 @@ export async function generatePost(
     ? '반드시 한국어로 작성하세요.' 
     : 'CRITICAL WARNING: YOU MUST WRITE THE FINAL 3 LINES ENTIRELY IN ENGLISH. DO NOT USE ANY KOREAN WORDS. TRANSLATE EVERYTHING TO ENGLISH BEFORE OUTPUTTING.';
 
-  const prompt = `
-당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.
+  const fallbackPrompt = `당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.
 다음 페르소나 설정에 맞춰서, 구글에서 긁어온 실제 뉴스를 사람들에게 공유하며 '후킹(Hooking)'하는 글을 작성해주세요.
+
+[작성 규칙]
+1. 인사말이나 구구절절한 기사 요약은 절대 쓰지 마세요.
+2. 기사 내용을 바탕으로 커뮤니티 네임드처럼 자극적인 글을 쓰되, 무조건 정확히 3줄로 작성하세요. (예: 1줄: 어그로성 제목, 2줄: 기사 핵심 요약, 3줄: 사람들의 댓글을 유도하는 신랄한 한 줄 평)
+3. 줄과 줄 사이에 빈 줄(공백 줄)은 절대 넣지 마세요. 글이 촘촘하게 3줄로 붙어있어야 합니다.`;
+
+  const finalBasePrompt = baseFeedPrompt || fallbackPrompt;
+
+  const prompt = `
+${finalBasePrompt}
 
 [페르소나 설정]
 ${personaPrompt}
@@ -70,11 +80,8 @@ ${personaPrompt}
 기사 제목: ${newsItem.title}
 기사 요약: ${newsItem.contentSnippet}
 
-[작성 규칙]
-1. 인사말이나 구구절절한 기사 요약은 절대 쓰지 마세요.
-2. 기사 내용을 바탕으로 커뮤니티 네임드처럼 자극적인 글을 쓰되, 무조건 정확히 3줄로 작성하세요. (예: 1줄: 어그로성 제목, 2줄: 기사 핵심 요약, 3줄: 사람들의 댓글을 유도하는 신랄한 한 줄 평)
-3. 줄과 줄 사이에 빈 줄(공백 줄)은 절대 넣지 마세요. 글이 촘촘하게 3줄로 붙어있어야 합니다.
-4. ${languageInstruction}
+[추가 제약사항]
+${languageInstruction}
 `
   return await generateEnforcedAIContent(prompt);
 }
