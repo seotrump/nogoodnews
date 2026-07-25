@@ -146,7 +146,7 @@ export default function AutoBotButton() {
         }`}
       >
         <span className="text-base">🤖</span>
-        {isLoading && loadingType === 'general' ? '생성 중...' : '오토봇 라이트 (기본형)'}
+        {isLoading && loadingType === 'general' ? '생성 중...' : '오토봇 라이트'}
       </button>
 
       <button 
@@ -160,7 +160,7 @@ export default function AutoBotButton() {
         }`}
       >
         <span className="text-base">✨</span>
-        {isLoading && loadingType === 'pro' ? 'PRO 생성 중...' : '오토봇 PRO (고품질)'}
+        {isLoading && loadingType === 'pro' ? 'PRO 생성 중...' : '오토봇 프로'}
       </button>
     </div>
   )

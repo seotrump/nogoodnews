@@ -122,7 +122,7 @@ export default function SystemPromptsForm({ settings }: Props) {
               : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
           }`}
         >
-          오토봇 일반 (Lite)
+          오토봇 라이트
         </button>
         <button
           type="button"
@@ -133,7 +133,7 @@ export default function SystemPromptsForm({ settings }: Props) {
               : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
           }`}
         >
-          오토봇 PRO (Advanced)
+          오토봇 프로
         </button>
       </div>
 
