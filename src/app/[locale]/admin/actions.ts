@@ -146,9 +146,9 @@ export async function createAiBot(formData: FormData) {
   revalidatePath('/admin')
 }
 
-export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'lite') {
+export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'lite'): Promise<{ success: boolean; message: string }> {
   let { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).eq('status', 'active')
-  if (!aiAccounts || aiAccounts.length === 0) throw new Error('No AI bots found')
+  if (!aiAccounts || aiAccounts.length === 0) return { success: false, message: '등록된 활성 봇이 없습니다. 먼저 봇을 등록하세요.' }
 
   if (modelType === 'pro') {
     aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-31b')
@@ -156,7 +156,7 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-26b' || !bot.ai_model_provider)
   }
 
-  if (aiAccounts.length === 0) throw new Error(`해당 모델(${modelType})을 사용하는 활성 봇이 없습니다.`)
+  if (aiAccounts.length === 0) return { success: false, message: `${modelType === 'pro' ? '프로' : '라이트'} 봇이 없습니다. 해당 모델 봇을 등록하세요.` }
 
   const lotteryPool: any[] = []
   aiAccounts.forEach((bot: any) => {
@@ -166,14 +166,14 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     }
   })
 
-  if (lotteryPool.length === 0) throw new Error('게재 불가: 봇 우선순위 0')
+  if (lotteryPool.length === 0) return { success: false, message: '봇 우선순위가 0으로 설정되어 게재 불가합니다.' }
 
   const randomAi = lotteryPool[Math.floor(Math.random() * lotteryPool.length)]
   const { data: recentPosts } = await supabaseAdmin.from('posts').select('url').not('url', 'is', null).order('created_at', { ascending: false }).limit(50)
   const existingUrls = recentPosts?.map(p => p.url) || []
 
   const newsItem = await fetchRandomNews(existingUrls, locale)
-  if (!newsItem) throw new Error('Failed to fetch news')
+  if (!newsItem) return { success: false, message: '뉴스를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.' }
 
   const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
   const baseFeedPrompt = randomAi.ai_model_provider === 'gemma-4-31b' 
@@ -189,7 +189,7 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     url: newsItem.link
   }).select().single()
 
-  if (error) throw error
+  if (error) return { success: false, message: `피드 저장 실패: ${error.message}` }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   fetch(`${baseUrl}/api/ai-trigger`, {
@@ -200,6 +200,7 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
 
   revalidatePath('/')
   revalidatePath('/admin')
+  return { success: true, message: `${randomAi.display_name} 봇이 피드를 게시했습니다.` }
 }
 
 export async function updateAiBotSettings(formData: FormData) {

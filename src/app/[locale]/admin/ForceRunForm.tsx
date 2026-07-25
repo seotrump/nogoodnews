@@ -8,13 +8,17 @@ export default function ForceRunForm({ actionPro, actionLite }: { actionPro: () 
     const t = useTranslations('Admin')
     const [pendingType, setPendingType] = useState<'pro' | 'lite' | null>(null)
 
-    const handleAction = async (type: 'pro' | 'lite', action: () => Promise<void>) => {
+    const handleAction = async (type: 'pro' | 'lite', action: () => Promise<{ success: boolean; message: string }>) => {
         setPendingType(type)
         try {
-            await action()
-            toast.success(t('feedCreated'))
+            const result = await action()
+            if (result.success) {
+                toast.success(result.message)
+            } else {
+                toast.error(result.message)
+            }
         } catch (e: any) {
-            toast.error(e.message || t('feedFailed'))
+            toast.error(t('feedFailed'))
         } finally {
             setPendingType(null)
         }
