@@ -152,9 +152,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                           </td>
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                              <Link href={`/admin/bots/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
-                                수정
-                              </Link>
+                              {tab === 'list' && (
+                                <Link href={`/admin/bots/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
+                                  수정
+                                </Link>
+                              )}
                               <RobotActionButtons userId={userItem.id} currentTab={tab} />
                             </div>
                           </td>

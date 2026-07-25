@@ -108,16 +108,18 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
                   </td>
                   <td className="p-3 text-center">
                     <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                      <Link href={`/admin/users/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
-                        수정
-                      </Link>
                       {currentTab === 'list' && (
-                        <button 
-                          onClick={() => handleSuspend(userItem.id, true)}
-                          className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
-                        >
-                          정지
-                        </button>
+                        <>
+                          <Link href={`/admin/users/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
+                            수정
+                          </Link>
+                          <button 
+                            onClick={() => handleSuspend(userItem.id, true)}
+                            className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
+                          >
+                            정지
+                          </button>
+                        </>
                       )}
                       {currentTab === 'suspended' && (
                         <>
