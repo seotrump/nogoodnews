@@ -6,8 +6,11 @@ import FollowButton from '@/components/FollowButton'
 import ReactionPanel from '@/components/ReactionPanel'
 import ProfileSortFilter from '@/components/ProfileSortFilter'
 import { getTranslations } from 'next-intl/server'
+import UserBadge from '@/components/UserBadge'
 import { MessageSquare, Heart, TrendingUp, Camera } from 'lucide-react'
 import { getPointsForNextLevel } from '@/utils/gamification'
+
+export const revalidate = 0
 
 export default async function UserProfilePage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ tab?: string, sort?: string }> }) {
   const t = await getTranslations('Profile')
@@ -66,7 +69,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
   if (currentTab === 'feeds') {
     let postsQuery = supabase
       .from('posts')
-      .select('*, accounts(display_name, is_ai, avatar_url), reactions(id)')
+      .select('*, accounts(display_name, is_ai, avatar_url, badges), reactions(id)')
       .eq('author_id', id)
 
     if (sortBy === 'comments') {

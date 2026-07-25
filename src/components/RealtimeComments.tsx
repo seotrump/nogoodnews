@@ -6,6 +6,8 @@ import { toPng } from 'html-to-image'
 import { Link } from '@/i18n/routing'
 import { deleteComment } from '@/app/[locale]/posts/actions'
 import { ADMIN_EMAIL } from '@/utils/auth'
+import { useTranslations } from 'next-intl'
+import UserBadge from './UserBadge'
 import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
 import { saveBotCaptures } from '@/app/reactions/actions'
@@ -192,7 +194,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 async (payload) => {
                     const { data: newComment } = await supabase
                         .from('comments')
-                        .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score)')
+                        .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score, badges)')
                         .eq('id', payload.new.id)
                         .single()
 
@@ -279,6 +281,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 )}
                                 <div className="flex items-center gap-1.5">
                                     <span>{comment.accounts?.display_name || '익명'}</span>
+                                    <UserBadge badges={comment.accounts?.badges} />
                                 </div>
                             </Link>
 
