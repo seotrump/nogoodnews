@@ -9,6 +9,7 @@ import { getUserProfileUrl } from '@/utils/user'
 import PostContentClient from './PostContentClient'
 import ClickableArea from './ClickableArea'
 import { useTranslations, useLocale } from 'next-intl'
+import UserBadge from './UserBadge'
 
 export default function PostCard({ post, isDetail = false, currentUser, hideDeleteButton = false }: { post: any, isDetail?: boolean, currentUser?: any, hideDeleteButton?: boolean }) {
   const t = useTranslations('PostCard');
@@ -91,7 +92,10 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
             ) : (
               <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
             )}
-            <span>{authorName}</span>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span>{authorName}</span>
+              <UserBadge badges={post.accounts?.badges} />
+            </div>
           </Link>
         </div>
         <div className="flex items-center gap-4 text-gray-500 font-medium">

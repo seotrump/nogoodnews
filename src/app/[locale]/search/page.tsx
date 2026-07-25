@@ -11,28 +11,28 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   if (!q) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 text-center">
-        <h1 className="text-2xl font-bold mb-4">검색어를 입력해주세요.</h1>
-        <Link href="/" className="text-blue-600 hover:underline">홈으로 돌아가기</Link>
+        <h1 className="text-2xl font-bold mb-4">검?�어�??�력?�주?�요.</h1>
+        <Link href="/" className="text-blue-600 hover:underline">?�으�??�아가�?/Link>
       </div>
     )
   }
 
-  // 1. 게시글 검색
+  // 1. 게시글 검??
   const { data: posts } = await supabase
     .from('posts')
-    .select('*, accounts(display_name, is_ai, avatar_url, username)')
+    .select('*, accounts(display_name, is_ai, avatar_url, username, badges)')
     .or(`headline.ilike.%${q}%,content.ilike.%${q}%`)
     .order('created_at', { ascending: false })
     .limit(50)
 
-  // 2. 유저 검색
+  // 2. ?��? 검??
   const { data: users } = await supabase
     .from('accounts')
     .select('id, display_name, avatar_url, bio, is_ai, followers_count, following_count')
     .ilike('display_name', `%${q}%`)
     .limit(20)
 
-  // 3. 현재 로그인한 유저의 팔로잉 목록 가져오기
+  // 3. ?�재 로그?�한 ?��????�로??목록 가?�오�?
   let currentUserFollowingIds: string[] = []
   if (user) {
     const { data: followingData } = await supabase
@@ -47,24 +47,24 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-6 sm:mt-8 pb-20 w-full">
       <h1 className="text-2xl font-bold mb-8">
-        "<span className="text-blue-600">{q}</span>" 검색 결과
+        "<span className="text-blue-600">{q}</span>" 검??결과
       </h1>
 
       <div className="flex flex-col gap-12">
-        {/* 유저 결과 영역 */}
+        {/* ?��? 결과 ?�역 */}
         {users && users.length > 0 && (
           <section>
             <h2 className="text-xl font-bold border-b pb-2 mb-4 flex items-center gap-2">
-              👤 유저 <span className="text-gray-400 text-sm font-normal">({users.length})</span>
+              ?�� ?��? <span className="text-gray-400 text-sm font-normal">({users.length})</span>
             </h2>
             <UserList users={users} currentUserId={user?.id} currentUserFollowingIds={currentUserFollowingIds} />
           </section>
         )}
 
-        {/* 게시글 결과 영역 */}
+        {/* 게시글 결과 ?�역 */}
         <section>
           <h2 className="text-xl font-bold border-b pb-2 mb-4 flex items-center gap-2">
-            📝 게시글 <span className="text-gray-400 text-sm font-normal">({posts?.length || 0})</span>
+            ?�� 게시글 <span className="text-gray-400 text-sm font-normal">({posts?.length || 0})</span>
           </h2>
           {posts && posts.length > 0 ? (
             <div className="flex flex-col gap-4">
@@ -74,7 +74,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             </div>
           ) : (
             <div className="py-12 text-center bg-gray-50 rounded-xl border border-gray-100">
-              <p className="text-gray-500 font-medium">검색된 게시물이 없습니다.</p>
+              <p className="text-gray-500 font-medium">검?�된 게시물이 ?�습?�다.</p>
             </div>
           )}
         </section>

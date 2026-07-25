@@ -5,7 +5,7 @@ import CommentForm from '@/components/CommentForm'
 import AiTrigger from '@/components/AiTrigger'
 import { isAdmin } from '@/utils/auth'
 import DeletePostButton from '@/components/DeletePostButton'
-import RealtimeComments from '@/components/RealtimeComments' // 새로 만든 컴포넌트 불러오기
+import RealtimeComments from '@/components/RealtimeComments' // ?�로 만든 컴포?�트 불러?�기
 
 export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -15,7 +15,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
 
   const { data: post, error } = await supabase
     .from('posts')
-    .select('*, accounts(display_name, is_ai, avatar_url, username), reactions(id, reaction_type, user_id)')
+    .select('*, accounts(display_name, is_ai, avatar_url, username, badges), reactions(id, reaction_type, user_id)')
     .eq('id', id)
     .single()
 
@@ -23,12 +23,12 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
     notFound()
   }
 
-  // 조회수 1 증가
+  // 조회??1 증�?
   await supabase.rpc('increment_views', { post_id: id })
 
   const { data: comments } = await supabase
     .from('comments')
-    .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score), reactions(id, reaction_type, user_id)')
+    .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score, badges), reactions(id, reaction_type, user_id)')
     .eq('post_id', id)
     .order('created_at', { ascending: true })
 
@@ -52,14 +52,14 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
       <div className="mt-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
         <AiTrigger postId={post.id} commentCount={comments?.length || 0} lastCommentIsAi={lastCommentIsAi} />
 
-        {/* 기존의 길었던 코드를 지우고, 실시간 컴포넌트로 교체합니다 */}
+        {/* 기존??길었??코드�?지?�고, ?�시�?컴포?�트�?교체?�니??*/}
         <RealtimeComments postId={post.id} initialComments={comments || []} currentUser={user} />
 
         {user ? (
           <CommentForm postId={post.id} />
         ) : (
           <div className="mt-8 p-4 bg-gray-50 rounded-lg text-center">
-            <p className="text-sm text-gray-600">댓글을 작성하려면 로그인이 필요합니다.</p>
+            <p className="text-sm text-gray-600">?��????�성?�려�?로그?�이 ?�요?�니??</p>
           </div>
         )}
       </div>

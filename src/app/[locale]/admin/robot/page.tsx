@@ -9,6 +9,7 @@ import AutoBotButton from '@/components/admin/AutoBotButton'
 import AdminNav from '@/components/admin/AdminNav'
 import Pagination from '@/components/Pagination'
 import { getTranslations, getLocale } from 'next-intl/server'
+import UserBadge from '@/components/UserBadge'
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string, page?: string, query?: string, category?: string }> }) {
   const t = await getTranslations('Admin')
@@ -131,9 +132,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                             </span>
                           </td>
                           <td className="p-3">
-                            <Link href={`/users/${userItem.id}`} className="font-bold text-gray-900 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">
-                              {userItem.display_name}
-                            </Link>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <Link href={`/users/${userItem.id}`} className="font-bold text-gray-900 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">
+                                {userItem.display_name}
+                              </Link>
+                              {userItem.badges && userItem.badges.length > 0 && (
+                                <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold shadow-sm whitespace-nowrap">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                                    <path d="M2.695 14.763l-1.262 3.152a.5.5 0 00.65.65l3.151-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                                  </svg>
+                                  기자단
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="p-3 text-center">
                             <img src={userItem.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${userItem.id}`} alt="avatar" className="w-8 h-8 rounded-full border shadow-sm mx-auto bg-white object-cover min-w-[32px]" />
@@ -158,7 +169,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                                   수정
                                 </Link>
                               )}
-                              <RobotActionButtons userId={userItem.id} currentTab={tab} />
+                              <RobotActionButtons userId={userItem.id} currentTab={tab} badges={userItem.badges} />
                             </div>
                           </td>
                         </tr>

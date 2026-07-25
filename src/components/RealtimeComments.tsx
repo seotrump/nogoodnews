@@ -22,15 +22,15 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
     const [isSelectMode, setIsSelectMode] = useState(false)
     const [selectedCommentIds, setSelectedCommentIds] = useState<string[]>([])
 
-    // 중복 제거 및 정렬 유틸리티
+    // 중복 ?�거 �??�렬 ?�틸리티
     const mergeComments = (prev: any[], next: any[]) => {
         const all = [...prev, ...next]
         const unique = Array.from(new Map(all.map(c => [c.id, c])).values())
         return unique.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
     }
 
-    // 서버 액션(사용자 댓글 작성 등)으로 전달된 최신 initialComments와 
-    // Realtime으로 먼저 들어온 comments를 병합하여 누락이나 덮어쓰기 방지
+    // ?�버 ?�션(?�용???��? ?�성 ???�로 ?�달??최신 initialComments?� 
+    // Realtime?�로 먼�? ?�어??comments�?병합?�여 ?�락?�나 ??��?�기 방�?
     useEffect(() => {
         setComments(current => mergeComments(current, initialComments))
     }, [initialComments])
@@ -49,14 +49,14 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
     }
 
     const handleDelete = async (commentId: string) => {
-        if (!confirm('댓글을 삭제하시겠습니까?')) return
+        if (!confirm('?��?????��?�시겠습?�까?')) return
         setDeletingId(commentId)
         try {
             await deleteComment(commentId, postId)
             setComments(prev => prev.filter(c => c.id !== commentId))
-            toast.success('댓글이 삭제되었습니다.')
+            toast.success('?��?????��?�었?�니??')
         } catch (e) {
-            toast.error('삭제에 실패했습니다.')
+            toast.error('??��???�패?�습?�다.')
         } finally {
             setDeletingId(null)
         }
@@ -66,35 +66,35 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
         const container = document.getElementById('comments-container')
         if (!container) return
 
-        const loadingToast = toast.loading('이미지 생성 중...')
+        const loadingToast = toast.loading('?��?지 ?�성 �?..')
         try {
             const className = mode === 'all' ? 'capture-mode-all' : 
                               mode === 'selected' ? 'capture-mode-selected' : 'capture-mode-dialogue'
             container.classList.add(className)
 
-            // 구글 번역기 등에서 주입한 크로스 오리진 스타일시트 접근 시 에러 방지
+            // 구�? 번역�??�에??주입???�로???�리�??��??�시???�근 ???�러 방�?
             const disabledSheets: CSSStyleSheet[] = [];
             Array.from(document.styleSheets).forEach(sheet => {
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const rules = sheet.cssRules;
                 } catch (e: any) {
-                    // SecurityError 등 모든 접근 거부 에러 발생 시 무조건 비활성화
+                    // SecurityError ??모든 ?�근 거�? ?�러 발생 ??무조�?비활?�화
                     sheet.disabled = true;
                     disabledSheets.push(sheet);
                 }
             });
 
-            // DOM 렌더링 대기
+            // DOM ?�더�??��?
             await new Promise(resolve => setTimeout(resolve, 150))
 
             const dataUrl = await toPng(container, {
                 backgroundColor: '#ffffff',
                 pixelRatio: 2,
-                skipFonts: true, // 크로스 오리진 웹 폰트/스타일시트 스캔 생략 (보안 에러 원천 차단)
+                skipFonts: true, // ?�로???�리�????�트/?��??�시???�캔 ?�략 (보안 ?�러 ?�천 차단)
             })
 
-            // 원래대로 복구
+            // ?�래?��?복구
             disabledSheets.forEach(sheet => {
                 sheet.disabled = false;
             });
@@ -108,7 +108,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                     new ClipboardItem({ 'image/png': blob })
                 ])
 
-                // 자동 저장 로직 (로그인된 사용자만)
+                // ?�동 ?�??로직 (로그?�된 ?�용?�만)
                 if (currentUser) {
                     const fileExt = 'png'
                     const fileName = `capture-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`
@@ -135,7 +135,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                         
                         const uniqueBots = Array.from(new Set(capturedBots)).filter(id => id !== currentUser.id)
 
-                        // 1. 유저 본인의 캡처는 클라이언트에서 저장 (RLS 통과)
+                        // 1. ?��? 본인??캡처???�라?�언?�에???�??(RLS ?�과)
                         const { error: insertErr } = await supabase.from('user_captures').insert({
                             user_id: currentUser.id,
                             image_url: publicUrl,
@@ -143,7 +143,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                         })
                         if (insertErr) console.error('Capture insert error:', insertErr)
                             
-                        // 2. 봇들의 캡처는 서버 액션(Admin 권한)으로 우회 저장
+                        // 2. 봇들??캡처???�버 ?�션(Admin 권한)?�로 ?�회 ?�??
                         if (uniqueBots.length > 0) {
                             try {
                                 await saveBotCaptures(uniqueBots, publicUrl, postId)
@@ -157,23 +157,23 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 }
 
                 toast.dismiss(loadingToast)
-                toast.success('클립보드에 복사되었습니다! (Ctrl+V)')
+                toast.success('?�립보드??복사?�었?�니?? (Ctrl+V)')
             } catch (clipErr) {
                 const link = document.createElement('a')
                 link.download = `nogoodnews-comments-${Date.now()}.png`
                 link.href = dataUrl
                 link.click()
                 toast.dismiss(loadingToast)
-                toast.success('이미지가 다운로드되었습니다.')
+                toast.success('?��?지가 ?�운로드?�었?�니??')
             }
 
-            // 캡처 성공 후 선택 모드 해제
+            // 캡처 ?�공 ???�택 모드 ?�제
             setIsSelectMode(false)
             setSelectedCommentIds([])
         } catch (e: any) {
             console.error(e)
             toast.dismiss(loadingToast)
-            toast.error('캡처에 실패했습니다.')
+            toast.error('캡처???�패?�습?�다.')
             container.classList.remove('capture-mode-all', 'capture-mode-dialogue')
         }
     }
@@ -192,15 +192,15 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 async (payload) => {
                     const { data: newComment } = await supabase
                         .from('comments')
-                        .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score)')
+                        .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score, badges)')
                         .eq('id', payload.new.id)
                         .single()
 
                     if (newComment) {
                         setComments((current) => mergeComments(current, [newComment]))
-                        // A안 + B안 하이브리드: 
-                        // B안(Realtime)으로 화면을 0.1초만에 즉각 업데이트 한 뒤,
-                        // A안(router.refresh)으로 서버 캐시를 백그라운드에서 강제로 한 번 더 덮어씌워 유실을 100% 방지함.
+                        // A??+ B???�이브리?? 
+                        // B??Realtime)?�로 ?�면??0.1초만??즉각 ?�데?�트 ????
+                        // A??router.refresh)?�로 ?�버 캐시�?백그?�운?�에??강제�???�?????��?�워 ?�실??100% 방�???
                         router.refresh()
                     }
                 }
@@ -228,7 +228,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
         <>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
                 <h3 className="text-lg font-bold flex items-center gap-2">
-                    댓글 <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{comments.length}</span>
+                    ?��? <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{comments.length}</span>
                 </h3>
                 {comments.length > 0 && (
                     <div className="flex flex-wrap items-center justify-end self-end gap-1.5 w-full sm:w-auto">
@@ -242,19 +242,19 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                     disabled={selectedCommentIds.length === 0}
                                     className="whitespace-nowrap text-[11px] sm:text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm disabled:opacity-50"
                                 >
-                                    <Camera className="w-3.5 h-3.5" /> {selectedCommentIds.length}개 캡처하기
+                                    <Camera className="w-3.5 h-3.5" /> {selectedCommentIds.length}�?캡처?�기
                                 </button>
                             </>
                         ) : (
                             <>
                                 <button onClick={() => setIsSelectMode(true)} className="whitespace-nowrap text-[11px] sm:text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-2.5 sm:px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                                    <CheckSquare className="w-3.5 h-3.5" /> 선택박제
+                                    <CheckSquare className="w-3.5 h-3.5" /> ?�택박제
                                 </button>
                                 <button onClick={() => handleCapture('all')} className="whitespace-nowrap text-[11px] sm:text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-2.5 sm:px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                                    <Camera className="w-3.5 h-3.5" /> 전체박제
+                                    <Camera className="w-3.5 h-3.5" /> ?�체박제
                                 </button>
                                 <button onClick={() => handleCapture('dialogue')} className="whitespace-nowrap text-[11px] sm:text-xs bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-1.5 px-2.5 sm:px-3 rounded-lg transition flex items-center gap-1 shadow-sm">
-                                    <MessageSquare className="w-3.5 h-3.5" /> 대화박제
+                                    <MessageSquare className="w-3.5 h-3.5" /> ?�?�박??
                                 </button>
                             </>
                         )}
@@ -278,7 +278,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                     <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
                                 )}
                                 <div className="flex items-center gap-1.5">
-                                    <span>{comment.accounts?.display_name || '익명'}</span>
+                                    <span>{comment.accounts?.display_name || '?�명'}</span>
                                 </div>
                             </Link>
 
@@ -302,7 +302,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                     disabled={deletingId === comment.id}
                                     className="delete-btn text-xs text-gray-400 hover:text-red-500 transition ml-2 disabled:opacity-40"
                                 >
-                                    {deletingId === comment.id ? '삭제 중...' : '삭제'}
+                                    {deletingId === comment.id ? '??�� �?..' : '??��'}
                                 </button>
                             )}
                         </div>
@@ -312,7 +312,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                             <div className="mt-3 mb-2 rounded-lg overflow-hidden border border-gray-100 max-w-sm inline-block">
                                 <img 
                                     src={comment.image_url} 
-                                    alt="첨부된 짤방" 
+                                    alt="첨�???짤방" 
                                     className="w-full h-auto max-h-60 object-contain bg-gray-50 cursor-zoom-in" 
                                     loading="lazy" 
                                     onClick={() => setZoomedImage(comment.image_url)}
@@ -332,7 +332,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 ))}
                 </div>
                 {comments.length === 0 && (
-                    <p className="text-gray-500 text-center py-8 text-sm">아직 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!</p>
+                    <p className="text-gray-500 text-center py-8 text-sm">?�직 ?��????�습?�다. �?번째 ?��????�겨보세??</p>
                 )}
             </div>
 
@@ -347,4 +347,4 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
             )}
         </>
     )
-}
+}

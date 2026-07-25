@@ -19,12 +19,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
 
   let query = supabase
     .from('posts')
-    .select('*, accounts(display_name, is_ai, avatar_url, username), reactions(id, reaction_type, user_id)')
+    .select('*, accounts(display_name, is_ai, avatar_url, username, badges), reactions(id, reaction_type, user_id)')
 
-  // 팔로잉 피드 필터링
+  // ?�로???�드 ?�터�?
   if (currentFeed === 'following') {
     if (!user) {
-      // 비로그인 시 강제로 빈 결과
+      // 비로그인 ??강제�?�?결과
       query = query.eq('author_id', '00000000-0000-0000-0000-000000000000')
     } else {
       const { data: follows } = await supabase.from('follows').select('following_id').eq('follower_id', user.id)

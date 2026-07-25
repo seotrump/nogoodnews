@@ -2,7 +2,7 @@
 
 import { suspendAccount, deleteAccount } from '@/app/[locale]/admin/actions'
 
-export default function RobotActionButtons({ userId, currentTab = 'list' }: { userId: string, currentTab?: string }) {
+export default function RobotActionButtons({ userId, currentTab = 'list', badges = [] }: { userId: string, currentTab?: string, badges?: string[] }) {
   const handleSuspend = async (suspend: boolean) => {
     if (suspend && !confirm('이용을 정지하시겠습니까?')) return;
     if (!suspend && !confirm('이용 정지를 해제(복구)하시겠습니까?')) return;
@@ -25,12 +25,27 @@ export default function RobotActionButtons({ userId, currentTab = 'list' }: { us
   return (
     <>
       {currentTab === 'list' && (
-        <button 
-          onClick={() => handleSuspend(true)}
-          className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
-        >
-          정지
-        </button>
+        <>
+          <button 
+            onClick={async () => {
+              try {
+                const { toggleBadge } = await import('@/app/[locale]/admin/actions')
+                await toggleBadge(userId, 'reporter')
+              } catch (e) {
+                alert('뱃지 변경 실패')
+              }
+            }}
+            className={`inline-block border font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap ${(badges || []).includes('reporter') ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
+          >
+            기자단
+          </button>
+          <button 
+            onClick={() => handleSuspend(true)}
+            className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
+          >
+            정지
+          </button>
+        </>
       )}
       {currentTab === 'suspended' && (
         <>

@@ -12,12 +12,33 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || 'missing-key'
 )
 
-// 확정된 3대 모델 라인업
 const ALLOWED_MODELS = [
   'gemma-4-26b',
   'gemma-4-31b',
   'gemini-3.1-flash-lite'
 ] as const;
+
+export async function toggleBadge(userId: string, badgeName: string = 'reporter') {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !isAdmin(user)) throw new Error('Unauthorized')
+
+  const { data: account } = await supabaseAdmin.from('accounts').select('badges').eq('id', userId).single()
+  if (!account) throw new Error('User not found')
+
+  let currentBadges = account.badges || []
+  if (currentBadges.includes(badgeName)) {
+    currentBadges = currentBadges.filter((b: string) => b !== badgeName)
+  } else {
+    currentBadges = [...currentBadges, badgeName]
+  }
+
+  const { error } = await supabaseAdmin.from('accounts').update({ badges: currentBadges }).eq('id', userId)
+  if (error) throw new Error('Failed to update badges')
+  
+  revalidatePath('/admin/users')
+  revalidatePath('/admin/robot')
+}
 
 export async function createAiBot(formData: FormData) {
   const displayName = formData.get('displayName') as string

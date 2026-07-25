@@ -1,7 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Link } from '@/i18n/routing'
+import toast from 'react-hot-toast'
+import UserBadge from '@/components/UserBadge'
 import { useTranslations } from 'next-intl'
 import { suspendAccount, deleteAccount } from '../actions'
 
@@ -86,9 +89,12 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
                     </span>
                   </td>
                   <td className="p-3">
-                    <Link href={`/users/${userItem.id}`} className="font-bold text-gray-900 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">
-                      {userItem.display_name}
-                    </Link>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Link href={`/users/${userItem.id}`} className="font-bold text-gray-900 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">
+                        {userItem.display_name}
+                      </Link>
+                      <UserBadge badges={userItem.badges} />
+                    </div>
                   </td>
                   <td className="p-3 text-center">
                     <img src={userItem.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userItem.id}`} alt="avatar" className="w-8 h-8 rounded-full border shadow-sm mx-auto bg-white object-cover min-w-[32px]" />
@@ -113,6 +119,20 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
                           <Link href={`/admin/users/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
                             수정
                           </Link>
+                          <button 
+                            onClick={async () => {
+                              try {
+                                const { toggleBadge } = await import('@/app/[locale]/admin/actions')
+                                await toggleBadge(userItem.id, 'reporter')
+                                toast.success('뱃지가 변경되었습니다.')
+                              } catch (e) {
+                                toast.error('뱃지 변경 실패')
+                              }
+                            }}
+                            className={`inline-block border font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap ${(userItem.badges || []).includes('reporter') ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
+                          >
+                            기자단
+                          </button>
                           <button 
                             onClick={() => handleSuspend(userItem.id, true)}
                             className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
