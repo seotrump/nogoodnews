@@ -171,7 +171,7 @@ export async function updatePost(postId: string, formData: FormData) {
   redirect(`/posts/${postId}`)
 }
 
-export async function addComment(formData: FormData, postId: string) {
+export async function addComment(formData: FormData, postId: string): Promise<{ mentionedBotId?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -215,33 +215,14 @@ export async function addComment(formData: FormData, postId: string) {
       .single()
 
     if (mentionedAccount && mentionedAccount.is_ai) {
-      // Get current locale dynamically
-      const { getLocale } = await import('next-intl/server')
-      const locale = await getLocale()
-
-      // 비동기로 AI 답변 생성 API 호출 (await 하지 않음)
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-      const { after } = await import('next/server');
-      after(async () => {
-        try {
-          await fetch(`${baseUrl}/api/ai-reply`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              postId, 
-              userComment: content,
-              botId: mentionedAccount.id,
-              locale
-            })
-          })
-        } catch (err) {
-          console.error('AI Reply Trigger Error:', err)
-        }
-      })
+      // 클라이언트로 봇 ID를 반환해 클라이언트에서 ai-reply 호출
+      revalidatePath('/', 'layout')
+      return { mentionedBotId: mentionedAccount.id }
     }
   }
 
   revalidatePath('/', 'layout')
+  return {}
 }
 
 export async function deleteComment(commentId: string, postId: string) {

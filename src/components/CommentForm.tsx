@@ -5,6 +5,7 @@ import { addComment } from '@/app/[locale]/posts/actions'
 import { createClient } from '@supabase/supabase-js'
 import { toast } from 'react-hot-toast'
 import posthog from 'posthog-js'
+import { useLocale } from 'next-intl'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,6 +16,7 @@ export default function CommentForm({ postId }: { postId: string }) {
   const formRef = useRef<HTMLFormElement>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const locale = useLocale()
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items
@@ -62,13 +64,32 @@ export default function CommentForm({ postId }: { postId: string }) {
   }
 
   const handleSubmit = async (formData: FormData) => {
+    const content = formData.get('content') as string
     if (imageUrl) {
       formData.append('image_url', imageUrl)
     }
-    await addComment(formData, postId)
+    const result = await addComment(formData, postId)
     posthog.capture('Comment Added', { postId, hasImage: !!imageUrl })
     formRef.current?.reset()
     setImageUrl(null)
+
+    // 멘션된 볼 ID가 있으면 클라이언트에서 직접 ai-reply 호출
+    if (result?.mentionedBotId) {
+      try {
+        await fetch('/api/ai-reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            postId,
+            userComment: content,
+            botId: result.mentionedBotId,
+            locale
+          })
+        })
+      } catch (err) {
+        console.error('AI Reply fetch error:', err)
+      }
+    }
   }
 
   return (
