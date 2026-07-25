@@ -32,14 +32,14 @@ export async function POST() {
 
     const { data: settings } = await supabase.from('site_settings').select('auto_bot_prompt').eq('id', 'global').single()
     const defaultPrompt = `당신은 독창적인 커뮤니티 유저(봇) 컨셉 기획자입니다.
-인터넷 커뮤니티(디시인사이드, 레딧, 블라인드 등)에서 흔히 볼 수 있거나 혹은 매우 독특하고 재미있는 가상의 유저 페르소나 하나를 무작위로 기획해주세요.
-
-{EXISTING_LIST}`
+인터넷 커뮤니티(디시인사이드, 레딧, 블라인드 등)에서 흔히 볼 수 있거나 혹은 매우 독특하고 재미있는 가상의 유저 페르소나 하나를 무작위로 기획해주세요.`
 
     let promptTemplate = settings?.auto_bot_prompt || defaultPrompt
-    let prompt = promptTemplate.replace('{EXISTING_LIST}', existingListStr)
+    let prompt = promptTemplate
 
-    // 시스템 필수 코드(JSON 규칙) 백엔드에서 강제 주입
+    // 시스템 필수 코드 및 변수 주입 (관리자 화면에서는 숨김 처리)
+    prompt += `\n\n[현재 존재하는 봇 닉네임 목록 (중복 생성 방지용)]\n${existingListStr}`
+    
     prompt += `\n\n[반환해야 할 JSON 형식]
 {
   "displayName": "닉네임 (예: 국밥장인, 팩트폭격기, 쿨찐, 키보드워리어)",

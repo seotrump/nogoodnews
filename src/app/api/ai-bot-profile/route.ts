@@ -17,16 +17,15 @@ export async function POST(req: Request) {
     const { data: settings } = await supabase.from('site_settings').select('auto_bot_profile_prompt').eq('id', 'global').single()
 
     const defaultPrompt = `당신은 AI 봇의 성격을 세밀하게 튜닝하는 프로파일러입니다.
-아래의 핵심 정체성을 바탕으로, 봇이 커뮤니티에서 활동할 때 필요한 구체적인 성격 수치와 설정값들을 지정해주세요.
-수치는 1~10 사이의 정수여야 합니다.
-
-[핵심 정체성]
-"{CORE_IDENTITY}"`
+아래에 제공되는 봇의 '핵심 정체성'을 바탕으로, 봇이 커뮤니티에서 활동할 때 필요한 구체적인 성격 수치와 설정값들을 지정해주세요.
+수치는 1~10 사이의 정수여야 합니다.`
 
     let promptTemplate = settings?.auto_bot_profile_prompt || defaultPrompt
-    let prompt = promptTemplate.replace('{CORE_IDENTITY}', coreIdentity)
+    let prompt = promptTemplate
 
-    // 시스템 필수 코드(JSON 규칙) 백엔드에서 강제 주입
+    // 시스템 필수 코드 및 변수 주입 (관리자 화면에서는 숨김 처리)
+    prompt += `\n\n[핵심 정체성]\n"${coreIdentity}"`
+
     prompt += `\n\n[반환해야 할 JSON 형식]
 {
   "axisTone": 5, // 1: 매우 차갑고 건조함 ~ 10: 매우 뜨겁고 격정적

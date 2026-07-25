@@ -5,16 +5,11 @@ import { toast } from 'react-hot-toast'
 import { updateSystemPrompts } from '@/app/[locale]/admin/actions'
 
 const DEFAULT_AUTO_BOT_PROMPT = `당신은 독창적인 커뮤니티 유저(봇) 컨셉 기획자입니다.
-인터넷 커뮤니티(디시인사이드, 레딧, 블라인드 등)에서 흔히 볼 수 있거나 혹은 매우 독특하고 재미있는 가상의 유저 페르소나 하나를 무작위로 기획해주세요.
-
-{EXISTING_LIST}`
+인터넷 커뮤니티(디시인사이드, 레딧, 블라인드 등)에서 흔히 볼 수 있거나 혹은 매우 독특하고 재미있는 가상의 유저 페르소나 하나를 무작위로 기획해주세요.`
 
 const DEFAULT_AUTO_BOT_PROFILE_PROMPT = `당신은 AI 봇의 성격을 세밀하게 튜닝하는 프로파일러입니다.
-아래의 핵심 정체성을 바탕으로, 봇이 커뮤니티에서 활동할 때 필요한 구체적인 성격 수치와 설정값들을 지정해주세요.
-수치는 1~10 사이의 정수여야 합니다.
-
-[핵심 정체성]
-"{CORE_IDENTITY}"`
+아래에 제공되는 봇의 '핵심 정체성'을 바탕으로, 봇이 커뮤니티에서 활동할 때 필요한 구체적인 성격 수치와 설정값들을 지정해주세요.
+수치는 1~10 사이의 정수여야 합니다.`
 
 interface Props {
   settings: {
@@ -58,8 +53,7 @@ export default function SystemPromptsForm({ settings }: Props) {
       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
         <h3 className="font-bold text-gray-800 mb-2">1. 봇 기획 프롬프트 (Core Identity)</h3>
         <p className="text-xs text-gray-500 mb-3">
-          오토 로봇 생성 시 최초로 로봇의 '닉네임'과 '핵심 정체성'을 기획하는 프롬프트입니다.<br/>
-          <span className="font-mono bg-white px-1 rounded border text-blue-600">{`{EXISTING_LIST}`}</span> 부분은 중복 방지를 위해 현재 존재하는 로봇 목록으로 자동 치환됩니다. 반드시 남겨두세요.
+          오토 로봇 생성 시 최초로 로봇의 '닉네임'과 '핵심 정체성'을 기획하는 프롬프트입니다.
         </p>
         <textarea
           name="autoBotPrompt"
@@ -74,8 +68,7 @@ export default function SystemPromptsForm({ settings }: Props) {
       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
         <h3 className="font-bold text-gray-800 mb-2">2. 봇 성격 튜닝 프롬프트 (Profile)</h3>
         <p className="text-xs text-gray-500 mb-3">
-          1단계에서 기획된 핵심 정체성을 바탕으로 구체적인 성격 수치, 말투, 금지어 등을 설정하는 프롬프트입니다.<br/>
-          <span className="font-mono bg-white px-1 rounded border text-blue-600">{`{CORE_IDENTITY}`}</span> 부분은 1단계에서 생성된 정체성 내용으로 자동 치환됩니다. 반드시 남겨두세요.
+          1단계에서 기획된 핵심 정체성을 바탕으로 구체적인 성격 수치, 말투, 금지어 등을 설정하는 프롬프트입니다.
         </p>
         <textarea
           name="autoBotProfilePrompt"
