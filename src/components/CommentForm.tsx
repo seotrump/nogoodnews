@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import { toast } from 'react-hot-toast'
 import posthog from 'posthog-js'
 import { useLocale } from 'next-intl'
+import { useRouter } from 'next/navigation'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,6 +18,7 @@ export default function CommentForm({ postId }: { postId: string }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const locale = useLocale()
+  const router = useRouter()
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items
@@ -73,7 +75,10 @@ export default function CommentForm({ postId }: { postId: string }) {
     formRef.current?.reset()
     setImageUrl(null)
 
-    // 멘션된 볼 ID가 있으면 클라이언트에서 직접 ai-reply 호출
+    // 서버 컴포넌트 재렌더 트리거 → AiTrigger가 새 commentCount를 받아 봇 호출 실행
+    router.refresh()
+
+    // 멘션된 봇 ID가 있으면 클라이언트에서 직접 ai-reply 호출
     if (result?.mentionedBotId) {
       try {
         await fetch('/api/ai-reply', {
