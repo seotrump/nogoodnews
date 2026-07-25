@@ -66,7 +66,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
   if (currentTab === 'feeds') {
     let postsQuery = supabase
       .from('posts')
-      .select('*, accounts(display_name, is_ai, avatar_url, badges), reactions(id)')
+      .select('*, accounts(display_name, is_ai, avatar_url), reactions(id)')
       .eq('author_id', id)
 
     if (sortBy === 'comments') {
@@ -173,7 +173,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
             <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gray-100 border-4 border-white shadow-sm flex items-center justify-center text-gray-300 text-3xl font-bold mb-4 bg-white">?</div>
           )}
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-          <span className="text-2xl sm:text-3xl leading-none">{['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '?��'][profile.level || 1] || `[${profile.level || 1}]`}</span>
+          <span className="text-2xl sm:text-3xl leading-none">{['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'][profile.level || 1] || `[${profile.level || 1}]`}</span>
           <span className="break-all">{profile.display_name}</span>
           {profile.is_ai && (
             <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap">{t('aiAdmin')}</span>
@@ -205,10 +205,10 @@ export default async function UserProfilePage({ params, searchParams }: { params
         
         <div className="flex gap-4 mt-2">
           <Link href={`/users/${profileUrlId}/following`} className="hover:underline hover:text-gray-900 transition-all">
-            <span className="font-bold">{profile.following_count || 0}</span> <span className="text-gray-500">?�로??/span>
+            <span className="font-bold">{profile.following_count || 0}</span> <span className="text-gray-500">팔로잉</span>
           </Link>
           <Link href={`/users/${profileUrlId}/followers`} className="hover:underline hover:text-gray-900 transition-all">
-            <span className="font-bold">{profile.followers_count || 0}</span> <span className="text-gray-500">?�로??/span>
+            <span className="font-bold">{profile.followers_count || 0}</span> <span className="text-gray-500">팔로워</span>
           </Link>
         </div>
 
@@ -242,7 +242,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {captures.length === 0 ? (
                 <div className="col-span-full text-center py-12 bg-white rounded-xl border border-gray-100">
-                  <p className="text-gray-500">박제???��?지가 ?�습?�다.</p>
+                  <p className="text-gray-500">박제된 이미지가 없습니다.</p>
                 </div>
               ) : (
                 captures.map(capture => (
@@ -253,13 +253,13 @@ export default async function UserProfilePage({ params, searchParams }: { params
                           <img src={capture.image_url} alt="Captured comment" className="max-w-full max-h-full object-contain" />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <span className="bg-white text-black text-sm font-bold py-2 px-4 rounded-full shadow-sm hover:scale-105 transition-transform">
-                              ?�본 ?��?지 보기 ?��
+                              원본 이미지 보기 📸
                             </span>
                           </div>
                         </a>
                         <Link href={`/posts/${capture.post_id}`} className="block hover:underline">
                           <p className="text-sm font-bold text-gray-800 truncate leading-snug">
-                            {capture.posts?.headline || '?�문 ?�보 ?�음'}
+                            {capture.posts?.headline || '원문 정보 없음'}
                           </p>
                         </Link>
                       </div>
@@ -269,11 +269,11 @@ export default async function UserProfilePage({ params, searchParams }: { params
                           <img src={capture.image_url} alt="Captured comment" className="max-w-full max-h-full object-contain" />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <a href={capture.image_url} target="_blank" rel="noreferrer" className="bg-white text-black text-sm font-bold py-2 px-4 rounded-full shadow-sm hover:scale-105 transition-transform">
-                              ?�본 ?��?지 ?��
+                              원본 이미지 📸
                             </a>
                           </div>
                         </div>
-                        <p className="text-sm font-bold text-gray-800 truncate leading-snug">?�전 캡처 기록</p>
+                        <p className="text-sm font-bold text-gray-800 truncate leading-snug">이전 캡처 기록</p>
                       </div>
                     )}
                     <div className="px-1">
@@ -298,7 +298,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
                 bestComments.map(comment => (
                   <Link key={comment.id} href={`/posts/${comment.post_id}`} className="block bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
                     <div className="text-sm text-gray-500 mb-2 truncate">
-                      <span className="font-bold text-gray-700">?�문:</span> {comment.posts?.headline}
+                      <span className="font-bold text-gray-700">원문:</span> {comment.posts?.headline}
                     </div>
                     <p className="text-gray-900 mb-3 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
                     {comment.image_url && (
