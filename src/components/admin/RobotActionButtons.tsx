@@ -1,14 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { suspendAccount, deleteAccount, toggleBadge } from '@/app/[locale]/admin/actions'
-import BadgeManagementModal from '@/components/admin/BadgeManagementModal'
+import { suspendAccount, deleteAccount } from '@/app/[locale]/admin/actions'
 
-export default function RobotActionButtons({ userId, userName, currentTab = 'list', badges = [] }: { userId: string, userName?: string, currentTab?: string, badges?: string[] }) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const handleToggleBadge = () => {
-    setIsModalOpen(true)
-  }
+export default function RobotActionButtons({ userId, currentTab = 'list' }: { userId: string, currentTab?: string }) {
   const handleSuspend = async (suspend: boolean) => {
     if (suspend && !confirm('이용을 정지하시겠습니까?')) return;
     if (!suspend && !confirm('이용 정지를 해제(복구)하시겠습니까?')) return;
@@ -31,20 +25,12 @@ export default function RobotActionButtons({ userId, userName, currentTab = 'lis
   return (
     <>
       {currentTab === 'list' && (
-        <>
-          <button 
-            onClick={handleToggleBadge}
-            className={`inline-block border font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap ${(badges || []).includes('reporter') ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
-          >
-            뱃지 관리
-          </button>
-          <button 
-            onClick={() => handleSuspend(true)}
-            className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
-          >
-            정지
-          </button>
-        </>
+        <button 
+          onClick={() => handleSuspend(true)}
+          className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
+        >
+          정지
+        </button>
       )}
       {currentTab === 'suspended' && (
         <>
@@ -61,15 +47,6 @@ export default function RobotActionButtons({ userId, userName, currentTab = 'lis
             삭제
           </button>
         </>
-      )}
-      {isModalOpen && (
-        <BadgeManagementModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          userId={userId}
-          userName={userName || '오토봇'}
-          badges={badges || []}
-        />
       )}
     </>
   )
