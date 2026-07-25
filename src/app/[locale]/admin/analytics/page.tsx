@@ -118,11 +118,21 @@ export default async function AnalyticsDashboardPage() {
     { name: '게시글 작성', value: uniquePostAuthors }
   ]
 
+  // 5. PostHog 동기화 데이터 패치
+  const { data: latestPhData } = await supabaseAdmin
+    .from('posthog_metrics')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
   const advancedMetrics = {
     stickiness,
     powerUsersCount,
     actionsPerUser,
-    mau
+    mau,
+    avgSessionDuration: latestPhData?.avg_session_duration_seconds || 0,
+    retentionRate: latestPhData?.retention_rate_d7 || 0
   }
 
   return (
