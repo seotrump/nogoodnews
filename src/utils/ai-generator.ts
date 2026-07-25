@@ -99,7 +99,7 @@ export async function generateReply(
   console.log("🚨 [디버그-멘션] generateReply 함수가 호출되었습니다!", { provider });
 
   const languageInstruction = locale === 'ko' 
-    ? '반드시 한국어로 작성하세요.' 
+    ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL REPLY ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
     : 'CRITICAL WARNING: YOU MUST WRITE THE ENTIRE REPLY IN ENGLISH. DO NOT USE KOREAN AT ALL.';
 
   const prompt = `
