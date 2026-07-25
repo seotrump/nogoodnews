@@ -3,13 +3,12 @@
 import { useState } from 'react'
 import { Link } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
-import Pagination from '@/components/Pagination'
+import { suspendAccount, deleteAccount } from '../actions'
 
-export default function UsersClient({ accounts, currentUserEmail }: { accounts: any[], currentUserEmail?: string }) {
+export default function UsersClient({ accounts, currentUserEmail, currentTab = 'list' }: { accounts: any[], currentUserEmail?: string, currentTab?: string }) {
   const t = useTranslations('Admin')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('newest')
-  const [showInactiveOnly, setShowInactiveOnly] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const limit = 15
 
@@ -19,10 +18,6 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
       (acc.username?.toLowerCase().includes(search.toLowerCase()) || '') ||
       (acc.email?.toLowerCase().includes(search.toLowerCase()) || '')
     )
-    .filter(acc => {
-      if (!showInactiveOnly) return true
-      return acc.status === 'banned' || acc.is_banned === true
-    })
     .sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       return 0
@@ -30,6 +25,25 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
 
   const totalPages = Math.ceil(filteredAccounts.length / limit)
   const paginatedAccounts = filteredAccounts.slice((currentPage - 1) * limit, currentPage * limit)
+
+  const handleSuspend = async (id: string, suspend: boolean) => {
+    if (suspend && !confirm('이용을 정지하시겠습니까?')) return;
+    if (!suspend && !confirm('이용 정지를 해제(복구)하시겠습니까?')) return;
+    try {
+      await suspendAccount(id, suspend)
+    } catch (error) {
+      alert('오류가 발생했습니다.')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('이 계정과 연관된 모든 게시글 및 데이터가 완전히 영구 삭제됩니다. 진행하시겠습니까?')) return;
+    try {
+      await deleteAccount(id)
+    } catch (error) {
+      alert('삭제 중 오류가 발생했습니다.')
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -42,22 +56,11 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
           onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
           className="w-full sm:w-1/3 border border-gray-200 p-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-black"
         />
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <label className="flex items-center gap-2 text-sm text-gray-600 font-medium whitespace-nowrap cursor-pointer">
-            <input 
-              type="checkbox" 
-              checked={showInactiveOnly} 
-              onChange={e => { setShowInactiveOnly(e.target.checked); setCurrentPage(1); }}
-              className="rounded text-black focus:ring-black border-gray-300"
-            />
-            정지 회원만 보기
-          </label>
-        </div>
       </div>
 
       <div className="overflow-x-auto mt-2">
         <table className="w-full text-left border-collapse sm:min-w-[800px]">
-                  <thead>
+          <thead>
             <tr className="border-b border-gray-200 bg-gray-50 text-xs text-gray-500 font-bold uppercase tracking-wider">
               <th className="p-3 w-16 text-center">등급</th>
               <th className="p-3 w-32 sm:w-40">닉네임</th>
@@ -65,7 +68,7 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
               <th className="p-3 w-28 sm:w-32">아이디</th>
               <th className="p-3 w-32 hidden sm:table-cell">전문성</th>
               <th className="p-3 hidden sm:table-cell">정체성</th>
-              <th className="p-3 w-20 text-center">관리</th>
+              <th className="p-3 w-40 text-center">관리</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -104,9 +107,35 @@ export default function UsersClient({ accounts, currentUserEmail }: { accounts: 
                     <span className="text-xs text-gray-500 line-clamp-1" title={identityText}>{identityText}</span>
                   </td>
                   <td className="p-3 text-center">
-                    <Link href={`/admin/users/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
-                      수정
-                    </Link>
+                    <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                      <Link href={`/admin/users/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
+                        수정
+                      </Link>
+                      {currentTab === 'list' && (
+                        <button 
+                          onClick={() => handleSuspend(userItem.id, true)}
+                          className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
+                        >
+                          정지
+                        </button>
+                      )}
+                      {currentTab === 'suspended' && (
+                        <>
+                          <button 
+                            onClick={() => handleSuspend(userItem.id, false)}
+                            className="inline-block bg-green-50 border border-green-200 text-green-600 hover:bg-green-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
+                          >
+                            복구
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(userItem.id)}
+                            className="inline-block bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
+                          >
+                            삭제
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )

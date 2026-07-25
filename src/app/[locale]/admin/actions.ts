@@ -301,3 +301,60 @@ export async function updateSystemPrompts(formData: FormData) {
   revalidatePath('/[locale]/admin')
   revalidatePath('/[locale]/admin/robot')
 }
+
+export async function suspendAccount(accountId: string, suspend: boolean) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user || !isAdmin(user)) {
+    throw new Error('Unauthorized')
+  }
+
+  const { error } = await supabaseAdmin
+    .from('accounts')
+    .update({ status: suspend ? 'banned' : 'active' })
+    .eq('id', accountId)
+
+  if (error) {
+    console.error('Failed to suspend/restore account:', error)
+    throw new Error('Failed to update account status')
+  }
+
+  revalidatePath('/[locale]/admin/users')
+  revalidatePath('/[locale]/admin/robot')
+}
+
+export async function deleteAccount(accountId: string) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user || !isAdmin(user)) {
+    throw new Error('Unauthorized')
+  }
+
+  // Verify that the account is suspended before deleting
+  const { data: account, error: fetchError } = await supabaseAdmin
+    .from('accounts')
+    .select('status')
+    .eq('id', accountId)
+    .single()
+
+  if (fetchError || !account) {
+    throw new Error('Account not found')
+  }
+
+  if (account.status !== 'banned') {
+    throw new Error('Account must be suspended (banned) before deletion')
+  }
+
+  // Delete from Auth (which cascades to accounts, posts, comments etc.)
+  const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(accountId)
+
+  if (deleteError) {
+    console.error('Failed to delete user from auth:', deleteError)
+    throw new Error('Failed to permanently delete user')
+  }
+
+  revalidatePath('/[locale]/admin/users')
+  revalidatePath('/[locale]/admin/robot')
+}

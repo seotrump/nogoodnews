@@ -30,12 +30,18 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   let count: number | null = 0
   let totalPages = 0
 
-  if (tab === 'list') {
+  if (tab === 'list' || tab === 'suspended') {
     let dbQuery = supabase
       .from('accounts')
       .select('*', { count: 'exact' })
       .eq('is_ai', true)
       .order('created_at', { ascending: false })
+
+    if (tab === 'suspended') {
+      dbQuery = dbQuery.eq('status', 'banned')
+    } else {
+      dbQuery = dbQuery.or('status.neq.banned,status.is.null')
+    }
 
     if (query) {
       dbQuery = dbQuery.or(`display_name.ilike.%${query}%,username.ilike.%${query}%`)
@@ -52,6 +58,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   }
 
   const { Link: NextLink } = await import('@/i18n/routing')
+  const { default: RobotActionButtons } = await import('@/components/admin/RobotActionButtons')
 
   return (
     <>
@@ -64,6 +71,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'list' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
               로봇 목록
+            </Link>
+            <Link 
+              href="/admin/robot?tab=suspended" 
+              className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'suspended' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            >
+              이용 정지
             </Link>
             <Link 
               href="/admin/robot?tab=builder" 
@@ -83,7 +96,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </div>
           )}
 
-          {tab === 'list' && (
+          {(tab === 'list' || tab === 'suspended') && (
             <div className="p-4 sm:p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               
               <AdminFilter />
@@ -98,7 +111,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                       <th className="p-3 w-28 sm:w-32">아이디</th>
                       <th className="p-3 w-32 hidden sm:table-cell">전문성</th>
                       <th className="p-3 hidden sm:table-cell">정체성</th>
-                      <th className="p-3 w-20 text-center">관리</th>
+                      <th className="p-3 w-40 text-center">관리</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -138,9 +151,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                             <span className="text-xs text-gray-500 line-clamp-1" title={identityText}>{identityText}</span>
                           </td>
                           <td className="p-3 text-center">
-                            <Link href={`/admin/bots/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
-                              수정
-                            </Link>
+                            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                              <Link href={`/admin/bots/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
+                                수정
+                              </Link>
+                              <RobotActionButtons userId={userItem.id} currentTab={tab} />
+                            </div>
                           </td>
                         </tr>
                       )
