@@ -17,17 +17,6 @@ export async function POST(req: Request) {
     const { step, coreIdentity, script, params } = body
 
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    // Only admins can generate Pro bots
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: account } = await supabase.from('accounts').select('role').eq('id', user.id).single()
-    if (account?.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const { data: settings } = await supabase.from('site_settings').select('*').eq('id', 'global').single()
 
