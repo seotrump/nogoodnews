@@ -87,7 +87,7 @@ export default function BulkDeleteFeed({
     return (
       <div className="flex flex-col gap-6">
         {(!hideInternalDeleteButton || sortFilter || headerLeftContent) && (
-          <div className="mb-2 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="mb-2 flex flex-col items-end sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="w-full sm:w-auto">
               <div className="flex gap-4 mb-2 border-b border-gray-200">
                 {headerLeftContent}
@@ -99,7 +99,7 @@ export default function BulkDeleteFeed({
               )}
             </div>
             
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0 self-end">
               {hasAdmin && !hideInternalDeleteButton && (
                 <button
                   onClick={handleToggleDeleteMode}
@@ -146,7 +146,7 @@ export default function BulkDeleteFeed({
   return (
     <div className="flex flex-col gap-2">
       {(!hideInternalDeleteButton || sortFilter || headerLeftContent) && (
-        <div className="mb-2 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div className="mb-2 flex flex-col items-end sm:flex-row sm:items-end sm:justify-between gap-4">
           <div className="w-full sm:w-auto">
             <div className="flex gap-4 mb-2 border-b border-gray-200">
               {headerLeftContent}
@@ -158,7 +158,7 @@ export default function BulkDeleteFeed({
             )}
           </div>
           
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0 self-end">
             {hasAdmin && !hideInternalDeleteButton && (
               <button
                 onClick={handleToggleDeleteMode}

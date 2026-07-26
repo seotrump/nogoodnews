@@ -82,7 +82,7 @@ export default function PostContentClient({
 
   return (
     <div className="mt-1">
-      <div className="pr-10">
+      <div className="w-full">
         <h2 className={`text-xl font-bold text-gray-900 mb-2 leading-tight ${!isDetail ? 'hover:text-blue-600 transition' : ''}`}>
           {renderWithHashtags(headline)}
         </h2>
