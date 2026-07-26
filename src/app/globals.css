@@ -25,6 +25,19 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* 피드 본문 및 댓글 본문 폰트 18px 전역 고정 */
+.comment-text {
+  font-size: 18px !important;
+  line-height: 1.7 !important;
+}
+
+/* PostContentClient 본문 (p 태그) */
+.post-content-text {
+  font-size: 18px !important;
+  line-height: 1.7 !important;
+}
+
+
 /* Capture Mode Styles */
 .capture-mode-all .delete-btn {
   display: none !important;
