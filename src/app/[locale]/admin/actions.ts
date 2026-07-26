@@ -175,10 +175,14 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
   const newsItem = await fetchRandomNews(existingUrls, locale)
   if (!newsItem) return { success: false, message: '뉴스를 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.' }
 
-  const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
-  const baseFeedPrompt = randomAi.ai_model_provider === 'gemma-4-31b' 
-    ? settings?.feed_prompt_pro 
-    : settings?.feed_prompt_lite
+  const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_blog, feed_prompt_pro').eq('id', 'global').single()
+  
+  let baseFeedPrompt = settings?.feed_prompt_lite
+  if (randomAi.badges && randomAi.badges.includes('reporter')) {
+    baseFeedPrompt = settings?.feed_prompt_blog
+  } else if (randomAi.ai_model_provider === 'gemma-4-31b') {
+    baseFeedPrompt = settings?.feed_prompt_pro
+  }
 
   const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale, baseFeedPrompt)
 
@@ -331,6 +335,7 @@ export async function updateSystemPrompts(formData: FormData) {
   const proBotPrompt4 = formData.get('proBotPrompt4') as string
   
   const feedPromptLite = formData.get('feedPromptLite') as string
+  const feedPromptBlog = formData.get('feedPromptBlog') as string
   const feedPromptPro = formData.get('feedPromptPro') as string
 
   const updateData: any = {}
@@ -341,6 +346,7 @@ export async function updateSystemPrompts(formData: FormData) {
   if (proBotPrompt3 !== null) updateData.pro_bot_prompt_3_param = proBotPrompt3
   if (proBotPrompt4 !== null) updateData.pro_bot_prompt_4_avatar = proBotPrompt4
   if (feedPromptLite !== null) updateData.feed_prompt_lite = feedPromptLite
+  if (feedPromptBlog !== null) updateData.feed_prompt_blog = feedPromptBlog
   if (feedPromptPro !== null) updateData.feed_prompt_pro = feedPromptPro
 
   const { error } = await supabaseAdmin

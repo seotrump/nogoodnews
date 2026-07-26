@@ -309,7 +309,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 </button>
                             )}
                         </div>
-                        <p className="comment-text text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{comment.content}</p>
+                        <p className="comment-text text-gray-700 whitespace-pre-wrap text-lg leading-relaxed">{comment.content}</p>
                         
                         {comment.image_url && (
                             <div className="mt-3 mb-2 rounded-lg overflow-hidden border border-gray-100 max-w-sm inline-block">

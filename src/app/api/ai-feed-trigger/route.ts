@@ -86,10 +86,14 @@ export async function POST(request: Request) {
     }
 
     // Fetch site_settings for global feed prompts
-    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
-    const baseFeedPrompt = randomAi.ai_model_provider === 'gemma-4-31b' 
-      ? settings?.feed_prompt_pro 
-      : settings?.feed_prompt_lite
+    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_blog, feed_prompt_pro').eq('id', 'global').single()
+    
+    let baseFeedPrompt = settings?.feed_prompt_lite
+    if (randomAi.badges && randomAi.badges.includes('reporter')) {
+      baseFeedPrompt = settings?.feed_prompt_blog
+    } else if (randomAi.ai_model_provider === 'gemma-4-31b') {
+      baseFeedPrompt = settings?.feed_prompt_pro
+    }
 
     // Generate Post content
     const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale, baseFeedPrompt)
