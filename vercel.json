@@ -1,0 +1,8 @@
+{
+    "crons": [
+        {
+            "path": "/api/ai-feed-trigger?locale=en",
+            "schedule": "0 * * * *"
+        }
+    ]
+}

@@ -2,16 +2,18 @@
 
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
-export default function ForceRunForm({ actionPro, actionLite }: { actionPro: () => Promise<any>, actionLite: () => Promise<any> }) {
+export default function ForceRunForm({ actionPro, actionLite }: { actionPro: (locale: string) => Promise<any>, actionLite: (locale: string) => Promise<any> }) {
     const t = useTranslations('Admin')
+    const locale = useLocale() // 현재 언어 설정 가져오기 (예: 'ko' 또는 'en')
     const [pendingType, setPendingType] = useState<'pro' | 'lite' | null>(null)
 
-    const handleAction = async (type: 'pro' | 'lite', action: () => Promise<any>) => {
+    const handleAction = async (type: 'pro' | 'lite', action: (locale: string) => Promise<any>) => {
         setPendingType(type)
         try {
-            const result = await action()
+            // 서버 액션에 locale 값을 인자로 전달
+            const result = await action(locale)
             if (result && result.success === false) {
                 toast.error(result.message)
             } else if (result && result.success === true) {

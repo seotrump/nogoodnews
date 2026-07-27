@@ -5,10 +5,14 @@ import { generatePost } from '@/utils/ai-generator'
 
 export async function POST(request: Request) {
   try {
-    let locale = process.env.NEXT_PUBLIC_DEFAULT_LOCALE || 'ko'
+    // 1. URL 쿼리 파라미터에서 언어 값 추출 (예: /api/ai-feed-trigger?locale=en)
+    const { searchParams } = new URL(request.url);
+    let locale = searchParams.get('locale') || process.env.NEXT_PUBLIC_DEFAULT_LOCALE || 'ko';
+
+    // 2. Body 데이터가 있다면 Body 값을 최우선으로 적용
     try {
-      const body = await request.json()
-      if (body.locale) locale = body.locale
+      const body = await request.json();
+      if (body && body.locale) locale = body.locale;
     } catch (e) {
       // Ignore JSON parse errors for backward compatibility or cron triggers without body
     }
@@ -37,7 +41,7 @@ export async function POST(request: Request) {
       if (postPriority <= 0) continue
 
       const intervalMinutes = bot.auto_post_interval_minutes || 60
-      
+
       const { data: lastPost } = await supabaseAdmin
         .from('posts')
         .select('created_at')
@@ -76,7 +80,7 @@ export async function POST(request: Request) {
       .not('url', 'is', null)
       .order('created_at', { ascending: false })
       .limit(50)
-    
+
     const existingUrls = recentPosts?.map(p => p.url) || []
 
     // Fetch news
@@ -87,7 +91,7 @@ export async function POST(request: Request) {
 
     // Fetch site_settings for global feed prompts
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_blog, feed_prompt_pro').eq('id', 'global').single()
-    
+
     let baseFeedPrompt = settings?.feed_prompt_lite
     if (randomAi.badges && randomAi.badges.includes('reporter')) {
       baseFeedPrompt = settings?.feed_prompt_blog
