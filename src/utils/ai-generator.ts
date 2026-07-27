@@ -13,8 +13,8 @@ export async function generateComment(
 ) {
   console.log("🚨 [디버그-댓글] generateComment 함수가 호출되었습니다!", { provider });
 
-  const languageInstruction = locale === 'ko' 
-    ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL COMMENT ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
+  const languageInstruction = locale === 'ko'
+    ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL COMMENT ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.'
     : 'CRITICAL WARNING: YOU MUST WRITE THE ENTIRE COMMENT IN ENGLISH. DO NOT USE KOREAN AT ALL.';
 
   const prompt = `
@@ -45,7 +45,7 @@ ${recentComments || '(이전 댓글 없음)'}
 }
 
 // ==========================================
-// 2. 피드 생성 함수
+// 2. 피드 생성 함수 (수정본)
 // ==========================================
 export async function generatePost(
   newsItem: { title: string, link: string, contentSnippet: string },
@@ -54,33 +54,44 @@ export async function generatePost(
   locale: string = 'ko',
   baseFeedPrompt?: string
 ) {
-  console.log("🚨 [디버그-피드] generatePost 함수가 호출되었습니다!", { provider });
+  console.log("🚨 [디버그-피드] generatePost 함수가 호출되었습니다!", { provider, locale });
 
-  const languageInstruction = locale === 'ko' 
-    ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL POST ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
-    : 'CRITICAL WARNING: YOU MUST WRITE THE FINAL 3 LINES ENTIRELY IN ENGLISH. DO NOT USE ANY KOREAN WORDS. TRANSLATE EVERYTHING TO ENGLISH BEFORE OUTPUTTING.';
+  // 1. 영어 모드 강력 통제 지시문
+  const languageInstruction = locale === 'ko'
+    ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL POST ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH.'
+    : 'CRITICAL WARNING: FINAL OUTPUT MUST BE 100% IN ENGLISH. DO NOT OUTPUT A SINGLE KOREAN CHARACTER. TRANSLATE EVERYTHING.';
 
-  const fallbackPrompt = `당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.
-다음 페르소나 설정에 맞춰서, 구글에서 긁어온 실제 뉴스를 사람들에게 공유하며 '후킹(Hooking)'하는 글을 작성해주세요.
+  // 2. 라이트 모드용 기본 프롬프트 (DB에 값이 없을 경우 대비)
+  const fallbackPromptKo = `당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.\n무조건 정확히 3줄로 작성하세요.`;
+  const fallbackPromptEn = `You are an influencer bot active in the community.\nWrite exactly in 3 lines.`;
 
-[작성 규칙]
-1. 인사말이나 구구절절한 기사 요약은 절대 쓰지 마세요.
-2. 기사 내용을 바탕으로 커뮤니티 네임드처럼 자극적인 글을 쓰되, 무조건 정확히 3줄로 작성하세요. (예: 1줄: 어그로성 제목, 2줄: 기사 핵심 요약, 3줄: 사람들의 댓글을 유도하는 신랄한 한 줄 평)
-3. 줄과 줄 사이에 빈 줄(공백 줄)은 절대 넣지 마세요. 글이 촘촘하게 3줄로 붙어있어야 합니다.`;
+  // 3. DB 프롬프트(baseFeedPrompt) 처리 및 영문 강제 래핑(Wrapping)
+  let finalBasePrompt = baseFeedPrompt || (locale === 'ko' ? fallbackPromptKo : fallbackPromptEn);
 
-  const finalBasePrompt = baseFeedPrompt || fallbackPrompt;
+  if (locale === 'en' && baseFeedPrompt) {
+    // DB에서 가져온 한국어 지시문(프로/블로그 규칙)을 영어로 실행하도록 덮어씌움
+    finalBasePrompt = `
+[SYSTEM DIRECTIVE: READ RULES IN KOREAN, BUT OUTPUT ONLY IN ENGLISH]
+The following formatting rules are written in Korean. You must apply these formatting rules, BUT you MUST write the final content ENTIRELY IN ENGLISH.
 
+<Formatting_Rules>
+${baseFeedPrompt}
+</Formatting_Rules>
+`;
+  }
+
+  // 4. 최종 프롬프트 조립 (태그 영문화)
   const prompt = `
 ${finalBasePrompt}
 
-[페르소나 설정]
+[Persona Setup]
 ${personaPrompt}
 
-[가져온 뉴스 정보]
-기사 제목: ${newsItem.title}
-기사 요약: ${newsItem.contentSnippet}
+[News Information]
+Title: ${newsItem.title}
+Summary: ${newsItem.contentSnippet}
 
-[추가 제약사항]
+[Language Constraints]
 ${languageInstruction}
 `
   return await generateEnforcedAIContent(prompt);
@@ -98,8 +109,8 @@ export async function generateReply(
 ) {
   console.log("🚨 [디버그-멘션] generateReply 함수가 호출되었습니다!", { provider });
 
-  const languageInstruction = locale === 'ko' 
-    ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL REPLY ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
+  const languageInstruction = locale === 'ko'
+    ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL REPLY ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.'
     : 'CRITICAL WARNING: YOU MUST WRITE THE ENTIRE REPLY IN ENGLISH. DO NOT USE KOREAN AT ALL.';
 
   const prompt = `

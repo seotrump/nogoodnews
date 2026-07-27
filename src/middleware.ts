@@ -1,30 +1,10 @@
 import createMiddleware from 'next-intl/middleware';
-import {routing} from './i18n/routing';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
- 
-const intlMiddleware = createMiddleware(routing);
+import { routing } from './i18n/routing';
 
-export default function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  const localeCookie = request.cookies.get('NEXT_LOCALE')?.value;
+// next-intl이 라우팅, 쿠키 설정, 언어 리다이렉트를 모두 자동 처리합니다.
+export default createMiddleware(routing);
 
-  // 쿠키가 'ko'이고 /ko 경로가 아닌 경우 → /ko로 리다이렉트
-  if (localeCookie === 'ko' && !pathname.startsWith('/ko')) {
-    return NextResponse.redirect(new URL(`/ko${pathname === '/' ? '' : pathname}`, request.url));
-  }
-
-  // 쿠키가 없는 첫 방문자 → 한국어(/ko)로 리다이렉트 (단, 이미 /ko면 제외)
-  if (!localeCookie && !pathname.startsWith('/ko') && !pathname.startsWith('/en')) {
-    const response = NextResponse.redirect(new URL(`/ko${pathname === '/' ? '' : pathname}`, request.url));
-    response.cookies.set('NEXT_LOCALE', 'ko', { path: '/', maxAge: 60 * 60 * 24 * 365 });
-    return response;
-  }
-
-  return intlMiddleware(request);
-}
- 
 export const config = {
+  // API, 정적 파일, 내부 시스템 경로를 제외한 모든 요청에 미들웨어 적용
   matcher: ['/((?!api|auth|_next|_vercel|.*\\..*).*)']
 };

@@ -1,7 +1,6 @@
 import { Link } from '@/i18n/routing'
 import { createClient } from '@/utils/supabase/server'
 import { isAdmin } from '@/utils/auth'
-import { getUserProfileUrl } from '@/utils/user'
 import NotificationBell from '@/components/NotificationBell'
 import SearchBar from '@/components/SearchBar'
 import HeaderControls from '@/components/HeaderControls'
@@ -28,18 +27,39 @@ export default async function Header() {
   return (
     <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
       <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-        <a href={homeUrl} className="text-2xl font-black tracking-tighter shrink-0 flex items-center h-full py-3">
-          {siteLogo ? (
-            <img src={siteLogo} alt="Site Logo" className="h-full max-h-10 w-auto object-contain" />
-          ) : (
-            <>NoGoodNews<span className="text-red-500">.</span></>
-          )}
-        </a>
+        <div className="flex items-center gap-3">
+          <a href={homeUrl} className="text-2xl font-black tracking-tighter shrink-0 flex items-center h-full py-3">
+            {siteLogo ? (
+              <img src={siteLogo} alt="Site Logo" className="h-full max-h-10 w-auto object-contain" />
+            ) : (
+              <>NoGoodNews<span className="text-red-500">.</span></>
+            )}
+          </a>
+
+          {/* [추가됨] 언어 전환 버튼 (KO / EN) */}
+          <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
+            <Link
+              href="/"
+              locale="ko"
+              className={`text-xs font-bold px-2 py-1 rounded transition ${locale === 'ko' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            >
+              KO
+            </Link>
+            <Link
+              href="/"
+              locale="en"
+              className={`text-xs font-bold px-2 py-1 rounded transition ${locale === 'en' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            >
+              EN
+            </Link>
+          </div>
+        </div>
+
         <div className="flex items-center gap-4 flex-1 justify-between ml-4 sm:ml-8">
-          <HeaderControls 
-            user={user} 
-            profile={profile} 
-            hasAdmin={hasAdmin} 
+          <HeaderControls
+            user={user}
+            profile={profile}
+            hasAdmin={hasAdmin}
             t={{
               botManagement: t('botManagement'),
               userManagement: t('userManagement'),
@@ -48,7 +68,7 @@ export default async function Header() {
               account: t('account'),
               logout: t('logout'),
               login: t('login')
-            }} 
+            }}
           />
         </div>
       </div>
