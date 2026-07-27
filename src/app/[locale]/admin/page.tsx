@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const t = await getTranslations('Settings')
+  const tAdmin = await getTranslations('Admin')
   const locale = await getLocale()
   const boundForceAiPostPro = forceAiPost.bind(null, locale, 'pro')
   const boundForceAiPostLite = forceAiPost.bind(null, locale, 'lite')
@@ -47,19 +48,19 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           href="/admin?tab=main" 
           className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'main' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
-          환경 설정
+          {tAdmin('tabMain')}
         </Link>
         <Link 
           href="/admin?tab=feed" 
           className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'feed' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
-          피드 설정
+          {tAdmin('tabFeed')}
         </Link>
         <Link 
           href="/admin?tab=robot" 
           className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'robot' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
-          오토봇 설정
+          {tAdmin('tabRobot')}
         </Link>
       </div>
 

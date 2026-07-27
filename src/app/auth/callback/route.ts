@@ -17,11 +17,14 @@ export async function GET(request: Request) {
     if (!error && data.user) {
       if (data.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         const cookieStore = await cookies()
-        cookieStore.set('NEXT_LOCALE', 'ko', { path: '/' })
+        const currentLocale = cookieStore.get('NEXT_LOCALE')?.value || 'ko'
+        cookieStore.set('NEXT_LOCALE', currentLocale, { path: '/' })
+        
+        const localePrefix = currentLocale === 'en' ? '' : `/${currentLocale}`
         if (next === '/' || next === '') {
-          redirectUrl = `${origin}/ko`
-        } else if (!next.startsWith('/ko')) {
-          redirectUrl = `${origin}/ko${next}`
+          redirectUrl = `${origin}${localePrefix}`
+        } else if (localePrefix !== '' && !next.startsWith(localePrefix)) {
+          redirectUrl = `${origin}${localePrefix}${next}`
         }
       }
 

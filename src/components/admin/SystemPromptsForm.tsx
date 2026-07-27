@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'react-hot-toast'
 import { updateSystemPrompts } from '@/app/[locale]/admin/actions'
+import { useTranslations } from 'next-intl'
 
 const DEFAULT_AUTO_BOT_PROMPT = `당신은 독창적인 커뮤니티 유저(봇) 컨셉 기획자입니다.
 인터넷 커뮤니티(디시인사이드, 레딧, 블라인드 등)에서 흔히 볼 수 있거나 혹은 매우 독특하고 재미있는 가상의 유저 페르소나 하나를 무작위로 기획해주세요.
@@ -107,6 +108,7 @@ interface Props {
 }
 
 export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props) {
+  const t = useTranslations('Admin')
   const [isPending, startTransition] = useTransition()
   
   // General
@@ -134,15 +136,15 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
     startTransition(async () => {
       try {
         await updateSystemPrompts(formData)
-        toast.success('로봇 프롬프트가 저장되었습니다.')
+        toast.success(t('saveSuccess'))
       } catch (err: any) {
-        toast.error(err.message || '저장 실패')
+        toast.error(err.message || t('saveFailed'))
       }
     })
   }
 
   const handleReset = () => {
-    if (confirm('정말 기본 프롬프트로 초기화하시겠습니까?')) {
+    if (confirm(t('resetConfirm'))) {
       if (topTab === 'general') {
         setPrompt1(DEFAULT_AUTO_BOT_PROMPT)
         setPrompt2(DEFAULT_AUTO_BOT_PROFILE_PROMPT)
@@ -165,7 +167,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       {/* Header: Title and Buttons */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-          오토 로봇 프롬프트 관리
+          {t('promptManagementTitle')}
         </h1>
         
         <div className="flex items-center gap-3">
@@ -174,14 +176,14 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             onClick={handleReset}
             className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-md font-medium hover:bg-gray-200 transition"
           >
-            기본값 복원
+            {t('resetDefault')}
           </button>
           <button
             type="submit"
             disabled={isPending}
             className="px-6 py-2 text-sm bg-blue-600 text-white rounded-md font-bold hover:bg-blue-700 disabled:opacity-50 transition shadow-sm"
           >
-            {isPending ? '저장 중...' : '프롬프트 저장'}
+            {isPending ? t('savingPrompt') : t('savePrompt')}
           </button>
         </div>
       </div>
@@ -198,7 +200,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
                 : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
             }`}
           >
-            오토봇 라이트
+            {t('botLite')}
           </button>
           <button
             type="button"
@@ -209,7 +211,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
                 : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
             }`}
           >
-            오토봇 프로
+            {t('botPro')}
           </button>
         </div>
       )}
@@ -228,7 +230,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                1. 컨셉기획
+                {t('tabConcept')}
               </button>
               <button
                 type="button"
@@ -239,7 +241,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                2. 성격튜닝
+                {t('tabTuning')}
               </button>
             </div>
 
@@ -247,12 +249,12 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
               <div className="p-4 bg-gray-100 border-b border-gray-200">
                 <h3 className="font-bold text-gray-800 mb-1">
-                  {subTab === 'concept' ? '봇 기획 프롬프트 (Core Identity)' : '봇 성격 튜닝 프롬프트 (Profile)'}
+                  {subTab === 'concept' ? t('conceptTitle') : t('tuningTitle')}
                 </h3>
                 <p className="text-xs text-gray-500">
                   {subTab === 'concept' 
-                    ? "오토 로봇 생성 시 최초로 로봇의 '닉네임'과 '핵심 정체성'을 기획하는 프롬프트입니다. {기존 로스터 요약} 자리에는 기존 봇 목록이 자동 삽입됩니다."
-                    : "1단계에서 기획된 핵심 정체성을 바탕으로 구체적인 성격 수치, 말투, 금지어 등을 설정하는 프롬프트입니다."}
+                    ? t('conceptDesc')
+                    : t('tuningDesc')}
                 </p>
               </div>
               <div className="p-4 bg-white">
@@ -275,16 +277,16 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             {/* Pro Sub Tabs */}
             <div className="flex border-b border-gray-200 overflow-x-auto">
               <button type="button" onClick={() => setSubTab('pro1')} className={`py-2 px-4 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'pro1' ? 'border-purple-600 text-purple-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                1. 정체성 기획
+                {t('tabPro1')}
               </button>
               <button type="button" onClick={() => setSubTab('pro2')} className={`py-2 px-4 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'pro2' ? 'border-purple-600 text-purple-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                2. 대본 작성
+                {t('tabPro2')}
               </button>
               <button type="button" onClick={() => setSubTab('pro3')} className={`py-2 px-4 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'pro3' ? 'border-purple-600 text-purple-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                3. 파라미터 추출
+                {t('tabPro3')}
               </button>
               <button type="button" onClick={() => setSubTab('pro4')} className={`py-2 px-4 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'pro4' ? 'border-purple-600 text-purple-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                4. 아바타 프롬프트
+                {t('tabPro4')}
               </button>
             </div>
 
@@ -292,16 +294,16 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
               <div className="p-4 bg-gray-100 border-b border-gray-200">
                 <h3 className="font-bold text-gray-800 mb-1">
-                  {subTab === 'pro1' && '1단계: 세계관 및 정체성 딥 기획'}
-                  {subTab === 'pro2' && '2단계: 페르소나 대본 작성 (말투 훈련)'}
-                  {subTab === 'pro3' && '3단계: 텍스트 프로파일링 (파라미터 추출)'}
-                  {subTab === 'pro4' && '4단계: 아바타 이미지 프롬프트 도출'}
+                  {subTab === 'pro1' && t('proTitle1')}
+                  {subTab === 'pro2' && t('proTitle2')}
+                  {subTab === 'pro3' && t('proTitle3')}
+                  {subTab === 'pro4' && t('proTitle4')}
                 </h3>
                 <p className="text-xs text-gray-500">
-                  {subTab === 'pro1' && "가장 기반이 되는 세계관과 디테일한 캐릭터의 뼈대를 생성합니다. {기존 로스터 요약} / {기존 로스터 전문분야 목록} 자리에는 기존 봇 데이터가 자동 삽입됩니다."}
-                  {subTab === 'pro2' && "1단계 스토리를 바탕으로 커뮤니티에 쓸법한 찐 게시글 3편을 시뮬레이션합니다."}
-                  {subTab === 'pro3' && "작성된 대본을 분석하여 시스템에 등록할 1~10 수치 및 발작버튼을 추출합니다."}
-                  {subTab === 'pro4' && "최종 완성된 캐릭터의 외형을 생성하기 위한 이미지 프롬프트를 만듭니다. {기존 아바타 색상 팔레트 요약} 자리에는 기존 아바타 데이터가 자동 삽입됩니다."}
+                  {subTab === 'pro1' && t('proDesc1')}
+                  {subTab === 'pro2' && t('proDesc2')}
+                  {subTab === 'pro3' && t('proDesc3')}
+                  {subTab === 'pro4' && t('proDesc4')}
                 </p>
               </div>
               <div className="p-4 bg-white">
@@ -338,13 +340,13 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             {/* Feed Sub Tabs */}
             <div className="flex border-b border-gray-200 overflow-x-auto">
               <button type="button" onClick={() => setSubTab('lite')} className={`py-2 px-6 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'lite' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                라이트
+                {t('feedLite')}
               </button>
               <button type="button" onClick={() => setSubTab('blog')} className={`py-2 px-6 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'blog' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                블로그
+                {t('feedBlog')}
               </button>
               <button type="button" onClick={() => setSubTab('pro')} className={`py-2 px-6 text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${subTab === 'pro' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                프로
+                {t('feedPro')}
               </button>
             </div>
 
@@ -352,14 +354,14 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
               <div className="p-4 bg-gray-100 border-b border-gray-200">
                 <h3 className="font-bold text-gray-800 mb-1">
-                  {subTab === 'lite' && '오토봇 라이트 피드 작성 템플릿'}
-                  {subTab === 'blog' && '오토봇 블로그 피드 작성 템플릿'}
-                  {subTab === 'pro' && '오토봇 프로 피드 작성 템플릿'}
+                  {subTab === 'lite' && t('feedTitleLite')}
+                  {subTab === 'blog' && t('feedTitleBlog')}
+                  {subTab === 'pro' && t('feedTitlePro')}
                 </h3>
                 <p className="text-xs text-gray-500">
-                  {subTab === 'lite' && "가볍고 빠른 3줄 요약 어그로 포맷을 유지합니다."}
-                  {subTab === 'blog' && "라이트와 프로 사이의 중간 분량 포맷입니다. 삽화 이미지 프롬프트 요약을 함께 생성합니다. 프로 등급 봇이 전문분야와 일치하는 중대 이슈를 다룰 때 사용합니다."}
-                  {subTab === 'pro' && "봇의 설정과 세계관을 녹여낸 심층적이고 긴 호흡의 글쓰기를 유도합니다."}
+                  {subTab === 'lite' && t('feedDescLite')}
+                  {subTab === 'blog' && t('feedDescBlog')}
+                  {subTab === 'pro' && t('feedDescPro')}
                 </p>
               </div>
               <div className="p-4 bg-white">

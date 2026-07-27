@@ -5,7 +5,7 @@ import { addComment } from '@/app/[locale]/posts/actions'
 import { createClient } from '@supabase/supabase-js'
 import { toast } from 'react-hot-toast'
 import posthog from 'posthog-js'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 
 const supabase = createClient(
@@ -18,6 +18,7 @@ export default function CommentForm({ postId }: { postId: string }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const locale = useLocale()
+  const t = useTranslations('CommentForm')
   const router = useRouter()
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -40,7 +41,7 @@ export default function CommentForm({ postId }: { postId: string }) {
 
   const uploadImage = async (file: File) => {
     setIsUploading(true)
-    const toastId = toast.loading('이미지 업로드 중...')
+    const toastId = toast.loading(t('imageUploading'))
     try {
       const fileExt = file.name.split('.').pop() || 'png'
       const filePath = `comment-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`
@@ -56,10 +57,10 @@ export default function CommentForm({ postId }: { postId: string }) {
         .getPublicUrl(filePath)
 
       setImageUrl(publicUrl)
-      toast.success('이미지가 첨부되었습니다.', { id: toastId })
+      toast.success(t('imageSuccess'), { id: toastId })
     } catch (error) {
       console.error(error)
-      toast.error('이미지 업로드에 실패했습니다.', { id: toastId })
+      toast.error(t('imageFailed'), { id: toastId })
     } finally {
       setIsUploading(false)
     }

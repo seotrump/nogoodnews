@@ -24,9 +24,10 @@ export async function login(formData: FormData) {
 
   if (data.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
     const cookieStore = await cookies()
-    cookieStore.set('NEXT_LOCALE', 'ko', { path: '/' })
+    const currentLocale = cookieStore.get('NEXT_LOCALE')?.value || 'ko'
+    cookieStore.set('NEXT_LOCALE', currentLocale, { path: '/' })
     revalidatePath('/', 'layout')
-    redirect('/ko')
+    redirect(currentLocale === 'en' ? '/' : `/${currentLocale}`)
   }
 
   revalidatePath('/', 'layout')

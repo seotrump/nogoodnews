@@ -5,7 +5,7 @@ import { generatePost } from '@/utils/ai-generator'
 
 export async function POST(request: Request) {
   try {
-    let locale = 'ko'
+    let locale = process.env.NEXT_PUBLIC_DEFAULT_LOCALE || 'ko'
     try {
       const body = await request.json()
       if (body.locale) locale = body.locale

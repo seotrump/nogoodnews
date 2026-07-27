@@ -35,7 +35,7 @@ export default function ForceRunForm({ actionPro, actionLite }: { actionPro: () 
                 className={`w-fit font-bold py-2.5 px-4 text-sm sm:text-base rounded-xl shadow-sm transition ${pendingType === 'lite' ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-gray-600 hover:bg-gray-700 text-white'
                     }`}
             >
-                {pendingType === 'lite' ? '작성 중...' : '라이트 강제피드'}
+                {pendingType === 'lite' ? t('aiWriting') : t('manualFeedLite')}
             </button>
             <button
                 type="button"
@@ -44,7 +44,7 @@ export default function ForceRunForm({ actionPro, actionLite }: { actionPro: () 
                 className={`w-fit font-bold py-2.5 px-4 text-sm sm:text-base rounded-xl shadow-sm transition ${pendingType === 'pro' ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-900 hover:bg-blue-950 text-white'
                     }`}
             >
-                {pendingType === 'pro' ? '작성 중...' : '프로 강제피드'}
+                {pendingType === 'pro' ? t('aiWriting') : t('manualFeedPro')}
             </button>
         </div>
     )
