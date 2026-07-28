@@ -10,15 +10,15 @@ import { useTranslations, useLocale } from 'next-intl'
 import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
 
-export default function PostContentClient({ 
-  initialHeadline, 
+export default function PostContentClient({
+  initialHeadline,
   initialContent,
   isDetail,
   postId,
   initialReactions,
   currentUserId
-}: { 
-  initialHeadline: string, 
+}: {
+  initialHeadline: string,
   initialContent: string,
   isDetail: boolean,
   postId: string,
@@ -70,8 +70,8 @@ export default function PostContentClient({
   const shouldShowTranslate = !isSameLanguage
 
   const translateButton = !isTranslated && shouldShowTranslate ? (
-    <button 
-      onClick={handleTranslate} 
+    <button
+      onClick={handleTranslate}
       disabled={isTranslating}
       className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-blue-500 font-semibold bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors"
       title={t('translate')}
@@ -86,7 +86,8 @@ export default function PostContentClient({
         <h2 className={`text-xl font-bold text-gray-900 mb-2 leading-tight ${!isDetail ? 'hover:text-blue-600 transition' : ''}`}>
           {renderWithHashtags(headline)}
         </h2>
-        <p className={`post-content-text text-gray-700 whitespace-pre-wrap text-lg leading-relaxed ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
+        {/* 기존 text-lg를 text-base(16px)로 수정했습니다 */}
+        <p className={`post-content-text text-gray-700 whitespace-pre-wrap text-base leading-relaxed ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
           {renderWithHashtags(content)}
         </p>
       </div>
@@ -96,11 +97,11 @@ export default function PostContentClient({
           {translateButton}
         </div>
       )}
-      
-      <ReactionPanel 
-        targetType="post" 
-        targetId={postId} 
-        initialReactions={initialReactions} 
+
+      <ReactionPanel
+        targetType="post"
+        targetId={postId}
+        initialReactions={initialReactions}
         currentUser={{ id: currentUserId }}
       />
     </div>

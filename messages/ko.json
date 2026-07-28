@@ -105,7 +105,7 @@
   },
   "Settings": {
     "title": "환경설정",
-    "version": "V3.10",
+    "version": "V3.11",
     "accountEmail": "계정 이메일",
     "language": "기본 언어 (Language)",
     "aiAdmin": "로봇 운영계정",

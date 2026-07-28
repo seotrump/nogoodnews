@@ -38,7 +38,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
     }, [initialComments])
 
     const toggleSelection = (id: string) => {
-        setSelectedCommentIds(prev => 
+        setSelectedCommentIds(prev =>
             prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
         )
     }
@@ -70,8 +70,8 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
 
         const loadingToast = toast.loading('이미지 생성 중...')
         try {
-            const className = mode === 'all' ? 'capture-mode-all' : 
-                              mode === 'selected' ? 'capture-mode-selected' : 'capture-mode-dialogue'
+            const className = mode === 'all' ? 'capture-mode-all' :
+                mode === 'selected' ? 'capture-mode-selected' : 'capture-mode-dialogue'
             container.classList.add(className)
 
             // 구글 번역기 등에서 주입한 크로스 오리진 스타일시트 접근 시 에러 방지
@@ -114,16 +114,16 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 if (currentUser) {
                     const fileExt = 'png'
                     const fileName = `capture-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`
-                    
+
                     const { error: uploadError } = await supabase.storage
                         .from('captures')
                         .upload(fileName, blob)
-                    
+
                     if (!uploadError) {
                         const { data: { publicUrl } } = supabase.storage
                             .from('captures')
                             .getPublicUrl(fileName)
-                            
+
                         let capturedBots: string[] = []
                         if (mode === 'selected') {
                             capturedBots = comments
@@ -134,7 +134,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 .filter((c: any) => c.accounts?.is_ai)
                                 .map((c: any) => c.author_id)
                         }
-                        
+
                         const uniqueBots = Array.from(new Set(capturedBots)).filter(id => id !== currentUser.id)
 
                         // 1. 유저 본인의 캡처는 클라이언트에서 저장 (RLS 통과)
@@ -144,7 +144,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                             post_id: postId
                         })
                         if (insertErr) console.error('Capture insert error:', insertErr)
-                            
+
                         // 2. 봇들의 캡처는 서버 액션(Admin 권한)으로 우회 저장
                         if (uniqueBots.length > 0) {
                             try {
@@ -236,11 +236,11 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                     <div className="flex flex-wrap items-center justify-end self-end gap-1.5 w-full sm:w-auto">
                         {isSelectMode ? (
                             <>
-                                <button onClick={() => {setIsSelectMode(false); setSelectedCommentIds([]);}} className="whitespace-nowrap text-[11px] sm:text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition">
+                                <button onClick={() => { setIsSelectMode(false); setSelectedCommentIds([]); }} className="whitespace-nowrap text-[11px] sm:text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-1.5 px-3 rounded-lg transition">
                                     취소
                                 </button>
-                                <button 
-                                    onClick={() => handleCapture('selected')} 
+                                <button
+                                    onClick={() => handleCapture('selected')}
                                     disabled={selectedCommentIds.length === 0}
                                     className="whitespace-nowrap text-[11px] sm:text-xs bg-black hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1 shadow-sm disabled:opacity-50"
                                 >
@@ -266,73 +266,73 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
 
             <div id="comments-container" className={`bg-white transition-all duration-300 ${isSelectMode ? 'p-2 sm:p-4 rounded-xl border border-gray-200' : ''}`}>
                 <div className="flex flex-col gap-2">
-                {comments.map((comment: any, index: number) => (
-                    <div 
-                        key={`${comment.id}-${index}`}
-                        className={`pb-3 border-b last:border-b-0 border-gray-100 comment-item ${isSelectMode && !selectedCommentIds.includes(comment.id) ? 'not-selected-for-capture opacity-50' : ''}`}
-                        onClick={() => isSelectMode && toggleSelection(comment.id)}
-                    >
-                        <div className="flex items-center gap-2 mb-2">
-                            <Link href={getUserProfileUrl(comment)} className="flex items-center gap-2 font-semibold text-gray-800 hover:underline">
-                                {comment.accounts?.avatar_url ? (
-                                    <img src={comment.accounts.avatar_url} alt="Avatar" className="w-5 h-5 rounded-full object-cover border" />
-                                ) : (
-                                    <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
-                                )}
-                                <div className="flex items-center gap-1.5">
-                                    <span>{comment.accounts?.display_name || '익명'}</span>
-                                    <UserBadge badges={comment.accounts?.badges} />
-                                </div>
-                            </Link>
-
-                            <span className="text-xs text-gray-400 ml-auto flex items-center gap-3">
-                                <span>{new Date(comment.created_at).toLocaleString('ko-KR')}</span>
-                                {isSelectMode && (
-                                    <div className="checkbox-wrapper flex items-center">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={selectedCommentIds.includes(comment.id)}
-                                            readOnly
-                                            className="w-4 h-4 text-black bg-gray-100 border-gray-300 rounded focus:ring-black focus:ring-2 cursor-pointer"
-                                        />
+                    {comments.map((comment: any, index: number) => (
+                        <div
+                            key={`${comment.id}-${index}`}
+                            className={`pb-3 border-b last:border-b-0 border-gray-100 comment-item ${isSelectMode && !selectedCommentIds.includes(comment.id) ? 'not-selected-for-capture opacity-50' : ''}`}
+                            onClick={() => isSelectMode && toggleSelection(comment.id)}
+                        >
+                            <div className="flex items-center gap-2 mb-2">
+                                <Link href={getUserProfileUrl(comment)} className="flex items-center gap-2 font-semibold text-gray-800 hover:underline">
+                                    {comment.accounts?.avatar_url ? (
+                                        <img src={comment.accounts.avatar_url} alt="Avatar" className="w-5 h-5 rounded-full object-cover border" />
+                                    ) : (
+                                        <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
+                                    )}
+                                    <div className="flex items-center gap-1.5">
+                                        <span>{comment.accounts?.display_name || '익명'}</span>
+                                        <UserBadge badges={comment.accounts?.badges} />
                                     </div>
-                                )}
-                            </span>
+                                </Link>
 
-                            {canDelete(comment) && (
-                                <button
-                                    onClick={() => handleDelete(comment.id)}
-                                    disabled={deletingId === comment.id}
-                                    className="delete-btn text-xs text-gray-400 hover:text-red-500 transition ml-2 disabled:opacity-40"
-                                >
-                                    {deletingId === comment.id ? '삭제 중...' : '삭제'}
-                                </button>
+                                <span className="text-xs text-gray-400 ml-auto flex items-center gap-3">
+                                    <span>{new Date(comment.created_at).toLocaleString('ko-KR')}</span>
+                                    {isSelectMode && (
+                                        <div className="checkbox-wrapper flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedCommentIds.includes(comment.id)}
+                                                readOnly
+                                                className="w-4 h-4 text-black bg-gray-100 border-gray-300 rounded focus:ring-black focus:ring-2 cursor-pointer"
+                                            />
+                                        </div>
+                                    )}
+                                </span>
+
+                                {canDelete(comment) && (
+                                    <button
+                                        onClick={() => handleDelete(comment.id)}
+                                        disabled={deletingId === comment.id}
+                                        className="delete-btn text-xs text-gray-400 hover:text-red-500 transition ml-2 disabled:opacity-40"
+                                    >
+                                        {deletingId === comment.id ? '삭제 중...' : '삭제'}
+                                    </button>
+                                )}
+                            </div>
+                            <p className="comment-text text-gray-700 whitespace-pre-wrap text-base leading-relaxed">{comment.content}</p>
+
+                            {comment.image_url && (
+                                <div className="mt-3 mb-2 rounded-lg overflow-hidden border border-gray-100 max-w-sm inline-block">
+                                    <img
+                                        src={comment.image_url}
+                                        alt="첨부된 짤방"
+                                        className="w-full h-auto max-h-60 object-contain bg-gray-50 cursor-zoom-in"
+                                        loading="lazy"
+                                        onClick={() => setZoomedImage(comment.image_url)}
+                                    />
+                                </div>
                             )}
-                        </div>
-                        <p className="comment-text text-gray-700 whitespace-pre-wrap text-lg leading-relaxed">{comment.content}</p>
-                        
-                        {comment.image_url && (
-                            <div className="mt-3 mb-2 rounded-lg overflow-hidden border border-gray-100 max-w-sm inline-block">
-                                <img 
-                                    src={comment.image_url} 
-                                    alt="첨부된 짤방" 
-                                    className="w-full h-auto max-h-60 object-contain bg-gray-50 cursor-zoom-in" 
-                                    loading="lazy" 
-                                    onClick={() => setZoomedImage(comment.image_url)}
+
+                            <div className="mt-1 reaction-panel">
+                                <ReactionPanel
+                                    targetType="comment"
+                                    targetId={comment.id}
+                                    initialReactions={comment.reactions || []}
+                                    currentUser={currentUser}
                                 />
                             </div>
-                        )}
-
-                        <div className="mt-1 reaction-panel">
-                            <ReactionPanel 
-                                targetType="comment" 
-                                targetId={comment.id} 
-                                initialReactions={comment.reactions || []} 
-                                currentUser={currentUser} 
-                            />
                         </div>
-                    </div>
-                ))}
+                    ))}
                 </div>
                 {comments.length === 0 && (
                     <p className="text-gray-500 text-center py-8 text-sm">아직 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!</p>
@@ -340,7 +340,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
             </div>
 
             {zoomedImage && (
-                <div 
+                <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4 cursor-zoom-out"
                     onClick={() => setZoomedImage(null)}
                 >
@@ -350,4 +350,4 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
             )}
         </>
     )
-}
+}
