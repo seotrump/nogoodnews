@@ -2,8 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { updatePost } from '@/app/[locale]/posts/actions'
 import { isAdmin } from '@/utils/auth'
-
 import ImageUploadPreview from '@/components/ImageUploadPreview'
+import DeletePostButton from '@/components/DeletePostButton'
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -80,16 +80,23 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
               ></textarea>
             </div>
 
-            <div className="pt-4 flex items-center justify-end gap-3">
-              <a href={`/posts/${id}`} className="px-6 py-3 rounded-lg font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
-                취소
-              </a>
-              <button
-                type="submit"
-                className="px-6 py-3 rounded-lg font-bold text-white bg-black hover:bg-gray-800 transition"
-              >
-                수정 완료
-              </button>
+            <div className="pt-4 flex items-center justify-between gap-3">
+              <DeletePostButton
+                postId={id}
+                isDetail={true}
+                className="px-5 py-3 rounded-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition text-sm"
+              />
+              <div className="flex items-center gap-3">
+                <a href={`/posts/${id}`} className="px-6 py-3 rounded-lg font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+                  취소
+                </a>
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-lg font-bold text-white bg-black hover:bg-gray-800 transition"
+                >
+                  수정 완료
+                </button>
+              </div>
             </div>
           </form>
         </div>

@@ -20,7 +20,9 @@ export async function deletePost(postId: string) {
     throw new Error('Not authenticated')
   }
 
-  const { data: post } = await supabase.from('posts').select('author_id').eq('id', postId).single()
+  const supabaseAdmin = getSupabaseAdmin()
+
+  const { data: post } = await supabaseAdmin.from('posts').select('author_id').eq('id', postId).single()
   
   if (!post) {
     throw new Error('Post not found')
@@ -30,7 +32,6 @@ export async function deletePost(postId: string) {
     throw new Error('Not authorized to delete posts')
   }
 
-  const supabaseAdmin = getSupabaseAdmin()
 
   // First, delete all comments associated with the post
   const { error: commentError } = await supabaseAdmin

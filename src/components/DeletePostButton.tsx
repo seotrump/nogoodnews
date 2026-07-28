@@ -34,18 +34,32 @@ export default function DeletePostButton({ postId, isDetail, className }: { post
   }
 
   const defaultClassName = "absolute top-4 right-4 z-10 text-gray-400 hover:text-red-500 bg-white p-2 rounded-full shadow-sm border hover:border-red-200 transition"
-  
+  const isCustomStyle = !!className
+
   return (
     <button 
       onClick={handleDelete}
       disabled={isDeleting}
       className={`${className || defaultClassName} ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`} 
-      title="관리자 권한으로 삭제"
+      title="게시물 삭제"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
+      {isCustomStyle ? (
+        <span className="flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+            <path d="M9 6V4h6v2"></path>
+          </svg>
+          {isDeleting ? '삭제 중...' : '이 글 삭제'}
+        </span>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      )}
     </button>
   )
 }
