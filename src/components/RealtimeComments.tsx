@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { toPng } from 'html-to-image'
 import { Link } from '@/i18n/routing'
-import { deleteComment } from '@/app/[locale]/posts/actions'
+import { deleteComment, updateComment } from '@/app/[locale]/posts/actions'
 import { ADMIN_EMAIL } from '@/utils/auth'
 import { useTranslations } from 'next-intl'
 import UserBadge from './UserBadge'
@@ -23,6 +23,11 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
     const [zoomedImage, setZoomedImage] = useState<string | null>(null)
     const [isSelectMode, setIsSelectMode] = useState(false)
     const [selectedCommentIds, setSelectedCommentIds] = useState<string[]>([])
+    
+    // 댓글 수정 상태
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [editContent, setEditContent] = useState('')
+    const [isSavingEdit, setIsSavingEdit] = useState(false)
 
     // 중복 제거 및 정렬 유틸리티
     const mergeComments = (prev: any[], next: any[]) => {
@@ -61,6 +66,29 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
             toast.error('삭제에 실패했습니다.')
         } finally {
             setDeletingId(null)
+        }
+    }
+
+    const handleEditStart = (comment: any) => {
+        setEditingId(comment.id)
+        setEditContent(comment.content)
+    }
+
+    const handleEditSave = async (commentId: string) => {
+        if (!editContent.trim()) {
+            toast.error('내용을 입력해주세요.')
+            return
+        }
+        setIsSavingEdit(true)
+        try {
+            await updateComment(commentId, editContent)
+            setComments(prev => prev.map(c => c.id === commentId ? { ...c, content: editContent } : c))
+            toast.success('댓글이 수정되었습니다.')
+            setEditingId(null)
+        } catch (e) {
+            toast.error('수정에 실패했습니다.')
+        } finally {
+            setIsSavingEdit(false)
         }
     }
 
@@ -219,6 +247,18 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                     setComments(prev => prev.filter(c => c.id !== payload.old.id))
                 }
             )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'comments',
+                    filter: `post_id=eq.${postId}`
+                },
+                (payload) => {
+                    setComments(prev => prev.map(c => c.id === payload.new.id ? { ...c, content: payload.new.content } : c))
+                }
+            )
             .subscribe()
 
         return () => {
@@ -300,16 +340,52 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 </span>
 
                                 {canDelete(comment) && (
-                                    <button
-                                        onClick={() => handleDelete(comment.id)}
-                                        disabled={deletingId === comment.id}
-                                        className="delete-btn text-xs text-gray-400 hover:text-red-500 transition ml-2 disabled:opacity-40"
-                                    >
-                                        {deletingId === comment.id ? '삭제 중...' : '삭제'}
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={() => handleEditStart(comment)}
+                                            disabled={deletingId === comment.id || editingId === comment.id}
+                                            className="edit-btn text-xs text-gray-400 hover:text-blue-500 transition ml-2 disabled:opacity-40"
+                                        >
+                                            수정
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(comment.id)}
+                                            disabled={deletingId === comment.id || editingId === comment.id}
+                                            className="delete-btn text-xs text-gray-400 hover:text-red-500 transition ml-2 disabled:opacity-40"
+                                        >
+                                            {deletingId === comment.id ? '삭제 중...' : '삭제'}
+                                        </button>
+                                    </>
                                 )}
                             </div>
-                            <p className="comment-text text-gray-700 whitespace-pre-wrap text-base leading-relaxed">{comment.content}</p>
+                            
+                            {editingId === comment.id ? (
+                                <div className="mt-2 mb-3">
+                                    <textarea
+                                        value={editContent}
+                                        onChange={(e) => setEditContent(e.target.value)}
+                                        className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-1 focus:ring-black outline-none resize-none"
+                                        rows={3}
+                                    />
+                                    <div className="flex justify-end gap-2 mt-2">
+                                        <button
+                                            onClick={() => setEditingId(null)}
+                                            className="text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded transition"
+                                        >
+                                            취소
+                                        </button>
+                                        <button
+                                            onClick={() => handleEditSave(comment.id)}
+                                            disabled={isSavingEdit}
+                                            className="text-xs text-white bg-black hover:bg-gray-800 px-3 py-1.5 rounded transition disabled:opacity-50"
+                                        >
+                                            {isSavingEdit ? '저장 중...' : '저장'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="comment-text text-gray-700 whitespace-pre-wrap text-base leading-relaxed">{comment.content}</p>
+                            )}
 
                             {comment.image_url && (
                                 <div className="mt-3 mb-2 rounded-lg overflow-hidden border border-gray-100 max-w-sm inline-block">

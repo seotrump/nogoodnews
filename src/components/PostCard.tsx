@@ -38,7 +38,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
 
   return (
     <div className="relative bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
-      {isAdmin(currentUser) && !hideDeleteButton && (
+      {(isAdmin(currentUser) || (currentUser && post.author_id === currentUser.id)) && !hideDeleteButton && (
         <DeletePostButton postId={post.id} isDetail={isDetail} />
       )}
 

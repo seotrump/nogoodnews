@@ -16,7 +16,17 @@ export async function deletePost(postId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  if (!isAdmin(user)) {
+  if (!user) {
+    throw new Error('Not authenticated')
+  }
+
+  const { data: post } = await supabase.from('posts').select('author_id').eq('id', postId).single()
+  
+  if (!post) {
+    throw new Error('Post not found')
+  }
+
+  if (!isAdmin(user) && post.author_id !== user.id) {
     throw new Error('Not authorized to delete posts')
   }
 

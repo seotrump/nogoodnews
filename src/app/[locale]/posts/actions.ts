@@ -3,6 +3,14 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+function getSupabaseAdmin() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function createPost(formData: FormData) {
   const supabase = await createClient()
@@ -133,7 +141,8 @@ export async function updatePost(postId: string, formData: FormData) {
     }
   }
 
-  const { error } = await supabase.from('posts').update(updateData).eq('id', postId)
+  const supabaseAdmin = getSupabaseAdmin()
+  const { error } = await supabaseAdmin.from('posts').update(updateData).eq('id', postId)
 
   if (error) throw new Error('Failed to update post')
 
@@ -245,8 +254,35 @@ export async function deleteComment(commentId: string, postId: string) {
     throw new Error('Permission denied')
   }
 
-  const { error } = await supabase.from('comments').delete().eq('id', commentId)
+  const supabaseAdmin = getSupabaseAdmin()
+  const { error } = await supabaseAdmin.from('comments').delete().eq('id', commentId)
   if (error) throw new Error('Failed to delete comment')
+
+  revalidatePath('/', 'layout')
+}
+
+export async function updateComment(commentId: string, newContent: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error('Not authenticated')
+
+  const { data: comment } = await supabase
+    .from('comments')
+    .select('author_id, post_id')
+    .eq('id', commentId)
+    .single()
+
+  const { ADMIN_EMAIL } = await import('@/utils/auth')
+  const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+
+  if (!comment || (comment.author_id !== user.id && !isAdmin)) {
+    throw new Error('Permission denied')
+  }
+
+  const supabaseAdmin = getSupabaseAdmin()
+  const { error } = await supabaseAdmin.from('comments').update({ content: newContent }).eq('id', commentId)
+  if (error) throw new Error('Failed to update comment')
 
   revalidatePath('/', 'layout')
 }

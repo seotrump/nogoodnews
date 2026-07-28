@@ -54,6 +54,12 @@ export default function UserEditor({ user, onSubmit }: { user: any, onSubmit: (f
           </select>
           <p className="text-xs text-gray-500 mt-1">계정 일시 정지 시 커뮤니티 노출이 제한됩니다.</p>
         </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">새 비밀번호 설정 (강제 변경)</label>
+          <input type="password" name="password" placeholder="변경할 경우에만 입력하세요" className="w-full border rounded-lg p-2 bg-gray-50 focus:bg-white transition-colors" />
+          <p className="text-xs text-gray-500 mt-1">입력 시 해당 유저의 비밀번호가 즉시 변경됩니다.</p>
+        </div>
       </div>
 
       <div className="pt-4 border-t flex justify-end">

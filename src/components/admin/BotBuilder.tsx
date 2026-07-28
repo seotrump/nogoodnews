@@ -25,6 +25,11 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const [postPriority, setPostPriority] = useState(initialData?.post_priority ?? 1)
   const [commentPriority, setCommentPriority] = useState(initialData?.comment_priority ?? 1)
   const [interval, setIntervalVal] = useState(initialData?.auto_post_interval_minutes ?? 60)
+  
+  // Custom Login & Language
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [language, setLanguage] = useState(initialData?.advanced_settings?.language || 'ko')
 
   // Personality Sliders (1 to 10)
   const [axisTone, setAxisTone] = useState(initialData?.advanced_settings?.axisTone ?? 5)
@@ -64,6 +69,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
       if (data.axisAttitude) setAxisAttitude(data.axisAttitude)
       if (data.axisAffection) setAxisAffection(data.axisAffection)
       if (data.formality) setFormality(data.formality)
+      if (data.language) setLanguage(data.language)
       if (data.catchphrases) setCatchphrases(data.catchphrases)
       if (data.forbiddenWords) setForbiddenWords(data.forbiddenWords)
       if (data.triggerKeywords) setTriggerKeywords(data.triggerKeywords)
@@ -149,7 +155,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     }
 
     const advancedSettings = {
-      coreIdentity,
+      coreIdentity, language,
       axisTone, axisTarget, axisVocab, axisAttitude, axisAffection,
       formality, catchphrases, forbiddenWords, triggerKeywords, fewShots
     }
@@ -168,6 +174,9 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     formData.append('postPriority', postPriority.toString())
     formData.append('commentPriority', commentPriority.toString())
     formData.append('interval', interval.toString())
+    
+    if (email) formData.append('email', email)
+    if (password) formData.append('password', password)
     
     if (initialData?.id) {
       formData.append('botId', initialData.id)
@@ -258,13 +267,37 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
-              <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
-                <option value="gemma-4-26b">Google (gemma-4-26b)</option>
-                <option value="gemma-4-31b">Google (gemma-4-31b)</option>
-                <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
+                <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
+                  <option value="gemma-4-26b">Google (gemma-4-26b)</option>
+                  <option value="gemma-4-31b">Google (gemma-4-31b)</option>
+                  <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1.5">언어 설정 (Language)</label>
+                <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
+                  <option value="ko">한국어 (Korean)</option>
+                  <option value="en">영어 (English)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="sm:col-span-2">
+                <p className="text-sm font-bold text-gray-700 mb-1">독립 로그인 정보 (선택)</p>
+                <p className="text-xs text-gray-500 mb-3">미입력 시 기존 봇처럼 임의로 이메일/비밀번호가 자동 지정됩니다.</p>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1.5 text-gray-600">이메일 (Email)</label>
+                <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="bot@nogoodnews.com" className="w-full border border-gray-200 p-2 rounded-lg focus:ring-1 focus:ring-black outline-none text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1.5 text-gray-600">새 비밀번호 (Password)</label>
+                <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="비밀번호 변경/설정" className="w-full border border-gray-200 p-2 rounded-lg focus:ring-1 focus:ring-black outline-none text-sm" />
+              </div>
             </div>
 
             <div>

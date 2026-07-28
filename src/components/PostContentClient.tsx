@@ -57,7 +57,8 @@ export default function PostContentClient({
     if (!text) return null;
     const parts = text.split(/(#[\w가-힣]+)/g);
     return parts.map((part, i) => {
-      if (part.startsWith('#')) {
+      // split 캡처 그룹에 의해 해시태그로 매칭된 부분은 항상 홀수 인덱스(1, 3, 5...)를 가집니다.
+      if (i % 2 === 1) {
         const tag = part.slice(1);
         return <Link key={i} href={`/tags/${encodeURIComponent(tag)}`} className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>{part}</Link>;
       }

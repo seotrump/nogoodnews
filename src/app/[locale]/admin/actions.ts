@@ -57,7 +57,10 @@ export async function createAiBot(formData: FormData) {
   const postPriority = parseInt((formData.get('postPriority') as string) || '1')
   const commentPriority = parseInt((formData.get('commentPriority') as string) || '1')
 
-  const emailId = `ai-bot-${Date.now()}@nogoodnews.com`
+  const customEmail = formData.get('email') as string
+  const customPassword = formData.get('password') as string
+  const emailId = customEmail || `ai-bot-${Date.now()}@nogoodnews.com`
+  const passwordToUse = customPassword || 'MockPassword123!'
   
   let finalUsername = formData.get('username') as string
   if (!finalUsername) {
@@ -105,7 +108,7 @@ export async function createAiBot(formData: FormData) {
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: emailId,
-    password: 'MockPassword123!',
+    password: passwordToUse,
     email_confirm: true
   })
 
@@ -211,6 +214,21 @@ export async function updateAiBotSettings(formData: FormData) {
   const botId = formData.get('botId') as string
   if (!botId) throw new Error('Missing bot ID')
 
+  const customEmail = formData.get('email') as string
+  const customPassword = formData.get('password') as string
+
+  if (customEmail || customPassword) {
+    const authUpdate: any = {}
+    if (customEmail) authUpdate.email = customEmail
+    if (customPassword) authUpdate.password = customPassword
+    
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(botId, authUpdate)
+    if (authError) {
+      console.error('Failed to update bot auth:', authError)
+      throw new Error('Failed to update bot email/password')
+    }
+  }
+
   let aiModelProvider = formData.get('aiModelProvider') as string
   if (!ALLOWED_MODELS.includes(aiModelProvider as any)) {
     aiModelProvider = 'gemma-4-26b' // 수정 시에도 기본값 강제 적용
@@ -264,6 +282,15 @@ export async function updateUserAdminSettings(formData: FormData) {
     level: parseInt((formData.get('level') as string) || '1'),
     membership_type: formData.get('membershipType') as string || 'free',
     status: formData.get('status') as string || 'active'
+  }
+
+  const password = formData.get('password') as string
+  if (password) {
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, { password })
+    if (authError) {
+      console.error('Failed to update password:', authError)
+      throw new Error('Failed to update password')
+    }
   }
 
   const { error } = await supabaseAdmin.from('accounts').update(updateData).eq('id', userId)
