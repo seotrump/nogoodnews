@@ -5,6 +5,7 @@ import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import FollowButton from '@/components/FollowButton'
 import ReactionPanel from '@/components/ReactionPanel'
 import ProfileSortFilter from '@/components/ProfileSortFilter'
+import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server'
 import UserBadge from '@/components/UserBadge'
 import { MessageSquare, Heart, TrendingUp, Camera } from 'lucide-react'

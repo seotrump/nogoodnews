@@ -1,3 +1,4 @@
+import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { updatePost, deletePost } from '@/app/[locale]/posts/actions'
@@ -10,7 +11,8 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
   const { data: { user } } = await supabase.auth.getUser()
   const { id, locale } = await params
 
-  if (!user) {
+  
+  setRequestLocale(locale);if (!user) {
     redirect('/login')
   }
 

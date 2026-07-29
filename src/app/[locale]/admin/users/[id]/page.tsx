@@ -1,3 +1,4 @@
+import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { isAdmin } from '@/utils/auth'
@@ -5,7 +6,7 @@ import { Link } from '@/i18n/routing'
 import UserEditor from '@/components/admin/UserEditor'
 import { updateUserAdminSettings } from '../../actions'
 
-export default async function AdminUserEditPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminUserEditPage({ params }: { params: Promise<{ id: string , locale: string }> }) {
   const supabase = await createClient()
   const { data: { user: currentUser } } = await supabase.auth.getUser()
 
@@ -13,8 +14,9 @@ export default async function AdminUserEditPage({ params }: { params: Promise<{ 
     redirect('/')
   }
 
-  const { id } = await params
-  const { data: targetUser } = await supabase
+  const { id , locale} = await params
+  
+  setRequestLocale(locale);const { data: targetUser } = await supabase
     .from('accounts')
     .select('*')
     .eq('id', id)

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { Link, redirect } from '@/i18n/routing'
+import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server'
 import BotBuilder from '@/components/admin/BotBuilder'
 import { updateAiBotSettings } from '../../actions'
@@ -13,7 +14,8 @@ export default async function BotSettingsPage({ params }: { params: Promise<{ id
 
   const { id, locale } = await params
 
-  const { data: bot } = await supabaseAdmin
+  
+  setRequestLocale(locale);const { data: bot } = await supabaseAdmin
     .from('accounts')
     .select('*')
     .eq('id', id)

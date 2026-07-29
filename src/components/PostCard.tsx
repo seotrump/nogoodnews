@@ -40,6 +40,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
       postId={post.id}
       initialReactions={post.reactions || []}
       currentUserId={currentUser?.id}
+      locale={locale}
     />
   )
 

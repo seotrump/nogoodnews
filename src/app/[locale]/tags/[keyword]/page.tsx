@@ -3,10 +3,12 @@ import { notFound } from 'next/navigation'
 import { Link } from '@/i18n/routing'
 import PostCard from '@/components/PostCard'
 import { Hash } from 'lucide-react'
+import { setRequestLocale } from 'next-intl/server'
 
-export default async function TagPage({ params }: { params: Promise<{ keyword: string }> }) {
+export default async function TagPage({ params }: { params: Promise<{ keyword: string, locale: string }> }) {
   const supabase = await createClient()
-  const { keyword } = await params
+  const { keyword, locale } = await params
+  setRequestLocale(locale)
   const decodedKeyword = decodeURIComponent(keyword).toLowerCase()
 
   // Get current user
@@ -28,16 +30,17 @@ export default async function TagPage({ params }: { params: Promise<{ keyword: s
         )
       `)
       .eq('hashtag_id', tag.id)
-      .order('created_at', { ascending: false })
 
     if (data) {
       posts = data.map((row: any) => row.posts).filter(Boolean)
+      posts.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     }
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 mt-8 pb-20">
-      <div className="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+    <main className="min-h-screen bg-gray-50 pb-20">
+      <div className="max-w-4xl mx-auto px-4 mt-8 flex flex-col gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
         <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
           <Hash className="w-8 h-8" />
         </div>
@@ -58,6 +61,7 @@ export default async function TagPage({ params }: { params: Promise<{ keyword: s
           ))
         )}
       </div>
-    </div>
+      </div>
+    </main>
   )
 }

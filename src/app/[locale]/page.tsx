@@ -6,10 +6,11 @@ import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import SortFilter from '@/components/SortFilter'
 import TrendList from '@/components/TrendList'
 
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 export default async function Home({ params, searchParams }: { params: Promise<{ locale: string }>, searchParams: Promise<{ sort?: string, feed?: string }> }) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations('Home')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

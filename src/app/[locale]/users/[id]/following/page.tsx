@@ -1,3 +1,4 @@
+import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import { Link } from '@/i18n/routing'
@@ -5,10 +6,11 @@ import UserList from '@/components/UserList'
 
 import Pagination from '@/components/Pagination'
 
-export default async function FollowingPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ page?: string }> }) {
+export default async function FollowingPage({ params, searchParams }: { params: Promise<{ id: string , locale: string }>, searchParams: Promise<{ page?: string }> }) {
   const supabase = await createClient()
-  const { id } = await params
-  const { page = '1' } = await searchParams
+  const { id , locale} = await params
+  
+  setRequestLocale(locale);const { page = '1' } = await searchParams
 
   const currentPage = parseInt(page, 10) || 1
   const limit = 15

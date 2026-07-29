@@ -7,11 +7,14 @@ import { isAdmin } from '@/utils/auth'
 import DeletePostButton from '@/components/DeletePostButton'
 import RealtimeComments from '@/components/RealtimeComments' // 새로 만든 컴포넌트 불러오기
 
-export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
+import { setRequestLocale } from 'next-intl/server'
+
+export default async function PostDetailPage({ params }: { params: Promise<{ id: string, locale: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { id } = await params
+  const { id, locale } = await params
+  setRequestLocale(locale)
 
   const { data: post, error } = await supabase
     .from('posts')

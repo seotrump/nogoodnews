@@ -11,17 +11,20 @@ export default function PostContentClient({
   isDetail,
   postId,
   initialReactions,
-  currentUserId
+  currentUserId,
+  locale
 }: { 
   initialHeadline: string, 
   initialContent: string,
   isDetail: boolean,
   postId: string,
   initialReactions: any[],
-  currentUserId?: string
+  currentUserId?: string,
+  locale?: string
 }) {
   const [headline, setHeadline] = useState(initialHeadline)
   const [content, setContent] = useState(initialContent)
+  const safeLocale = locale || 'ko'
 
   const renderWithHashtags = (text: string) => {
     if (!text) return null;
@@ -29,7 +32,7 @@ export default function PostContentClient({
     return parts.map((part, i) => {
       if (part.startsWith('#')) {
         const tag = part.slice(1);
-        return <a key={i} href={`/tags/${encodeURIComponent(tag)}`} className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>{part}</a>;
+        return <a key={i} href={`/${safeLocale}/tags/${encodeURIComponent(tag)}`} className="text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>{part}</a>;
       }
       return part;
     });

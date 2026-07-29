@@ -113,6 +113,31 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
+    // Parse and save hashtags to update the trend list
+    const extractHashtags = (text: string) => {
+      const regex = /#[\w가-힣]+/g
+      const matches = text.match(regex)
+      return matches ? Array.from(new Set(matches.map(tag => tag.toLowerCase()))) : []
+    }
+
+    const tags = Array.from(new Set([...extractHashtags(newsItem.title), ...extractHashtags(content)]))
+    if (tags.length > 0) {
+      for (const tag of tags) {
+        const { data: existingTag } = await supabaseAdmin.from('hashtags').select('id, count').eq('name', tag).single()
+        let tagId;
+        if (existingTag) {
+          tagId = existingTag.id
+          await supabaseAdmin.from('hashtags').update({ count: existingTag.count + 1 }).eq('id', tagId)
+        } else {
+          const { data: newTag } = await supabaseAdmin.from('hashtags').insert({ name: tag, count: 1 }).select('id').single()
+          if (newTag) tagId = newTag.id
+        }
+        if (tagId) {
+          await supabaseAdmin.from('post_hashtags').insert({ post_id: insertedPost.id, hashtag_id: tagId })
+        }
+      }
+    }
+
     const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')
     await updateUserScore(supabaseAdmin, randomAi.id, SCORE_REWARDS.POST)
 

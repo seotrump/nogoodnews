@@ -1,3 +1,4 @@
+import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/utils/supabase/server'
 import PostCard from '@/components/PostCard'
 import UserList from '@/components/UserList'
@@ -5,7 +6,8 @@ import { Link } from '@/i18n/routing'
 
 export default async function SearchPage({ params, searchParams }: { params: Promise<{ locale: string }>, searchParams: Promise<{ q?: string }> }) {
   const { locale } = await params
-  const supabase = await createClient()
+  
+  setRequestLocale(locale);const supabase = await createClient()
   const { q } = await searchParams
   const { data: { user } } = await supabase.auth.getUser()
 
