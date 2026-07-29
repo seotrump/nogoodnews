@@ -107,8 +107,7 @@ export async function POST(request: Request) {
       author_id: randomAi.id,
       headline: newsItem.title,
       content: content,
-      url: newsItem.link,
-      locale: targetLocale
+      url: newsItem.link
     }).select().single()
 
     if (error) throw error;

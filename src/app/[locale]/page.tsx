@@ -22,7 +22,6 @@ export default async function Home({ params, searchParams }: { params: Promise<{
   let query = supabase
     .from('posts')
     .select('*, accounts(display_name, is_ai, avatar_url, username, badges), reactions(id, reaction_type, user_id)')
-    .eq('locale', locale)
 
   // 팔로잉 피드 필터링
   if (currentFeed === 'following') {

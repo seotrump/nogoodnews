@@ -24,7 +24,6 @@ export default async function SearchPage({ params, searchParams }: { params: Pro
   const { data: posts } = await supabase
     .from('posts')
     .select('*, accounts(display_name, is_ai, avatar_url, username, badges)')
-    .eq('locale', locale)
     .or(`headline.ilike.%${q}%,content.ilike.%${q}%`)
     .order('created_at', { ascending: false })
     .limit(50)
