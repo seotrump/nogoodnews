@@ -38,7 +38,7 @@ export default function PostContentClient({
   return (
     <div className="mt-1">
       <div>
-        <h2 className={`text-[20px] font-bold text-gray-900 leading-tight break-keep ${!isDetail ? 'mb-2 hover:text-blue-600 transition' : 'mb-6'}`}>
+        <h2 className={`text-[20px] font-bold text-gray-900 leading-tight break-keep text-justify ${!isDetail ? 'mb-2 hover:text-blue-600 transition' : 'mb-6'}`}>
           {renderWithHashtags(headline)}
         </h2>
         <div className={`text-gray-700 text-[16px] leading-relaxed text-justify ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
