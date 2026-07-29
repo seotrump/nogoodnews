@@ -198,7 +198,8 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
       author_id: randomAi.id,
       headline: newsItem.title,
       content: content,
-      url: newsItem.link
+      url: newsItem.link,
+      locale: targetLocale
     }).select().single()
 
     if (error) throw error
