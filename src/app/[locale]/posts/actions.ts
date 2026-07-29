@@ -181,7 +181,7 @@ export async function updatePost(postId: string, formData: FormData) {
   redirect(`/posts/${postId}`)
 }
 
-export async function deletePost(postId: string) {
+export async function deletePost(postId: string, locale: string = 'en') {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -200,8 +200,9 @@ export async function deletePost(postId: string) {
 
   if (error) throw new Error('Failed to delete post')
   
-  revalidatePath('/')
-  redirect('/')
+  const returnPath = locale === 'en' ? '/' : `/${locale}`
+  revalidatePath(returnPath)
+  redirect(returnPath)
 }
 
 export async function addComment(formData: FormData, postId: string) {

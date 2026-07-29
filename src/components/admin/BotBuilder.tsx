@@ -227,34 +227,47 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
       <div className="p-4 sm:p-6">
         {activeTab === 'basic' && (
           <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="sm:col-span-1">
-                <label className="block text-sm font-bold mb-1.5">{t('botNickname')} *</label>
-                <input value={displayName} onChange={e => setDisplayName(e.target.value)} type="text" placeholder={t('botNicknamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+                <label className="block text-sm font-bold mb-1.5 text-gray-800">{t('botNickname')} *</label>
+                <input value={displayName} onChange={e => setDisplayName(e.target.value)} type="text" placeholder={t('botNicknamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none transition-shadow bg-white" />
               </div>
               <div className="sm:col-span-1">
-                <label className="block text-sm font-bold mb-1.5">{t('botUsername')} (자동 생성 가능)</label>
-                <input value={username} onChange={e => setUsername(e.target.value)} type="text" pattern="^[a-zA-Z0-9_]*$" placeholder={t('botUsernamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none" />
-                
-                <div className="mt-3 bg-gray-50 border border-gray-200 p-3 rounded-lg flex flex-col gap-2">
-                  <label className="block text-xs font-bold text-gray-700">봇 로그인 계정 관리 (수동 지정)</label>
+                <label className="block text-sm font-bold mb-1.5 text-gray-800">{t('botUsername')} <span className="text-gray-400 font-normal text-xs ml-1">(자동 생성 가능)</span></label>
+                <input value={username} onChange={e => setUsername(e.target.value)} type="text" pattern="^[a-zA-Z0-9_]*$" placeholder={t('botUsernamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none transition-shadow bg-white" />
+              </div>
+            </div>
+
+            <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl mt-1 mb-2 shadow-sm">
+              <p className="text-sm font-bold text-gray-800 mb-3">봇 로그인 계정 관리 <span className="text-gray-500 font-normal text-xs ml-1">(수동 지정)</span></p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 w-full">
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5">이메일 (ID)</label>
                   <input 
                     value={loginEmail} 
                     onChange={e => setLoginEmail(e.target.value)} 
                     type="email" 
-                    placeholder={username ? `${username.toLowerCase()}@nogoodnews.com` : '로그인 이메일 (ID)'} 
-                    className="w-full border border-gray-200 p-2 rounded focus:ring-1 focus:ring-black outline-none text-sm" 
+                    placeholder={username ? `${username.toLowerCase()}@nogoodnews.com` : '미입력 시 [아이디]@nogoodnews.com'} 
+                    className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm bg-white" 
                   />
+                </div>
+                <div className="flex-1 w-full">
+                  <label className="block text-xs font-bold text-gray-600 mb-1.5">비밀번호</label>
                   <input 
                     value={loginPassword} 
                     onChange={e => setLoginPassword(e.target.value)} 
                     type="text" 
                     placeholder={initialData ? "새 비밀번호 (변경 시 입력)" : "초기 비밀번호 (기본: aa1111)"} 
-                    className="w-full border border-gray-200 p-2 rounded focus:ring-1 focus:ring-black outline-none text-sm" 
+                    className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm bg-white" 
                   />
-                  <p className="text-xs text-gray-500">※ 미입력 시 `[아이디]@nogoodnews.com` / `aa1111` 로 자동 생성 및 유지됩니다.</p>
                 </div>
               </div>
+              {!initialData && (
+                <p className="text-xs text-gray-500 mt-2.5 flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  미입력 시 기본값으로 자동 생성됩니다.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

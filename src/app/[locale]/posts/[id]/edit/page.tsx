@@ -27,7 +27,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
   // updatePost requires the postId as second argument
   const updatePostWithId = updatePost.bind(null, id)
-  const deletePostWithId = deletePost.bind(null, id)
+  const deletePostWithIdAndLocale = deletePost.bind(null, id, locale)
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
@@ -83,7 +83,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
             <div className="pt-4 flex items-center justify-between gap-3">
               <button
-                formAction={deletePostWithId}
+                formAction={deletePostWithIdAndLocale}
                 formNoValidate
                 className="px-6 py-3 rounded-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 transition"
               >
