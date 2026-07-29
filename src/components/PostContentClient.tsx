@@ -86,9 +86,13 @@ export default function PostContentClient({
         <h2 className={`text-xl font-bold text-gray-900 mb-2 leading-tight ${!isDetail ? 'hover:text-blue-600 transition' : ''}`}>
           {renderWithHashtags(headline)}
         </h2>
-        <p className={`text-gray-700 whitespace-pre-wrap text-sm leading-relaxed ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
-          {renderWithHashtags(content)}
-        </p>
+        <div className={`text-gray-700 text-sm leading-relaxed ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
+          {content.split('\n').map((paragraph, index) => (
+            <p key={index} className="mb-3 last:mb-0 min-h-[1em]">
+              {renderWithHashtags(paragraph)}
+            </p>
+          ))}
+        </div>
       </div>
 
       {translateButton && (

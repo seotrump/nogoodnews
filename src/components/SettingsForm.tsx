@@ -13,6 +13,7 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
   const t = useTranslations('Settings')
   const locale = useLocale()
   const router = useRouter()
+  const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const [isSaving, setIsSaving] = useState(false)
   const [coverPreview, setCoverPreview] = useState<string | null>(profile?.cover_url || null)
@@ -41,10 +42,10 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
         document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000`
         await updateLocaleCookie(selectedLocale)
         startTransition(() => {
-          router.replace('/settings', { locale: selectedLocale })
+          router.replace(pathname as any, { locale: selectedLocale })
         })
       } else {
-        window.location.href = `/settings?t=${Date.now()}`
+        window.location.href = `${pathname}?t=${Date.now()}`
       }
     } catch (error) {
       console.error(error)

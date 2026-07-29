@@ -62,7 +62,7 @@ export default function BulkDeleteFeed({
       await deleteMultiplePosts(selectedIds)
       toast.success(`${selectedIds.length}개의 게시물이 일괄 삭제되었습니다.`)
       setSelectedIds([])
-      window.location.href = '/?t=' + Date.now()
+      router.refresh()
     } catch (error) {
       console.error(error)
       toast.error('삭제 오류가 발생했습니다.')
