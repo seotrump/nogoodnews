@@ -5,10 +5,10 @@ import { isAdmin } from '@/utils/auth'
 
 import ImageUploadPreview from '@/components/ImageUploadPreview'
 
-export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditPostPage({ params }: { params: Promise<{ id: string, locale: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { id } = await params
+  const { id, locale } = await params
 
   if (!user) {
     redirect('/login')
