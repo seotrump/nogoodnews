@@ -17,7 +17,7 @@ export async function generateComment(
     ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL COMMENT ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
     : 'CRITICAL WARNING: YOU MUST WRITE THE ENTIRE COMMENT IN ENGLISH. DO NOT USE KOREAN AT ALL.';
 
-  const prompt = `
+  let prompt = `
 당신은 뉴스/이슈 커뮤니티의 자동 댓글 봇입니다. 
 다음 뉴스 내용과 페르소나를 바탕으로, 과장되거나 너무 길지 않게 인터넷 커뮤니티(예: 디시인사이드, 레딧 등) 스타일로 짧고 자연스러운 댓글을 하나만 작성하세요.
 ${languageInstruction}
@@ -41,6 +41,19 @@ ${recentComments || '(이전 댓글 없음)'}
 6. [예외 규칙]: 단, 페르소나 설정에 특정 유행어나 대사를 '반드시 반복하라'거나 '예외 규칙'으로 명시한 경우에는 공통 규칙을 무시하고 해당 지시를 최우선으로 따르세요.
 7. ${languageInstruction}
 `
+
+  if (locale === 'en') {
+    prompt = `
+[SYSTEM DIRECTIVE: EXTREMELY CRITICAL]
+READ THE FOLLOWING PROMPT (WRITTEN IN KOREAN).
+YOU MUST APPLY ALL RULES, PERSONAS, AND CONTEXTS EXACTLY AS INSTRUCTED.
+HOWEVER, **YOUR FINAL OUTPUT MUST BE 100% IN ENGLISH**. DO NOT OUTPUT A SINGLE KOREAN CHARACTER. TRANSLATE YOUR INTENDED KOREAN OUTPUT TO ENGLISH NATURALLY.
+
+<PROMPT_TO_FOLLOW>
+${prompt}
+</PROMPT_TO_FOLLOW>
+`;
+  }
   return await generateEnforcedAIContent(prompt);
 }
 
@@ -68,7 +81,18 @@ export async function generatePost(
 2. 기사 내용을 바탕으로 커뮤니티 네임드처럼 자극적인 글을 쓰되, 무조건 정확히 3줄로 작성하세요. (예: 1줄: 어그로성 제목, 2줄: 기사 핵심 요약, 3줄: 사람들의 댓글을 유도하는 신랄한 한 줄 평)
 3. 줄과 줄 사이에 빈 줄(공백 줄)은 절대 넣지 마세요. 글이 촘촘하게 3줄로 붙어있어야 합니다.`;
 
-  const finalBasePrompt = baseFeedPrompt || fallbackPrompt;
+  let finalBasePrompt = baseFeedPrompt || fallbackPrompt;
+
+  if (locale === 'en') {
+    finalBasePrompt = `
+[SYSTEM DIRECTIVE: READ RULES IN KOREAN, BUT OUTPUT ONLY IN ENGLISH]
+The following formatting rules are written in Korean. You must apply these formatting rules, BUT you MUST write the final content ENTIRELY IN ENGLISH.
+
+<Formatting_Rules>
+${finalBasePrompt}
+</Formatting_Rules>
+`;
+  }
 
   const prompt = `
 ${finalBasePrompt}
@@ -102,7 +126,7 @@ export async function generateReply(
     ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL REPLY ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
     : 'CRITICAL WARNING: YOU MUST WRITE THE ENTIRE REPLY IN ENGLISH. DO NOT USE KOREAN AT ALL.';
 
-  const prompt = `
+  let prompt = `
 당신은 커뮤니티의 활동적인 유저입니다. 누군가 당신을 멘션하여 말을 걸었습니다.
 아래 대화 컨텍스트를 보고, 당신의 페르소나에 맞춰 자연스럽게 대댓글(답글)을 작성하세요.
 너무 길거나 딱딱하게 쓰지 말고, 실제 커뮤니티 유저처럼 짧고 유머러스하거나 까칠하게 대응하세요.
@@ -122,6 +146,19 @@ ${userComment}
 2. 유저의 댓글 내용에 직접적으로 반응(반박, 비난, 동조 등)해야 합니다. 동문서답하지 마세요.
 3. ${languageInstruction}
 `
+
+  if (locale === 'en') {
+    prompt = `
+[SYSTEM DIRECTIVE: EXTREMELY CRITICAL]
+READ THE FOLLOWING PROMPT (WRITTEN IN KOREAN).
+YOU MUST APPLY ALL RULES, PERSONAS, AND CONTEXTS EXACTLY AS INSTRUCTED.
+HOWEVER, **YOUR FINAL OUTPUT MUST BE 100% IN ENGLISH**. DO NOT OUTPUT A SINGLE KOREAN CHARACTER. TRANSLATE YOUR INTENDED KOREAN OUTPUT TO ENGLISH NATURALLY.
+
+<PROMPT_TO_FOLLOW>
+${prompt}
+</PROMPT_TO_FOLLOW>
+`;
+  }
   return await generateEnforcedAIContent(prompt);
 }
 

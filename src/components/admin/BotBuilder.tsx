@@ -17,6 +17,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   // States
   const [displayName, setDisplayName] = useState(initialData?.display_name || '')
   const [username, setUsername] = useState(initialData?.username || '')
+  const [loginEmail, setLoginEmail] = useState(initialData?.email || '')
+  const [loginPassword, setLoginPassword] = useState('')
   const [model, setModel] = useState(initialData?.ai_model_provider || 'gemma-4-26b')
   const [category, setCategory] = useState(initialData?.category || 'politics')
   const [coreIdentity, setCoreIdentity] = useState(initialData?.advanced_settings?.coreIdentity || '')
@@ -45,6 +47,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   )
   const [isAutoTuning, setIsAutoTuning] = useState(false)
   const [isBasicMode, setIsBasicMode] = useState(false)
+
+  const [language, setLanguage] = useState(initialData?.advanced_settings?.language || 'default')
 
   const triggerAutoTune = async (identityString: string) => {
     setIsAutoTuning(true)
@@ -149,7 +153,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     }
 
     const advancedSettings = {
-      coreIdentity,
+      coreIdentity, language,
       axisTone, axisTarget, axisVocab, axisAttitude, axisAffection,
       formality, catchphrases, forbiddenWords, triggerKeywords, fewShots
     }
@@ -169,9 +173,12 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     formData.append('commentPriority', commentPriority.toString())
     formData.append('interval', interval.toString())
     
-    if (initialData?.id) {
+    if (initialData) {
       formData.append('botId', initialData.id)
     }
+
+    if (loginEmail) formData.append('loginEmail', loginEmail)
+    if (loginPassword) formData.append('loginPassword', loginPassword)
 
     try {
       await onSubmit(formData)
@@ -208,8 +215,11 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
           <button type="button" onClick={handleResetTuning} className="text-xs bg-gray-200 text-gray-700 hover:bg-gray-300 font-bold py-1.5 px-3 rounded transition">
             튜닝리셋
           </button>
-          <button type="button" onClick={handleAutoTune} disabled={isAutoTuning} className="text-xs bg-black text-white hover:bg-gray-800 font-bold py-1.5 px-3 rounded disabled:opacity-50 transition">
+          <button type="button" onClick={handleAutoTune} disabled={isAutoTuning} className="text-xs bg-gray-200 text-gray-700 hover:bg-gray-300 font-bold py-1.5 px-3 rounded disabled:opacity-50 transition">
             {isAutoTuning ? '튜닝 중...' : '자동튜닝'}
+          </button>
+          <button type="button" onClick={handleSubmit} disabled={isPending} className="text-xs bg-black text-white hover:bg-gray-800 font-bold py-1.5 px-4 rounded disabled:opacity-50 transition ml-2">
+            {initialData ? '저장' : t('botRegister')}
           </button>
         </div>
       </div>
@@ -225,6 +235,25 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
               <div className="sm:col-span-1">
                 <label className="block text-sm font-bold mb-1.5">{t('botUsername')} (자동 생성 가능)</label>
                 <input value={username} onChange={e => setUsername(e.target.value)} type="text" pattern="^[a-zA-Z0-9_]*$" placeholder={t('botUsernamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+                
+                <div className="mt-3 bg-gray-50 border border-gray-200 p-3 rounded-lg flex flex-col gap-2">
+                  <label className="block text-xs font-bold text-gray-700">봇 로그인 계정 관리 (수동 지정)</label>
+                  <input 
+                    value={loginEmail} 
+                    onChange={e => setLoginEmail(e.target.value)} 
+                    type="email" 
+                    placeholder={username ? `${username.toLowerCase()}@nogoodnews.com` : '로그인 이메일 (ID)'} 
+                    className="w-full border border-gray-200 p-2 rounded focus:ring-1 focus:ring-black outline-none text-sm" 
+                  />
+                  <input 
+                    value={loginPassword} 
+                    onChange={e => setLoginPassword(e.target.value)} 
+                    type="text" 
+                    placeholder={initialData ? "새 비밀번호 (변경 시 입력)" : "초기 비밀번호 (기본: aa1111)"} 
+                    className="w-full border border-gray-200 p-2 rounded focus:ring-1 focus:ring-black outline-none text-sm" 
+                  />
+                  <p className="text-xs text-gray-500">※ 미입력 시 `[아이디]@nogoodnews.com` / `aa1111` 로 자동 생성 및 유지됩니다.</p>
+                </div>
               </div>
             </div>
 
@@ -258,13 +287,23 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
-              <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
-                <option value="gemma-4-26b">Google (gemma-4-26b)</option>
-                <option value="gemma-4-31b">Google (gemma-4-31b)</option>
-                <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
+                <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
+                  <option value="gemma-4-26b">Google (gemma-4-26b)</option>
+                  <option value="gemma-4-31b">Google (gemma-4-31b)</option>
+                  <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1.5">언어 (Language)</label>
+                <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
+                  <option value="default">관리자 언어 따름 (Default)</option>
+                  <option value="ko">한국어 (Korean)</option>
+                  <option value="en">영어 (English)</option>
+                </select>
+              </div>
             </div>
 
             <div>
@@ -437,12 +476,6 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
             {/* Future condition settings can be added here */}
           </div>
         )}
-      </div>
-
-      <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-end">
-        <button type="button" onClick={handleSubmit} disabled={isPending} className="bg-black text-white font-bold py-2.5 px-6 rounded-lg hover:bg-gray-800 transition disabled:opacity-50">
-          {initialData ? '저장' : t('botRegister')}
-        </button>
       </div>
     </div>
   )

@@ -3,7 +3,8 @@ import PostCard from '@/components/PostCard'
 import UserList from '@/components/UserList'
 import { Link } from '@/i18n/routing'
 
-export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function SearchPage({ params, searchParams }: { params: Promise<{ locale: string }>, searchParams: Promise<{ q?: string }> }) {
+  const { locale } = await params
   const supabase = await createClient()
   const { q } = await searchParams
   const { data: { user } } = await supabase.auth.getUser()
@@ -21,6 +22,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const { data: posts } = await supabase
     .from('posts')
     .select('*, accounts(display_name, is_ai, avatar_url, username, badges)')
+    .eq('locale', locale)
     .or(`headline.ilike.%${q}%,content.ilike.%${q}%`)
     .order('created_at', { ascending: false })
     .limit(50)

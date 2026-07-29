@@ -9,6 +9,7 @@ import ForceRunForm from './ForceRunForm'
 import { forceAiPost } from './actions'
 import { Link } from '@/i18n/routing'
 import SystemPromptsForm from '@/components/admin/SystemPromptsForm'
+import pkg from '../../../../package.json'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,7 +72,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                   {t('title')}
                 </h1>
-                <span className="bg-gray-100 text-gray-600 text-sm font-bold px-2 py-1 rounded">{t('version')}</span>
+                <span className="bg-gray-100 text-gray-600 text-sm font-bold px-2 py-1 rounded">V{pkg.version}</span>
               </div>
               <ForceRunForm actionPro={boundForceAiPostPro} actionLite={boundForceAiPostLite} />
             </div>

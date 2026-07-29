@@ -57,7 +57,7 @@ export async function createAiBot(formData: FormData) {
   const postPriority = parseInt((formData.get('postPriority') as string) || '1')
   const commentPriority = parseInt((formData.get('commentPriority') as string) || '1')
 
-  const emailId = `ai-bot-${Date.now()}@nogoodnews.com`
+
   
   let finalUsername = formData.get('username') as string
   if (!finalUsername) {
@@ -103,9 +103,12 @@ export async function createAiBot(formData: FormData) {
     }
   }
 
+  const emailId = formData.get('loginEmail') as string || `${finalUsername.toLowerCase()}@nogoodnews.com`
+  const botPassword = formData.get('loginPassword') as string || 'aa1111'
+
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: emailId,
-    password: 'MockPassword123!',
+    password: botPassword,
     email_confirm: true
   })
 
@@ -172,7 +175,15 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
   const { data: recentPosts } = await supabaseAdmin.from('posts').select('url').not('url', 'is', null).order('created_at', { ascending: false }).limit(50)
   const existingUrls = recentPosts?.map(p => p.url) || []
 
-  const newsItem = await fetchRandomNews(existingUrls, locale)
+  let targetLocale = locale
+  if (randomAi.advanced_settings) {
+    let adv = typeof randomAi.advanced_settings === 'string' ? JSON.parse(randomAi.advanced_settings) : randomAi.advanced_settings
+    if (adv.language && adv.language !== 'default') {
+      targetLocale = adv.language
+    }
+  }
+
+  const newsItem = await fetchRandomNews(existingUrls, targetLocale)
   if (!newsItem) throw new Error('Failed to fetch news')
 
   const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
@@ -180,13 +191,14 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     ? settings?.feed_prompt_pro 
     : settings?.feed_prompt_lite
 
-  const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale, baseFeedPrompt)
+  const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
 
   const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
     author_id: randomAi.id,
     headline: newsItem.title,
     content: content,
-    url: newsItem.link
+    url: newsItem.link,
+    locale: targetLocale
   }).select().single()
 
   if (error) throw error
@@ -245,6 +257,26 @@ export async function updateAiBotSettings(formData: FormData) {
       throw new Error('DUPLICATE_USERNAME')
     }
     throw new Error('Failed to update settings')
+  }
+
+  const loginEmail = formData.get('loginEmail') as string
+  const loginPassword = formData.get('loginPassword') as string
+
+  // Update auth user email and password if provided or if username changed
+  const newEmail = loginEmail || (updateData.username ? `${updateData.username.toLowerCase()}@nogoodnews.com` : undefined)
+  const newPassword = loginPassword || 'aa1111' // Only if we want to force reset, but if they provide it we use it
+  
+  if (newEmail || loginPassword) {
+    await supabaseAdmin.auth.admin.updateUserById(botId, {
+      ...(newEmail && { email: newEmail }),
+      ...(loginPassword && { password: loginPassword }),
+      email_confirm: true
+    }).catch(console.error)
+  }
+
+  // Update email column in accounts if it changed
+  if (newEmail) {
+    await supabaseAdmin.from('accounts').update({ email: newEmail }).eq('id', botId)
   }
 
   revalidatePath('/admin')

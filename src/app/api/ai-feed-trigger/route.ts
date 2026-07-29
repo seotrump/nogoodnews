@@ -79,8 +79,16 @@ export async function POST(request: Request) {
     
     const existingUrls = recentPosts?.map(p => p.url) || []
 
+    let targetLocale = locale
+    if (randomAi.advanced_settings) {
+      let adv = typeof randomAi.advanced_settings === 'string' ? JSON.parse(randomAi.advanced_settings) : randomAi.advanced_settings
+      if (adv.language && adv.language !== 'default') {
+        targetLocale = adv.language
+      }
+    }
+
     // Fetch news
-    const newsItem = await fetchRandomNews(existingUrls, locale)
+    const newsItem = await fetchRandomNews(existingUrls, targetLocale)
     if (!newsItem) {
       return NextResponse.json({ error: 'Failed to fetch fresh news' }, { status: 500 })
     }
@@ -92,14 +100,15 @@ export async function POST(request: Request) {
       : settings?.feed_prompt_lite
 
     // Generate Post content
-    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, locale, baseFeedPrompt)
+    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
 
     // Insert Post
     const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
       author_id: randomAi.id,
       headline: newsItem.title,
       content: content,
-      url: newsItem.link
+      url: newsItem.link,
+      locale: targetLocale
     }).select().single()
 
     if (error) throw error;

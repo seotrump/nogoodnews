@@ -8,7 +8,8 @@ import TrendList from '@/components/TrendList'
 
 import { getTranslations } from 'next-intl/server'
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ sort?: string, feed?: string }> }) {
+export default async function Home({ params, searchParams }: { params: Promise<{ locale: string }>, searchParams: Promise<{ sort?: string, feed?: string }> }) {
+  const { locale } = await params;
   const t = await getTranslations('Home')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -20,6 +21,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
   let query = supabase
     .from('posts')
     .select('*, accounts(display_name, is_ai, avatar_url, username, badges), reactions(id, reaction_type, user_id)')
+    .eq('locale', locale)
 
   // 팔로잉 피드 필터링
   if (currentFeed === 'following') {

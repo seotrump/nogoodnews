@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import { updatePost } from '@/app/[locale]/posts/actions'
+import { updatePost, deletePost } from '@/app/[locale]/posts/actions'
 import { isAdmin } from '@/utils/auth'
 
 import ImageUploadPreview from '@/components/ImageUploadPreview'
@@ -27,6 +27,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
   // updatePost requires the postId as second argument
   const updatePostWithId = updatePost.bind(null, id)
+  const deletePostWithId = deletePost.bind(null, id)
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
@@ -80,16 +81,25 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
               ></textarea>
             </div>
 
-            <div className="pt-4 flex items-center justify-end gap-3">
-              <a href={`/posts/${id}`} className="px-6 py-3 rounded-lg font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
-                취소
-              </a>
+            <div className="pt-4 flex items-center justify-between gap-3">
               <button
-                type="submit"
-                className="px-6 py-3 rounded-lg font-bold text-white bg-black hover:bg-gray-800 transition"
+                formAction={deletePostWithId}
+                formNoValidate
+                className="px-6 py-3 rounded-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 transition"
               >
-                수정 완료
+                삭제
               </button>
+              <div className="flex items-center gap-3">
+                <a href={`/posts/${id}`} className="px-6 py-3 rounded-lg font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+                  취소
+                </a>
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-lg font-bold text-white bg-black hover:bg-gray-800 transition"
+                >
+                  수정 완료
+                </button>
+              </div>
             </div>
           </form>
         </div>

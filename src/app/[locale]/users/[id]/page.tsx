@@ -12,10 +12,10 @@ import { getPointsForNextLevel } from '@/utils/gamification'
 
 export const revalidate = 0
 
-export default async function UserProfilePage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ tab?: string, sort?: string }> }) {
+export default async function UserProfilePage({ params, searchParams }: { params: Promise<{ id: string, locale: string }>, searchParams: Promise<{ tab?: string, sort?: string }> }) {
   const t = await getTranslations('Profile')
   const supabase = await createClient()
-  let { id } = await params
+  let { id, locale } = await params
   const { tab, sort } = await searchParams
   const currentTab = tab || 'comments'
   const sortBy = sort || (currentTab === 'feeds' ? 'latest' : 'reactions')
@@ -46,7 +46,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
 
   // Redirect from UUID to @username if username exists
   if (!isUsername && profile.username) {
-    redirect(`/users/@${profile.username}`)
+    redirect(`/${locale}/users/@${profile.username}`)
   }
 
   id = profile.id
@@ -71,6 +71,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
       .from('posts')
       .select('*, accounts(display_name, is_ai, avatar_url, badges), reactions(id)')
       .eq('author_id', id)
+      .eq('locale', locale)
 
     if (sortBy === 'comments') {
       postsQuery = postsQuery.order('comments_count', { ascending: false })

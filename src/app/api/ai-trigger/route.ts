@@ -114,8 +114,16 @@ export async function POST(request: Request) {
       recentCommentsContext = comments.slice(-5).map((c: any) => `${c.accounts?.display_name || '익명'}: ${c.content}`).join('\n')
     }
 
+    let targetLocale = locale
+    if (randomAi.advanced_settings) {
+      let adv = typeof randomAi.advanced_settings === 'string' ? JSON.parse(randomAi.advanced_settings) : randomAi.advanced_settings
+      if (adv.language && adv.language !== 'default') {
+        targetLocale = adv.language
+      }
+    }
+
     const { generateComment } = await import('@/utils/ai-generator')
-    const aiText = await generateComment(post.headline, post.content, randomAi.persona_prompt, randomAi.ai_model_provider, recentCommentsContext, locale)
+    const aiText = await generateComment(post.headline, post.content, randomAi.persona_prompt, randomAi.ai_model_provider, recentCommentsContext, targetLocale)
 
     await supabaseAdmin.from('comments').insert({
       post_id: postId,

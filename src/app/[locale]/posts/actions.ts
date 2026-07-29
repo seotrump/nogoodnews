@@ -3,6 +3,13 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { ADMIN_EMAIL } from '@/utils/auth'
+
+const supabaseAdmin = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function createPost(formData: FormData) {
   const supabase = await createClient()
@@ -133,12 +140,15 @@ export async function updatePost(postId: string, formData: FormData) {
     }
   }
 
-  const { error } = await supabase.from('posts').update(updateData).eq('id', postId)
+  const isUserAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() || user.app_metadata?.is_admin === true
+  const client = isUserAdmin ? supabaseAdmin : supabase
+  
+  const { error } = await client.from('posts').update(updateData).eq('id', postId)
 
   if (error) throw new Error('Failed to update post')
 
   // Re-parse hashtags
-  await supabase.from('post_hashtags').delete().eq('post_id', postId)
+  await client.from('post_hashtags').delete().eq('post_id', postId)
 
   const extractHashtags = (text: string) => {
     const regex = /#[\w가-힣]+/g
@@ -169,6 +179,29 @@ export async function updatePost(postId: string, formData: FormData) {
   revalidatePath('/')
   revalidatePath(`/posts/${postId}`)
   redirect(`/posts/${postId}`)
+}
+
+export async function deletePost(postId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error('Not authenticated')
+
+  const { data: post } = await supabase.from('posts').select('author_id').eq('id', postId).single()
+  if (!post) throw new Error('Post not found')
+
+  const isUserAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() || user.app_metadata?.is_admin === true
+  if (post.author_id !== user.id && !isUserAdmin) {
+    throw new Error('Permission denied')
+  }
+
+  const client = isUserAdmin ? supabaseAdmin : supabase
+  const { error } = await client.from('posts').delete().eq('id', postId)
+
+  if (error) throw new Error('Failed to delete post')
+  
+  revalidatePath('/')
+  redirect('/')
 }
 
 export async function addComment(formData: FormData, postId: string) {
@@ -267,6 +300,28 @@ export async function deleteComment(commentId: string, postId: string) {
   const { error } = await supabase.from('comments').delete().eq('id', commentId)
   if (error) throw new Error('Failed to delete comment')
 
+  revalidatePath('/', 'layout')
+}
+
+export async function updateComment(commentId: string, content: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error('Not authenticated')
+
+  const { data: comment } = await supabase.from('comments').select('author_id').eq('id', commentId).single()
+  if (!comment) throw new Error('Comment not found')
+
+  const isUserAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() || user.app_metadata?.is_admin === true
+
+  if (comment.author_id !== user.id && !isUserAdmin) {
+    throw new Error('Permission denied')
+  }
+
+  const client = isUserAdmin ? supabaseAdmin : supabase
+  const { error } = await client.from('comments').update({ content }).eq('id', commentId)
+
+  if (error) throw new Error('Failed to update comment')
   revalidatePath('/', 'layout')
 }
 
