@@ -150,68 +150,75 @@ export async function createAiBot(formData: FormData) {
 }
 
 export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'lite') {
-  let { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).eq('status', 'active')
-  if (!aiAccounts || aiAccounts.length === 0) throw new Error('No AI bots found')
+  try {
+    let { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).eq('status', 'active')
+    if (!aiAccounts || aiAccounts.length === 0) throw new Error('No AI bots found')
 
-  if (modelType === 'pro') {
-    aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-31b')
-  } else if (modelType === 'lite') {
-    aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-26b' || !bot.ai_model_provider)
-  }
-
-  if (aiAccounts.length === 0) throw new Error(`해당 모델(${modelType})을 사용하는 활성 봇이 없습니다.`)
-
-  const lotteryPool: any[] = []
-  aiAccounts.forEach((bot: any) => {
-    const priority = typeof bot.post_priority === 'number' ? bot.post_priority : 1
-    if (priority > 0) {
-      for (let i = 0; i < priority; i++) lotteryPool.push(bot)
+    if (modelType === 'pro') {
+      aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-31b')
+    } else if (modelType === 'lite') {
+      aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-26b' || !bot.ai_model_provider)
     }
-  })
 
-  if (lotteryPool.length === 0) throw new Error('게재 불가: 봇 우선순위 0')
+    if (aiAccounts.length === 0) throw new Error(`해당 모델(${modelType})을 사용하는 활성 봇이 없습니다.`)
 
-  const randomAi = lotteryPool[Math.floor(Math.random() * lotteryPool.length)]
-  const { data: recentPosts } = await supabaseAdmin.from('posts').select('url').not('url', 'is', null).order('created_at', { ascending: false }).limit(50)
-  const existingUrls = recentPosts?.map(p => p.url) || []
+    const lotteryPool: any[] = []
+    aiAccounts.forEach((bot: any) => {
+      const priority = typeof bot.post_priority === 'number' ? bot.post_priority : 1
+      if (priority > 0) {
+        for (let i = 0; i < priority; i++) lotteryPool.push(bot)
+      }
+    })
 
-  let targetLocale = locale
-  if (randomAi.advanced_settings) {
-    let adv = typeof randomAi.advanced_settings === 'string' ? JSON.parse(randomAi.advanced_settings) : randomAi.advanced_settings
-    if (adv.language && adv.language !== 'default') {
-      targetLocale = adv.language
+    if (lotteryPool.length === 0) throw new Error('게재 불가: 봇 우선순위 0')
+
+    const randomAi = lotteryPool[Math.floor(Math.random() * lotteryPool.length)]
+    const { data: recentPosts } = await supabaseAdmin.from('posts').select('url').not('url', 'is', null).order('created_at', { ascending: false }).limit(50)
+    const existingUrls = recentPosts?.map(p => p.url) || []
+
+    let targetLocale = locale
+    if (randomAi.advanced_settings) {
+      let adv = typeof randomAi.advanced_settings === 'string' ? JSON.parse(randomAi.advanced_settings) : randomAi.advanced_settings
+      if (adv.language && adv.language !== 'default') {
+        targetLocale = adv.language
+      }
     }
+
+    const newsItem = await fetchRandomNews(existingUrls, targetLocale)
+    if (!newsItem) throw new Error('Failed to fetch news (no fresh news or rate limited)')
+
+    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
+    const baseFeedPrompt = randomAi.ai_model_provider === 'gemma-4-31b' 
+      ? settings?.feed_prompt_pro 
+      : settings?.feed_prompt_lite
+
+    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
+
+    const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
+      author_id: randomAi.id,
+      headline: newsItem.title,
+      content: content,
+      url: newsItem.link,
+      locale: targetLocale
+    }).select().single()
+
+    if (error) throw error
+
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    fetch(`${baseUrl}/api/ai-trigger`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId: insertedPost.id, locale })
+    }).catch(console.error)
+
+    revalidatePath('/')
+    revalidatePath('/admin')
+    
+    return { success: true }
+  } catch (error: any) {
+    console.error('forceAiPost error:', error)
+    return { error: error.message || 'Unknown error occurred' }
   }
-
-  const newsItem = await fetchRandomNews(existingUrls, targetLocale)
-  if (!newsItem) throw new Error('Failed to fetch news')
-
-  const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
-  const baseFeedPrompt = randomAi.ai_model_provider === 'gemma-4-31b' 
-    ? settings?.feed_prompt_pro 
-    : settings?.feed_prompt_lite
-
-  const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
-
-  const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
-    author_id: randomAi.id,
-    headline: newsItem.title,
-    content: content,
-    url: newsItem.link,
-    locale: targetLocale
-  }).select().single()
-
-  if (error) throw error
-
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  fetch(`${baseUrl}/api/ai-trigger`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ postId: insertedPost.id, locale })
-  }).catch(console.error)
-
-  revalidatePath('/')
-  revalidatePath('/admin')
 }
 
 export async function updateAiBotSettings(formData: FormData) {
