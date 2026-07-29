@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import SettingsForm from '@/components/SettingsForm'
 import PasswordForm from '@/components/PasswordForm'
+import DeleteAccountForm from '@/components/DeleteAccountForm'
 
 import { getTranslations } from 'next-intl/server'
 
@@ -33,6 +34,7 @@ export default async function SettingsPage() {
         <div className="mt-12 pt-8 border-t border-gray-200">
           <h2 className="text-xl font-bold mb-6 text-gray-900">{t('securityAndPw')}</h2>
           <PasswordForm />
+          <DeleteAccountForm />
         </div>
       </div>
     </div>

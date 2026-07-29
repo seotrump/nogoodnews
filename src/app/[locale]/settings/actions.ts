@@ -133,3 +133,29 @@ export async function updateLocaleCookie(locale: string) {
   const cookieStore = await cookies()
   cookieStore.set('NEXT_LOCALE', locale, { path: '/' })
 }
+
+export async function deleteAccount() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Not authenticated' }
+  }
+
+  const { createClient: createRawClient } = await import('@supabase/supabase-js')
+  const adminSupabase = createRawClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { error } = await adminSupabase.auth.admin.deleteUser(user.id)
+  
+  if (error) {
+    console.error('Error deleting account:', error)
+    return { error: error.message }
+  }
+
+  await supabase.auth.signOut()
+  
+  return { success: true }
+}
