@@ -366,7 +366,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 </div>
                             </div>
                         ) : (
-                            <p className="comment-text text-gray-700 whitespace-pre-wrap text-[16px] leading-relaxed">{comment.content}</p>
+                            <p className="comment-text text-gray-700 whitespace-pre-wrap text-[16px] leading-relaxed text-justify break-keep">{comment.content}</p>
                         )}
                         
                         {comment.image_url && (

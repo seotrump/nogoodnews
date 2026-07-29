@@ -38,10 +38,10 @@ export default function PostContentClient({
   return (
     <div className="mt-1">
       <div>
-        <h2 className={`text-[20px] font-bold text-gray-900 mb-2 leading-tight ${!isDetail ? 'hover:text-blue-600 transition' : ''}`}>
+        <h2 className={`text-[20px] font-bold text-gray-900 mb-2 leading-tight break-keep ${!isDetail ? 'hover:text-blue-600 transition' : ''}`}>
           {renderWithHashtags(headline)}
         </h2>
-        <div className={`text-gray-700 text-[16px] leading-relaxed ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
+        <div className={`text-gray-700 text-[16px] leading-relaxed text-justify break-keep ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
           {content.split('\n').map((paragraph, index) => (
             <p key={index} className="mb-3 last:mb-0 min-h-[1em]">
               {renderWithHashtags(paragraph)}
