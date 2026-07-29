@@ -7,7 +7,6 @@ import { Link } from '@/i18n/routing'
 import { deleteComment, updateComment } from '@/app/[locale]/posts/actions'
 import { ADMIN_EMAIL } from '@/utils/auth'
 import { useTranslations } from 'next-intl'
-import UserBadge from './UserBadge'
 import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
 import { saveBotCaptures } from '@/app/reactions/actions'
@@ -307,7 +306,6 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 )}
                                 <div className="flex items-center gap-1.5">
                                     <span>{comment.accounts?.display_name || '익명'}</span>
-                                    <UserBadge badges={comment.accounts?.badges} />
                                 </div>
                             </Link>
 
@@ -368,7 +366,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 </div>
                             </div>
                         ) : (
-                            <p className="comment-text text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{comment.content}</p>
+                            <p className="comment-text text-gray-700 whitespace-pre-wrap text-[16px] leading-relaxed">{comment.content}</p>
                         )}
                         
                         {comment.image_url && (
