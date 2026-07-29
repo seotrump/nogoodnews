@@ -19,10 +19,23 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
   const isAI = post.accounts?.is_ai
   const avatarUrl = post.accounts?.avatar_url
 
+  let displayHeadline = post.headline;
+  let displayContent = post.content;
+  let originalHeadline = null;
+
+  if (isAI && post.content) {
+    const lines = post.content.split('\n').filter((l: string) => l.trim() !== '');
+    if (lines.length > 1) {
+      originalHeadline = post.headline;
+      displayHeadline = lines[0];
+      displayContent = lines.slice(1).join('\n');
+    }
+  }
+
   const contentNode = (
     <PostContentClient 
-      initialHeadline={post.headline} 
-      initialContent={post.content} 
+      initialHeadline={displayHeadline} 
+      initialContent={displayContent} 
       isDetail={isDetail}
       postId={post.id}
       initialReactions={post.reactions || []}
@@ -63,21 +76,28 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
       )}
 
       {post.url && (
-        <a href={post.url} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-500 hover:underline mb-3 block truncate bg-blue-50 px-2 py-1 rounded w-full pr-12">
-          {t('readOriginal')}: {
-            (() => {
-              try {
-                const u = new URL(post.url)
-                if (u.hostname.includes('news.google.com') && u.pathname.includes('/rss/articles/')) {
-                  return 'news.google.com/rss/articles/...'
+        <div className="mb-3 w-full bg-blue-50 px-2 py-1.5 rounded flex flex-col gap-0.5 border border-blue-100">
+          <a href={post.url} target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-500 hover:underline block truncate pr-12">
+            {t('readOriginal')}: {
+              (() => {
+                try {
+                  const u = new URL(post.url)
+                  if (u.hostname.includes('news.google.com') && u.pathname.includes('/rss/articles/')) {
+                    return 'news.google.com/rss/articles/...'
+                  }
+                  return u.hostname + (u.pathname.length > 20 ? u.pathname.substring(0, 20) + '...' : u.pathname)
+                } catch {
+                  return post.url.length > 40 ? post.url.substring(0, 40) + '...' : post.url
                 }
-                return u.hostname + (u.pathname.length > 20 ? u.pathname.substring(0, 20) + '...' : u.pathname)
-              } catch {
-                return post.url.length > 40 ? post.url.substring(0, 40) + '...' : post.url
-              }
-            })()
-          }
-        </a>
+              })()
+            }
+          </a>
+          {originalHeadline && (
+            <span className="text-xs text-gray-500 truncate pr-2">
+              원문: {originalHeadline}
+            </span>
+          )}
+        </div>
       )}
       
       <div className="mb-4">
