@@ -15,6 +15,19 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
   const tCat = useTranslations('Categories')
   const [showAllMobile, setShowAllMobile] = useState(false)
   
+  // 헤드라인 제목 추출 헬퍼 (기존 글이더라도 봇이 작성한 본문의 첫번째 줄/어그로 제목 우선 추출)
+  const getDisplayTitle = (post: any) => {
+    if (!post) return t('noTitle')
+    // 봇 글인 경우 본문의 첫번째 줄이 어그로 제목
+    if (post.content) {
+      const firstLine = post.content.split('\n')[0].replace(/^#+\s*/, '').trim()
+      if (firstLine && firstLine.length > 0) {
+        return firstLine
+      }
+    }
+    return post.headline || t('noTitle')
+  }
+
   // 헤드라인 TOP 10 정렬 조건: 댓글 많은 순 -> 조회수 많은 순 -> 최신순
   const sortedPosts = [...(posts || [])].sort((a, b) => {
     const commentsA = a.comments_count || 0
@@ -68,7 +81,7 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
                   {idx + 1}
                 </span>
                 <span className="text-xs font-semibold text-gray-800 group-hover:text-red-600 truncate flex-1">
-                  {post.headline || post.content?.slice(0, 40) || t('noTitle')}
+                  {getDisplayTitle(post)}
                 </span>
                 {post.comments_count > 0 && (
                   <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.2 rounded-full shrink-0">
@@ -92,7 +105,7 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
                     {idx + 6}
                   </span>
                   <span className="text-xs font-semibold text-gray-800 group-hover:text-red-600 truncate flex-1">
-                    {post.headline || post.content?.slice(0, 40) || t('noTitle')}
+                    {getDisplayTitle(post)}
                   </span>
                   {post.comments_count > 0 && (
                     <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.2 rounded-full shrink-0">
@@ -119,7 +132,7 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
                   {idx + 1}
                 </span>
                 <span className="text-xs font-semibold text-gray-800 group-hover:text-red-600 truncate flex-1">
-                  {post.headline || post.content?.slice(0, 40) || t('noTitle')}
+                  {getDisplayTitle(post)}
                 </span>
                 {post.comments_count > 0 && (
                   <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.2 rounded-full shrink-0">

@@ -25,6 +25,7 @@ export async function createPost(formData: FormData) {
   }
 
   const headline = formData.get('headline') as string
+  const linkTitle = formData.get('link_title') as string
   const url = formData.get('url') as string
   const content = formData.get('content') as string
   const category = (formData.get('category') as string) || 'all'
@@ -53,8 +54,10 @@ export async function createPost(formData: FormData) {
   const { data, error } = await supabase.from('posts').insert({
     author_id: user.id,
     headline,
+    link_title: linkTitle || null,
     url,
     content,
+    category,
     image_url: imageUrl
   }).select().single()
 
@@ -119,11 +122,13 @@ export async function updatePost(postId: string, formData: FormData) {
   }
 
   const headline = formData.get('headline') as string
+  const linkTitle = formData.get('link_title') as string
   const url = formData.get('url') as string
   const content = formData.get('content') as string
+  const category = (formData.get('category') as string) || 'all'
   const imageFile = formData.get('imageFile') as File | null
 
-  const updateData: any = { headline, url, content }
+  const updateData: any = { headline, link_title: linkTitle, url, content, category }
 
   if (imageFile && imageFile.size > 0) {
     const fileExt = imageFile.name.split('.').pop()

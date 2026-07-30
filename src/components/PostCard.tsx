@@ -21,12 +21,12 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
 
   let displayHeadline = post.headline;
   let displayContent = post.content;
-  let originalHeadline = null;
+  let originalHeadline = post.link_title || null;
 
   if (isAI && post.content) {
     const lines = post.content.split('\n').filter((l: string) => l.trim() !== '');
     if (lines.length > 1) {
-      originalHeadline = post.headline;
+      if (!originalHeadline) originalHeadline = post.headline;
       displayHeadline = lines[0];
       displayContent = lines.slice(1).join('\n');
     }

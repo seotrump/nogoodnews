@@ -232,15 +232,29 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
       : settings?.feed_prompt_lite
 
     const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
+    const firstLineHeadline = content.split('\n')[0].replace(/^#+\s*/, '').trim() || newsItem.title
 
-    const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
+    let insertedPost: any = null
+    const insertPayload = {
       author_id: randomAi.id,
-      headline: newsItem.title,
+      headline: firstLineHeadline,
       content: content,
       url: newsItem.link
+    }
+
+    const { data: resData, error: insertError } = await supabaseAdmin.from('posts').insert({
+      ...insertPayload,
+      link_title: newsItem.title
     }).select().single()
 
-    if (error) throw error
+    if (insertError) {
+      // link_title 컬럼이 Supabase 스키마 캐시에 아직 인식 안 되었을 경우 안전 우회
+      const { data: fallbackData, error: fallbackError } = await supabaseAdmin.from('posts').insert(insertPayload).select().single()
+      if (fallbackError) throw fallbackError
+      insertedPost = fallbackData
+    } else {
+      insertedPost = resData
+    }
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     fetch(`${baseUrl}/api/ai-trigger`, {

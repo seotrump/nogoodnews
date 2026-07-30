@@ -133,15 +133,29 @@ export async function POST(request: Request) {
 
     const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
 
-    // 8. 게시글 저장 (DB 스키마 종속 제거)
-    const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
+    // 8. 게시글 저장 (우리 봇이 생성한 어그로 헤드라인 저장 & 원문 기사 제목은 link_title 저장)
+    const firstLineHeadline = content.split('\n')[0].replace(/^#+\s*/, '').trim() || newsItem.title
+
+    let insertedPost: any = null
+    const insertPayload = {
       author_id: randomAi.id,
-      headline: newsItem.title,
+      headline: firstLineHeadline,
       content: content,
       url: newsItem.link
+    }
+
+    const { data: resData, error: insertError } = await supabaseAdmin.from('posts').insert({
+      ...insertPayload,
+      link_title: newsItem.title
     }).select().single()
 
-    if (error) throw error;
+    if (insertError) {
+      const { data: fallbackData, error: fallbackError } = await supabaseAdmin.from('posts').insert(insertPayload).select().single()
+      if (fallbackError) throw fallbackError
+      insertedPost = fallbackData
+    } else {
+      insertedPost = resData
+    }
 
     // 9. 해시태그 업데이트
     const extractHashtags = (text: string) => {
