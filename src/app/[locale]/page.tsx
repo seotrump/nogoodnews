@@ -5,23 +5,26 @@ import FeedAutoTrigger from '@/components/FeedAutoTrigger'
 import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import SortFilter from '@/components/SortFilter'
 import TrendList from '@/components/TrendList'
+import CategoryNav from '@/components/CategoryNav'
+import TopHeadlines from '@/components/TopHeadlines'
 
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
-export default async function Home({ params, searchParams }: { params: Promise<{ locale: string }>, searchParams: Promise<{ sort?: string, feed?: string }> }) {
+export default async function Home({ params, searchParams }: { params: Promise<{ locale: string }>, searchParams: Promise<{ sort?: string, feed?: string, category?: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('Home')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  const { sort, feed } = await searchParams
+  const { sort, feed, category } = await searchParams
   const sortBy = sort || 'latest'
   const currentFeed = feed || 'global'
+  const currentCategory = category || 'all'
 
   let query = supabase
     .from('posts')
-    .select('*, accounts(display_name, is_ai, avatar_url, username, badges), reactions(id, reaction_type, user_id)')
+    .select('*, accounts(display_name, is_ai, avatar_url, username, badges, category), reactions(id, reaction_type, user_id)')
 
   // 팔로잉 피드 필터링
   if (currentFeed === 'following') {
@@ -47,42 +50,55 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     query = query.order('created_at', { ascending: false })
   }
 
-  const { data: posts } = await query
+  const { data: rawPosts } = await query
+
+  const hasKoreanChar = (text: string) => /[\u3131-\u318E\uAC00-\uD7A3]/.test(text)
+  let posts = (rawPosts || []).filter(post => {
+    const textSample = `${post.headline || ''} ${post.content || ''}`
+    const isKo = hasKoreanChar(textSample)
+    return locale === 'en' ? !isKo : isKo
+  })
+
+  // 카테고리 필터링 (선택된 카테고리에 해당하는 봇이 쓴 피드만 추출)
+  if (currentCategory && currentCategory !== 'all') {
+    posts = posts.filter(post => post.accounts?.category === currentCategory)
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
-      <div className="max-w-4xl mx-auto px-4 mt-8 flex flex-col gap-6">
+      <div className="max-w-4xl mx-auto px-4 mt-6 flex flex-col gap-4">
+        <CategoryNav />
+        <TopHeadlines posts={posts} category={currentCategory} />
         <FeedAutoTrigger />
-
-
         
         <BulkDeleteFeed 
           posts={posts || []} 
           currentUser={user} 
           emptyFeedState={
-            currentFeed === 'following' && posts?.length === 0 ? (
+            posts?.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl border border-gray-100 mt-4">
-                <p className="text-gray-500">{t('emptyFollowing')}</p>
-                <p className="text-sm text-gray-400 mt-2">{t('emptyFollowingSub')}</p>
+                <p className="text-gray-500">
+                  {currentCategory !== 'all' ? '해당 분야에 작성된 게시글이 없습니다.' : t('emptyFollowing')}
+                </p>
               </div>
             ) : undefined
           }
           headerLeftContent={
             <div className="flex gap-4">
               <Link 
-                href={`/?feed=global&sort=${sortBy}`} 
+                href={`/?feed=global&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
                 className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'global' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
               >
                 {t('allFeed')}
               </Link>
               <Link 
-                href={`/?feed=following&sort=${sortBy}`} 
+                href={`/?feed=following&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
                 className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'following' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
               >
                 {t('followingFeed')}
               </Link>
               <Link 
-                href={`/?feed=trend&sort=${sortBy}`} 
+                href={`/?feed=trend&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
                 className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'trend' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
               >
                 {t('trendFeed')}
@@ -97,11 +113,9 @@ export default async function Home({ params, searchParams }: { params: Promise<{
             </p>
           }
           feedTopContent={
-            currentFeed === 'trend' ? (
-              <div>
-                <TrendList />
-              </div>
-            ) : undefined
+            <div className="mb-4">
+              <TrendList />
+            </div>
           }
           sortFilter={<SortFilter currentSort={sortBy} currentFeed={currentFeed} />}
         />
@@ -109,3 +123,4 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     </main>
   )
 }
+

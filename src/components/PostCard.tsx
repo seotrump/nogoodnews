@@ -32,6 +32,11 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
     }
   }
 
+  // Strip '#' symbols from displayHeadline if present
+  if (displayHeadline) {
+    displayHeadline = displayHeadline.replace(/#/g, '').trim();
+  }
+
   const contentNode = (
     <PostContentClient 
       initialHeadline={displayHeadline} 

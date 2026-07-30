@@ -67,7 +67,7 @@ export async function createPost(formData: FormData) {
 
   // Parse hashtags from headline and content
   const extractHashtags = (text: string) => {
-    const regex = /#[\w가-힣]+/g
+    const regex = /#[\w가-힣-]+/g
     const matches = text.match(regex)
     return matches ? Array.from(new Set(matches.map(tag => tag.toLowerCase()))) : []
   }

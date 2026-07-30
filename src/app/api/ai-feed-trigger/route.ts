@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       const postPriority = typeof bot.post_priority === 'number' ? bot.post_priority : 1
       if (postPriority <= 0) continue
 
-      const intervalMinutes = bot.auto_post_interval_minutes || 60
+      const intervalMinutes = typeof bot.auto_post_interval_minutes === 'number' ? bot.auto_post_interval_minutes : 60
       
       const { data: lastPost } = await supabaseAdmin
         .from('posts')
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
 
     // Parse and save hashtags to update the trend list
     const extractHashtags = (text: string) => {
-      const regex = /#[\w가-힣]+/g
+      const regex = /#[\w가-힣-]+/g
       const matches = text.match(regex)
       return matches ? Array.from(new Set(matches.map(tag => tag.toLowerCase()))) : []
     }

@@ -103,18 +103,33 @@ export async function createAiBot(formData: FormData) {
     }
   }
 
-  const emailId = formData.get('loginEmail') as string || `${finalUsername.toLowerCase()}@nogoodnews.com`
+  const inputEmail = formData.get('loginEmail') as string
+  const emailId = inputEmail || `bot_${finalUsername.toLowerCase()}_${Date.now()}@nogoodnews.com`
   const botPassword = formData.get('loginPassword') as string || 'aa1111'
 
+  let botId: string;
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: emailId,
     password: botPassword,
     email_confirm: true
   })
 
-  if (authError) throw new Error('Failed to create AI auth user')
-
-  const botId = authData.user!.id
+  if (authError) {
+    if (authError.message.includes('already been registered') || (authError as any).code === 'email_exists') {
+      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
+      const found = existingUsers?.users?.find(u => u.email === emailId)
+      if (found) {
+        botId = found.id
+      } else {
+        throw new Error(`Failed to create AI auth user: ${authError.message}`)
+      }
+    } else {
+      console.error('Failed to create AI auth user:', authError)
+      throw new Error(`Failed to create AI auth user: ${authError.message}`)
+    }
+  } else {
+    botId = authData.user!.id
+  }
   const category = formData.get('category') as string || null
   
   let advancedSettings = {}

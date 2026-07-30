@@ -15,7 +15,7 @@ export default async function TagPage({ params }: { params: Promise<{ keyword: s
   const { data: { user } } = await supabase.auth.getUser()
 
   // Get tag info
-  const { data: tag } = await supabase.from('hashtags').select('*').eq('name', `#${decodedKeyword}`).single()
+  const { data: tag } = await supabase.from('hashtags').select('*').ilike('name', `#${decodedKeyword}`).maybeSingle()
 
   // Get posts for this tag
   let posts = []
