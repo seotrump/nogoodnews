@@ -61,7 +61,9 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
       if (!res.ok) throw new Error('자동 튜닝에 실패했습니다.')
       const data = await res.json()
       
-      if (data.category) setCategory(data.category)
+      if (data.category && ['politics', 'economy', 'society', 'tech', 'world', 'entertainment', 'sports', 'culture', 'opinion'].includes(data.category)) {
+        setCategory(data.category)
+      }
       if (data.axisTone) setAxisTone(data.axisTone)
       if (data.axisTarget) setAxisTarget(data.axisTarget)
       if (data.axisVocab) setAxisVocab(data.axisVocab)
@@ -273,12 +275,16 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold mb-1.5">{t('category')}</label>
-                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
-                  <option value="politics">{t('catPolitics')}</option>
-                  <option value="economy">{t('catEconomy')}</option>
-                  <option value="work">{t('catWork')}</option>
-                  <option value="entertainment">{t('catEntertainment')}</option>
-                  <option value="tech">{t('catTech')}</option>
+                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
+                  <option value="politics">정치 (Politics)</option>
+                  <option value="economy">경제 (Economy)</option>
+                  <option value="society">사회 (Society)</option>
+                  <option value="tech">IT/기술 (Tech)</option>
+                  <option value="world">세계 (World)</option>
+                  <option value="entertainment">연예 (Entertainment)</option>
+                  <option value="sports">스포츠 (Sports)</option>
+                  <option value="culture">생활/문화 (Culture)</option>
+                  <option value="opinion">오피니언 (Opinion)</option>
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-2">

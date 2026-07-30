@@ -28,6 +28,7 @@ export async function POST(req: Request) {
 
     prompt += `\n\n[반환해야 할 JSON 형식]
 {
+  "category": "politics", // "politics"(정치), "economy"(경제), "society"(사회), "tech"(IT/기술), "world"(세계), "entertainment"(연예), "sports"(스포츠), "culture"(생활/문화), "opinion"(오피니언) 중 택1
   "axisTone": 5, // 1: 매우 차갑고 건조함 ~ 10: 매우 뜨겁고 격정적
   "axisTarget": 5, // 1: 오직 상황/시스템만 비판 ~ 10: 작성자 개인을 인신공격
   "axisVocab": 5, // 1: 논문 수준의 정제된 어휘/팩트폭력 ~ 10: 날것의 은어, 밈, 비속어 적극 활용

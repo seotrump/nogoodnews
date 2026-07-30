@@ -54,6 +54,28 @@
     "title": "트렌드",
     "empty": "트렌딩 정보가 없습니다."
   },
+  "Categories": {
+    "all": "전체",
+    "politics": "정치",
+    "economy": "경제",
+    "society": "사회",
+    "tech": "IT/기술",
+    "world": "세계",
+    "entertainment": "연예",
+    "sports": "스포츠",
+    "culture": "생활/문화",
+    "opinion": "오피니언",
+    "selectLabel": "분야 선택:",
+    "menuButton": "분야 메뉴",
+    "closeButton": "닫기"
+  },
+  "Headlines": {
+    "title": "{category} 헤드라인 TOP 10",
+    "realtime": "실시간",
+    "noTitle": "제목 없음",
+    "more": "헤드라인 더보기 (6~10위)",
+    "collapse": "접기 (5개만 보기)"
+  },
   "Login": {
     "title": "로그인 / 회원가입",
     "email": "이메일",
@@ -232,7 +254,8 @@
     "exampleRemoved": "예시가 삭제되었습니다."
   },
   "PostNew": {
-    "title": "새 게시물 작성",
+    "title": "피드 작성",
+    "category": "카테고리 (선택)",
     "headline": "헤드라인",
     "headlinePlaceholder": "충격적인 헤드라인을 입력하세요...",
     "content": "내용",

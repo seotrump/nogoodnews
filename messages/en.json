@@ -54,6 +54,28 @@
     "title": "Trends",
     "empty": "No trending information available."
   },
+  "Categories": {
+    "all": "All",
+    "politics": "Politics",
+    "economy": "Economy",
+    "society": "Society",
+    "tech": "IT/Tech",
+    "world": "World",
+    "entertainment": "Entertainment",
+    "sports": "Sports",
+    "culture": "Life/Culture",
+    "opinion": "Opinion",
+    "selectLabel": "Category:",
+    "menuButton": "Categories",
+    "closeButton": "Close"
+  },
+  "Headlines": {
+    "title": "{category} Top 10 Headlines",
+    "realtime": "LIVE",
+    "noTitle": "Untitled",
+    "more": "More Headlines (6-10)",
+    "collapse": "Collapse (Top 5)"
+  },
   "Login": {
     "title": "Login / Sign Up",
     "email": "Email",
@@ -135,7 +157,8 @@
     "pwFailed": "Failed to change password. (min 6 characters)"
   },
   "PostNew": {
-    "title": "Write New Post",
+    "title": "Create Feed",
+    "category": "Category (Optional)",
     "headline": "Headline",
     "headlinePlaceholder": "Enter a shocking headline...",
     "content": "Content",

@@ -59,9 +59,9 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     return locale === 'en' ? !isKo : isKo
   })
 
-  // 카테고리 필터링 (선택된 카테고리에 해당하는 봇이 쓴 피드만 추출)
+  // 카테고리 필터링 (선택된 카테고리에 해당하는 봇/휴먼 게시글 추출)
   if (currentCategory && currentCategory !== 'all') {
-    posts = posts.filter(post => post.accounts?.category === currentCategory)
+    posts = posts.filter(post => (post.category === currentCategory || post.accounts?.category === currentCategory))
   }
 
   return (
@@ -111,6 +111,13 @@ export default async function Home({ params, searchParams }: { params: Promise<{
                 ? (user ? t('followingDesc') : t('followingLoginRequired')) 
                 : currentFeed === 'trend' ? t('trendDesc') : t('globalDesc')}
             </p>
+          }
+          feedTopContent={
+            currentFeed === 'trend' ? (
+              <div className="mb-4">
+                <TrendList />
+              </div>
+            ) : undefined
           }
           sortFilter={<SortFilter currentSort={sortBy} currentFeed={currentFeed} />}
         />

@@ -36,6 +36,28 @@ export default function CreatePostFormClient({ t }: { t: any }) {
         <textarea id="content" name="content" required placeholder={t.contentPlaceholder} rows={5} className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none" />
       </div>
       <div>
+        <label htmlFor="category" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">
+          {t.category}
+        </label>
+        <select
+          id="category"
+          name="category"
+          defaultValue="all"
+          className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none bg-white font-medium text-sm sm:text-base text-gray-700"
+        >
+          <option value="all">전체 (커뮤니티)</option>
+          <option value="politics">정치 (Politics)</option>
+          <option value="economy">경제 (Economy)</option>
+          <option value="society">사회 (Society)</option>
+          <option value="tech">IT/기술 (Tech)</option>
+          <option value="world">세계 (World)</option>
+          <option value="entertainment">연예 (Entertainment)</option>
+          <option value="sports">스포츠 (Sports)</option>
+          <option value="culture">생활/문화 (Culture)</option>
+          <option value="opinion">오피니언 (Opinion)</option>
+        </select>
+      </div>
+      <div>
         <label htmlFor="url" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">{t.sourceUrl}</label>
         <input id="url" name="url" type="url" placeholder={t.sourceUrlPlaceholder} className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none" />
       </div>

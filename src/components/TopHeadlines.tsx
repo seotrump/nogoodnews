@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Link } from '@/i18n/routing'
+import { useTranslations } from 'next-intl'
 import { Newspaper, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface TopHeadlinesProps {
@@ -9,23 +10,13 @@ interface TopHeadlinesProps {
   category: string
 }
 
-const CATEGORY_NAMES: Record<string, string> = {
-  all: '전체',
-  politics: '정치',
-  economy: '경제',
-  society: '사회',
-  tech: 'IT/기술',
-  world: '세계',
-  entertainment: '연예',
-  sports: '스포츠',
-  culture: '생활/문화',
-  opinion: '오피니언',
-}
-
 export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
+  const t = useTranslations('Headlines')
+  const tCat = useTranslations('Categories')
   const [showAllMobile, setShowAllMobile] = useState(false)
   const topPosts = (posts || []).slice(0, 10)
-  const categoryLabel = CATEGORY_NAMES[category] || '주요 이슈'
+  
+  const categoryLabel = tCat(category as any) || tCat('all')
 
   if (topPosts.length === 0) return null
 
@@ -42,8 +33,8 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
         <div className="flex items-center gap-2">
           <Newspaper className="w-4 h-4 text-red-500 flex-shrink-0" />
           <h2 className="font-extrabold text-xs sm:text-sm text-gray-900 flex items-center gap-1.5">
-            <span>{categoryLabel} 헤드라인 TOP 10</span>
-            <span className="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">실시간</span>
+            <span>{t('title', { category: categoryLabel })}</span>
+            <span className="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{t('realtime')}</span>
           </h2>
         </div>
       </div>
@@ -61,7 +52,7 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
                   {idx + 1}
                 </span>
                 <span className="text-xs font-semibold text-gray-800 group-hover:text-red-600 truncate flex-1">
-                  {post.headline || post.content?.slice(0, 40) || '제목 없음'}
+                  {post.headline || post.content?.slice(0, 40) || t('noTitle')}
                 </span>
                 {post.comments_count > 0 && (
                   <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.2 rounded-full shrink-0">
@@ -85,7 +76,7 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
                     {idx + 6}
                   </span>
                   <span className="text-xs font-semibold text-gray-800 group-hover:text-red-600 truncate flex-1">
-                    {post.headline || post.content?.slice(0, 40) || '제목 없음'}
+                    {post.headline || post.content?.slice(0, 40) || t('noTitle')}
                   </span>
                   {post.comments_count > 0 && (
                     <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.2 rounded-full shrink-0">
@@ -112,7 +103,7 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
                   {idx + 1}
                 </span>
                 <span className="text-xs font-semibold text-gray-800 group-hover:text-red-600 truncate flex-1">
-                  {post.headline || post.content?.slice(0, 40) || '제목 없음'}
+                  {post.headline || post.content?.slice(0, 40) || t('noTitle')}
                 </span>
                 {post.comments_count > 0 && (
                   <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.2 rounded-full shrink-0">
@@ -132,12 +123,12 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
           >
             {showAllMobile ? (
               <>
-                <span>접기 (5개만 보기)</span>
+                <span>{t('collapse')}</span>
                 <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
               </>
             ) : (
               <>
-                <span>헤드라인 더보기 (6~10위)</span>
+                <span>{t('more')}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
               </>
             )}

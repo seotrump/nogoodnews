@@ -19,6 +19,7 @@ export default async function NewPostPage() {
       <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
         <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">{t('title')}</h1>
         <CreatePostFormClient t={{
+          category: t('category'),
           headline: t('headline'),
           headlinePlaceholder: t('headlinePlaceholder'),
           content: t('content'),

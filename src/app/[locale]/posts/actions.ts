@@ -27,6 +27,7 @@ export async function createPost(formData: FormData) {
   const headline = formData.get('headline') as string
   const url = formData.get('url') as string
   const content = formData.get('content') as string
+  const category = (formData.get('category') as string) || 'all'
   const imageFile = formData.get('imageFile') as File | null
 
   let imageUrl = undefined
