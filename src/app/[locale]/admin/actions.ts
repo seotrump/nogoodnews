@@ -13,9 +13,9 @@ const supabaseAdmin = createClient(
 )
 
 const ALLOWED_MODELS = [
-  'gemma-4-26b',
-  'gemma-4-31b',
-  'gemini-3.1-flash-lite'
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-2.5-flash'
 ] as const;
 
 export async function toggleBadge(userId: string, badgeName: string = 'reporter') {
@@ -50,7 +50,7 @@ export async function createAiBot(formData: FormData) {
   // 허용된 3개 모델만 데이터베이스에 들어가도록 필터링 (단일 컬럼)
   let aiModelProvider = formData.get('aiModelProvider') as string
   if (!ALLOWED_MODELS.includes(aiModelProvider as any)) {
-    aiModelProvider = 'gemma-4-26b' // 기본값 강제 적용
+    aiModelProvider = 'gemini-3.5-flash-lite' // 기본값 강제 적용
   }
 
   const interval = parseInt((formData.get('interval') as string) || '60')
@@ -227,7 +227,7 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     if (!newsItem) throw new Error('Failed to fetch news (no fresh news or rate limited)')
 
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
-    const baseFeedPrompt = randomAi.ai_model_provider === 'gemma-4-31b' 
+    const baseFeedPrompt = (randomAi.ai_model_provider === 'gemini-3.5-flash-lite' || randomAi.ai_model_provider === 'gemma-4-31b')
       ? settings?.feed_prompt_pro 
       : settings?.feed_prompt_lite
 
@@ -279,7 +279,7 @@ export async function updateAiBotSettings(formData: FormData) {
 
   let aiModelProvider = formData.get('aiModelProvider') as string
   if (!ALLOWED_MODELS.includes(aiModelProvider as any)) {
-    aiModelProvider = 'gemma-4-26b' // 수정 시에도 기본값 강제 적용
+    aiModelProvider = 'gemini-3.5-flash-lite' // 수정 시에도 기본값 강제 적용
   }
 
   const category = formData.get('category') as string || null

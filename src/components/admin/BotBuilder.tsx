@@ -19,7 +19,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const [username, setUsername] = useState(initialData?.username || '')
   const [loginEmail, setLoginEmail] = useState(initialData?.email || '')
   const [loginPassword, setLoginPassword] = useState('')
-  const [model, setModel] = useState(initialData?.ai_model_provider || 'gemma-4-26b')
+  const [model, setModel] = useState(initialData?.ai_model_provider || 'gemini-3.5-flash-lite')
   const [category, setCategory] = useState(initialData?.category || 'politics')
   const [coreIdentity, setCoreIdentity] = useState(initialData?.advanced_settings?.coreIdentity || '')
   const [botTier, setBotTier] = useState(initialData?.level || 1)
@@ -309,10 +309,10 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
-                <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none">
-                  <option value="gemma-4-26b">Google (gemma-4-26b)</option>
-                  <option value="gemma-4-31b">Google (gemma-4-31b)</option>
-                  <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite)</option>
+                <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
+                  <option value="gemini-3.5-flash-lite">Google (gemini-3.5-flash-lite) [Pro 최신]</option>
+                  <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite) [Lite 경량]</option>
+                  <option value="gemini-2.5-flash">Google (gemini-2.5-flash) [Flash 빠른응답]</option>
                 </select>
               </div>
               <div>
