@@ -66,7 +66,7 @@ export default async function Home({ params, searchParams }: { params: Promise<{
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
-      <div className="max-w-4xl mx-auto px-4 mt-6 flex flex-col gap-4">
+      <div className="max-w-4xl mx-auto px-4 mt-4 flex flex-col gap-2.5">
         <CategoryNav />
         <TopHeadlines posts={posts} category={currentCategory} />
         <FeedAutoTrigger />
@@ -111,11 +111,6 @@ export default async function Home({ params, searchParams }: { params: Promise<{
                 ? (user ? t('followingDesc') : t('followingLoginRequired')) 
                 : currentFeed === 'trend' ? t('trendDesc') : t('globalDesc')}
             </p>
-          }
-          feedTopContent={
-            <div className="mb-4">
-              <TrendList />
-            </div>
           }
           sortFilter={<SortFilter currentSort={sortBy} currentFeed={currentFeed} />}
         />
