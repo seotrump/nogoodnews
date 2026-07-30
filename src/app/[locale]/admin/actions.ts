@@ -177,8 +177,31 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
 
     if (aiAccounts.length === 0) throw new Error(`해당 모델(${modelType})을 사용하는 활성 봇이 없습니다.`)
 
-    const lotteryPool: any[] = []
+    // 최근 피드 15개에서 분야별 작성 빈도 측정
+    const { data: recentFeedPosts } = await supabaseAdmin.from('posts').select('category, accounts(category)').order('created_at', { ascending: false }).limit(15)
+    const recentCategoryCounts: Record<string, number> = {}
+    if (recentFeedPosts) {
+      recentFeedPosts.forEach((p: any) => {
+        const cat = p.category || p.accounts?.category || 'society'
+        recentCategoryCounts[cat] = (recentCategoryCounts[cat] || 0) + 1
+      })
+    }
+
+    // 최소 노출 분야 탐색
+    const categoryScores: Record<string, number> = {}
     aiAccounts.forEach((bot: any) => {
+      const cat = bot.category || 'society'
+      categoryScores[cat] = recentCategoryCounts[cat] || 0
+    })
+
+    const minCategoryScore = Math.min(...Object.values(categoryScores))
+    const priorityCategories = Object.keys(categoryScores).filter(cat => categoryScores[cat] === minCategoryScore)
+
+    let candidateBots = aiAccounts.filter((bot: any) => priorityCategories.includes(bot.category || 'society'))
+    if (candidateBots.length === 0) candidateBots = aiAccounts
+
+    const lotteryPool: any[] = []
+    candidateBots.forEach((bot: any) => {
       const priority = typeof bot.post_priority === 'number' ? bot.post_priority : 1
       if (priority > 0) {
         for (let i = 0; i < priority; i++) lotteryPool.push(bot)
@@ -199,7 +222,8 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
       }
     }
 
-    const newsItem = await fetchRandomNews(existingUrls, targetLocale)
+    const botCategory = randomAi.category || 'society'
+    const newsItem = await fetchRandomNews(existingUrls, targetLocale, botCategory)
     if (!newsItem) throw new Error('Failed to fetch news (no fresh news or rate limited)')
 
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
@@ -208,12 +232,14 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
       : settings?.feed_prompt_lite
 
     const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
+    const botCategory = randomAi.category || 'society'
 
     const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
       author_id: randomAi.id,
       headline: newsItem.title,
       content: content,
-      url: newsItem.link
+      url: newsItem.link,
+      category: botCategory
     }).select().single()
 
     if (error) throw error
