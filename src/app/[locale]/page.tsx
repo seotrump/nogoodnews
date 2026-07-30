@@ -61,7 +61,7 @@ export default async function Home({ params, searchParams }: { params: Promise<{
 
   // 카테고리 필터링 (선택된 카테고리에 해당하는 봇/휴먼 게시글 추출)
   if (currentCategory && currentCategory !== 'all') {
-    posts = posts.filter(post => (post.category === currentCategory || post.accounts?.category === currentCategory))
+    posts = posts.filter(post => ((post as any).category === currentCategory || post.accounts?.category === currentCategory))
   }
 
   return (

@@ -178,11 +178,11 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     if (aiAccounts.length === 0) throw new Error(`해당 모델(${modelType})을 사용하는 활성 봇이 없습니다.`)
 
     // 최근 피드 15개에서 분야별 작성 빈도 측정
-    const { data: recentFeedPosts } = await supabaseAdmin.from('posts').select('category, accounts(category)').order('created_at', { ascending: false }).limit(15)
+    const { data: recentFeedPosts } = await supabaseAdmin.from('posts').select('accounts(category)').order('created_at', { ascending: false }).limit(15)
     const recentCategoryCounts: Record<string, number> = {}
     if (recentFeedPosts) {
       recentFeedPosts.forEach((p: any) => {
-        const cat = p.category || p.accounts?.category || 'society'
+        const cat = p.accounts?.category || 'society'
         recentCategoryCounts[cat] = (recentCategoryCounts[cat] || 0) + 1
       })
     }
@@ -232,14 +232,12 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
       : settings?.feed_prompt_lite
 
     const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
-    const botCategory = randomAi.category || 'society'
 
     const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
       author_id: randomAi.id,
       headline: newsItem.title,
       content: content,
-      url: newsItem.link,
-      category: botCategory
+      url: newsItem.link
     }).select().single()
 
     if (error) throw error

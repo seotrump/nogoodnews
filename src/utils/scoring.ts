@@ -1,13 +1,13 @@
 export const LEVEL_THRESHOLDS = [
-  { level: 10, minScore: 180 },
-  { level: 9, minScore: 160 },
-  { level: 8, minScore: 140 },
-  { level: 7, minScore: 120 },
-  { level: 6, minScore: 100 },
-  { level: 5, minScore: 80 },
-  { level: 4, minScore: 60 },
-  { level: 3, minScore: 40 },
-  { level: 2, minScore: 20 },
+  { level: 10, minScore: 900 },
+  { level: 9, minScore: 800 },
+  { level: 8, minScore: 700 },
+  { level: 7, minScore: 600 },
+  { level: 6, minScore: 500 },
+  { level: 5, minScore: 400 },
+  { level: 4, minScore: 300 },
+  { level: 3, minScore: 200 },
+  { level: 2, minScore: 100 },
   { level: 1, minScore: 0 }
 ]
 

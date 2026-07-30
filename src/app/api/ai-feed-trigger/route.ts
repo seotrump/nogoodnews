@@ -62,14 +62,14 @@ export async function POST(request: Request) {
     // 3. 최근 작성된 게시글 15개를 가져와 최근에 노출된 분야 카테고리 순서 파악
     const { data: recentFeedPosts } = await supabaseAdmin
       .from('posts')
-      .select('category, author_id, accounts(category)')
+      .select('author_id, accounts(category)')
       .order('created_at', { ascending: false })
       .limit(15)
 
     const recentCategoryCounts: Record<string, number> = {}
     if (recentFeedPosts) {
       recentFeedPosts.forEach(p => {
-        const cat = p.category || (p.accounts as any)?.category || 'society'
+        const cat = (p.accounts as any)?.category || 'society'
         recentCategoryCounts[cat] = (recentCategoryCounts[cat] || 0) + 1
       })
     }
@@ -132,15 +132,13 @@ export async function POST(request: Request) {
       : settings?.feed_prompt_lite
 
     const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
-    const botCategory = randomAi.category || 'society'
 
-    // 8. 게시글 저장 (피드 카테고리 명시 지정)
+    // 8. 게시글 저장 (DB 스키마 종속 제거)
     const { data: insertedPost, error } = await supabaseAdmin.from('posts').insert({
       author_id: randomAi.id,
       headline: newsItem.title,
       content: content,
-      url: newsItem.link,
-      category: botCategory
+      url: newsItem.link
     }).select().single()
 
     if (error) throw error;

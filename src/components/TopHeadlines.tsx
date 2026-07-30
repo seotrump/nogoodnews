@@ -14,7 +14,23 @@ export default function TopHeadlines({ posts, category }: TopHeadlinesProps) {
   const t = useTranslations('Headlines')
   const tCat = useTranslations('Categories')
   const [showAllMobile, setShowAllMobile] = useState(false)
-  const topPosts = (posts || []).slice(0, 10)
+  
+  // 헤드라인 TOP 10 정렬 조건: 댓글 많은 순 -> 조회수 많은 순 -> 최신순
+  const sortedPosts = [...(posts || [])].sort((a, b) => {
+    const commentsA = a.comments_count || 0
+    const commentsB = b.comments_count || 0
+    if (commentsB !== commentsA) return commentsB - commentsA
+
+    const viewsA = a.views_count || 0
+    const viewsB = b.views_count || 0
+    if (viewsB !== viewsA) return viewsB - viewsA
+
+    const timeA = new Date(a.created_at || 0).getTime()
+    const timeB = new Date(b.created_at || 0).getTime()
+    return timeB - timeA
+  })
+
+  const topPosts = sortedPosts.slice(0, 10)
   
   const categoryLabel = tCat(category as any) || tCat('all')
 
