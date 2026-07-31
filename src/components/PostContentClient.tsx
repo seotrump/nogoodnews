@@ -12,7 +12,9 @@ export default function PostContentClient({
   postId,
   initialReactions,
   currentUserId,
-  locale
+  locale,
+  category,
+  accountCategory
 }: { 
   initialHeadline: string, 
   initialContent: string,
@@ -20,7 +22,9 @@ export default function PostContentClient({
   postId: string,
   initialReactions: any[],
   currentUserId?: string,
-  locale?: string
+  locale?: string,
+  category?: string,
+  accountCategory?: string
 }) {
   const [headline, setHeadline] = useState(initialHeadline)
   const [content, setContent] = useState(initialContent)

@@ -24,13 +24,20 @@ export async function POST(req: Request) {
     if (step === 1) {
       const { data: existingBots } = await supabase
         .from('accounts')
-        .select('display_name, advanced_settings')
+        .select('display_name, category, advanced_settings')
         .eq('is_ai', true)
         
+      const CATEGORY_IDS = ['politics', 'economy', 'society', 'tech', 'world', 'entertainment', 'sports', 'culture', 'opinion']
+      const categoryCounts: Record<string, number> = {}
+      CATEGORY_IDS.forEach(cat => { categoryCounts[cat] = 0 })
+      
       let existingListStr = ''
       if (existingBots && existingBots.length > 0) {
         existingListStr = '\n[이미 존재하는 봇 목록 - 아래 목록과 절대로 중복되거나 비슷한 컨셉을 만들지 마세요! 완전히 새로운 컨셉을 기획해야 합니다.]\n'
         existingBots.forEach((bot) => {
+          if (bot.category && CATEGORY_IDS.includes(bot.category)) {
+            categoryCounts[bot.category] = (categoryCounts[bot.category] || 0) + 1
+          }
           let coreId = '설명 없음'
           if (bot.advanced_settings) {
             try {
@@ -46,21 +53,42 @@ export async function POST(req: Request) {
         existingListStr = '\n[현재 존재하는 봇 없음]\n'
       }
 
+      // 9대 분야 로테이션 타겟 카테고리 선정
+      const minCount = Math.min(...Object.values(categoryCounts))
+      const minCategories = CATEGORY_IDS.filter(cat => categoryCounts[cat] === minCount)
+      const targetCategory = minCategories[Math.floor(Math.random() * minCategories.length)]
+
+      const categoryNames: Record<string, string> = {
+        politics: '정치 (Politics)',
+        economy: '경제 (Economy)',
+        society: '사회 (Society)',
+        tech: 'IT/기술 (Tech)',
+        world: '세계 (World)',
+        entertainment: '연예 (Entertainment)',
+        sports: '스포츠 (Sports)',
+        culture: '생활/문화 (Culture)',
+        opinion: '오피니언 (Opinion)'
+      }
+
       let prompt = settings?.pro_bot_prompt_1_concept || `당신은 초고도화된 커뮤니티 봇의 입체적인 세계관을 기획하는 작가입니다.\n매우 깊이 있고 디테일한 봇의 배경 스토리, 어린 시절, 트라우마, 현재 직업, 정치 성향 등을 포함한 '핵심 정체성'을 기획해주세요.`
       
       const seed = Math.floor(Math.random() * 1000000);
+      prompt += `\n\n[필수 지정 카테고리]\n이 PRO 봇은 반드시 **'${categoryNames[targetCategory]}'** 분야 전문 또는 해당 카테고리와 밀접한 유저 페르소나로 기획되어야 합니다.`
       prompt += `\n\n[중요: 무작위 시드 ${seed} 가 적용되었습니다. 이전 출력과 완전히 다른 무작위 성별, 연령, 직업, 성향을 기획하세요.]`
       prompt += `\n${existingListStr}`
       prompt += `\n\n[반환해야 할 JSON 형식]
 {
   "displayName": "닉네임",
-  "coreIdentity": "매우 깊이 있는 세계관 및 설정 (3~4줄 이상)"
+  "coreIdentity": "매우 깊이 있는 세계관 및 설정 (3~4줄 이상)",
+  "category": "${targetCategory}"
 }
 오직 JSON만 출력하세요. 모든 내용은 반드시 한국어(Korean)로 기획 및 작성해야 합니다.`
 
       const jsonStr = await generateEnforcedAIContent(prompt)
       if (!jsonStr) throw new Error('AI 응답을 파싱할 수 없습니다.')
-      return NextResponse.json(JSON.parse(extractJson(jsonStr)))
+      const resultJson = JSON.parse(extractJson(jsonStr))
+      resultJson.category = targetCategory
+      return NextResponse.json(resultJson)
     }
 
     // Step 2: Script

@@ -2,14 +2,11 @@
 
 import { useRef, useState } from 'react'
 import { addComment } from '@/app/[locale]/posts/actions'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
 import posthog from 'posthog-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const supabase = createClient()
 
 export default function CommentForm({ postId }: { postId: string }) {
   const formRef = useRef<HTMLFormElement>(null)

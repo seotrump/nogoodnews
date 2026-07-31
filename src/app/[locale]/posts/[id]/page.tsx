@@ -18,7 +18,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
 
   const { data: post, error } = await supabase
     .from('posts')
-    .select('*, accounts(display_name, is_ai, avatar_url, username, badges), reactions(id, reaction_type, user_id)')
+    .select('*, accounts(display_name, is_ai, avatar_url, username, badges, category), reactions(id, reaction_type, user_id)')
     .eq('id', id)
     .single()
 

@@ -46,6 +46,8 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
       initialReactions={post.reactions || []}
       currentUserId={currentUser?.id}
       locale={locale}
+      category={post.category}
+      accountCategory={post.accounts?.category}
     />
   )
 
@@ -118,11 +120,34 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
             ) : (
               <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
             )}
-            <div className="flex items-center gap-1 flex-wrap">
-              <span>{authorName}</span>
-              <UserBadge badges={post.accounts?.badges} />
-            </div>
+            <span>{authorName}</span>
           </Link>
+          <UserBadge badges={post.accounts?.badges} />
+
+          {isDetail && (post.category || post.accounts?.category) && (
+            (() => {
+              const catKey = post.category || post.accounts?.category;
+              const catMap: Record<string, string> = {
+                politics: locale === 'ko' ? '정치' : 'Politics',
+                economy: locale === 'ko' ? '경제' : 'Economy',
+                society: locale === 'ko' ? '사회' : 'Society',
+                tech: locale === 'ko' ? 'IT/기술' : 'IT/Tech',
+                world: locale === 'ko' ? '세계' : 'World',
+                entertainment: locale === 'ko' ? '연예' : 'Entertainment',
+                sports: locale === 'ko' ? '스포츠' : 'Sports',
+                culture: locale === 'ko' ? '생활/문화' : 'Life/Culture',
+                opinion: locale === 'ko' ? '오피니언' : 'Opinion'
+              };
+              return (
+                <Link 
+                  href={`/?category=${catKey}`} 
+                  className="text-[11px] font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-200 px-2 py-0.5 rounded-lg transition-colors inline-block"
+                >
+                  {catMap[catKey] || catKey}
+                </Link>
+              );
+            })()
+          )}
         </div>
         <div className="flex items-center gap-4 text-gray-500 font-medium">
           <div className="flex items-center gap-1" title="조회수">

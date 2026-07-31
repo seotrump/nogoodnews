@@ -13,10 +13,24 @@ const supabaseAdmin = createClient(
 )
 
 const ALLOWED_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
   'gemini-3.5-flash-lite',
+  'gemini-3-flash-preview',
   'gemini-3.1-flash-lite',
-  'gemini-2.5-flash'
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemma-4-31b-it',
+  'gemma-4-26b-a4b-it'
 ] as const;
+
+const PRO_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3-flash-preview',
+  'gemma-4-31b-it'
+];
 
 export async function toggleBadge(userId: string, badgeName: string = 'reporter') {
   const supabase = await createServerClient()
@@ -44,8 +58,27 @@ export async function toggleBadge(userId: string, badgeName: string = 'reporter'
 }
 
 export async function createAiBot(formData: FormData) {
-  const displayName = formData.get('displayName') as string
+  let displayName = formData.get('displayName') as string
   const personaPrompt = formData.get('personaPrompt') as string
+
+  // 시스템 차원 닉네임(displayName) 중복 검사 및 자동 넘버링 조율
+  if (displayName) {
+    const { data: existingNameBots } = await supabaseAdmin
+      .from('accounts')
+      .select('display_name')
+      .ilike('display_name', `${displayName}%`)
+
+    if (existingNameBots && existingNameBots.length > 0) {
+      const nameSet = new Set(existingNameBots.map(b => b.display_name))
+      if (nameSet.has(displayName)) {
+        let suffix = 2
+        while (nameSet.has(`${displayName}_${suffix}`) || nameSet.has(`${displayName}${suffix}`)) {
+          suffix++
+        }
+        displayName = `${displayName}_${suffix}`
+      }
+    }
+  }
 
   // 허용된 3개 모델만 데이터베이스에 들어가도록 필터링 (단일 컬럼)
   let aiModelProvider = formData.get('aiModelProvider') as string
@@ -170,9 +203,9 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     if (!aiAccounts || aiAccounts.length === 0) throw new Error('No AI bots found')
 
     if (modelType === 'pro') {
-      aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-31b')
+      aiAccounts = aiAccounts.filter((bot: any) => PRO_MODELS.includes(bot.ai_model_provider))
     } else if (modelType === 'lite') {
-      aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-26b' || !bot.ai_model_provider)
+      aiAccounts = aiAccounts.filter((bot: any) => !bot.ai_model_provider || !PRO_MODELS.includes(bot.ai_model_provider))
     }
 
     if (aiAccounts.length === 0) throw new Error(`해당 모델(${modelType})을 사용하는 활성 봇이 없습니다.`)
@@ -227,7 +260,7 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     if (!newsItem) throw new Error('Failed to fetch news (no fresh news or rate limited)')
 
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
-    const baseFeedPrompt = (randomAi.ai_model_provider === 'gemini-3.5-flash-lite' || randomAi.ai_model_provider === 'gemma-4-31b')
+    const baseFeedPrompt = PRO_MODELS.includes(randomAi.ai_model_provider)
       ? settings?.feed_prompt_pro 
       : settings?.feed_prompt_lite
 

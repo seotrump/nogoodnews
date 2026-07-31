@@ -126,8 +126,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch fresh news' }, { status: 500 })
     }
 
+    const PRO_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemma-4-31b-it', 'gemma-4-31b']
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
-    const baseFeedPrompt = (randomAi.ai_model_provider === 'gemini-3.5-flash-lite' || randomAi.ai_model_provider === 'gemma-4-31b')
+    const baseFeedPrompt = PRO_MODELS.includes(randomAi.ai_model_provider)
       ? settings?.feed_prompt_pro 
       : settings?.feed_prompt_lite
 

@@ -3,16 +3,16 @@ import {createNavigation} from 'next-intl/navigation';
  
 export const routing = defineRouting({
   // A list of all locales that are supported
-  locales: ['en', 'ko'],
+  locales: ['ko', 'en'],
  
   // Used when no locale matches
-  defaultLocale: 'en',
+  defaultLocale: 'ko',
   
   // Hide the prefix for the default locale
   localePrefix: 'as-needed',
 
-  // Disable automatic locale detection to force the default locale on the root domain
-  localeDetection: false
+  // Enable automatic locale detection via cookie (NEXT_LOCALE)
+  localeDetection: true
 });
  
 // Lightweight wrappers around Next.js' navigation APIs

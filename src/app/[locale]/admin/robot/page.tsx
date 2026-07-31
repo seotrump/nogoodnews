@@ -118,7 +118,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                       <th className="p-3 w-16 text-center">얼굴</th>
                       <th className="p-3 w-28 sm:w-32">아이디</th>
                       <th className="p-3 w-32 hidden sm:table-cell">전문성</th>
-                      <th className="p-3 hidden sm:table-cell">정체성</th>
                       <th className="p-3 w-40 text-center">관리</th>
                     </tr>
                   </thead>
@@ -126,7 +125,17 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                     {aiBots?.map(userItem => {
                       const advancedSettings = userItem.advanced_settings || {};
                       const identityText = userItem.is_ai ? (advancedSettings.coreIdentity || '-') : (userItem.bio || '-');
-                      const catMap: Record<string, string> = { politics: '정치', economy: '경제', work: '직장', entertainment: '연예', tech: '기술' };
+                      const catMap: Record<string, string> = { 
+                        politics: '정치', 
+                        economy: '경제', 
+                        society: '사회', 
+                        tech: 'IT/기술', 
+                        world: '세계', 
+                        entertainment: '연예', 
+                        sports: '스포츠', 
+                        culture: '생활/문화', 
+                        opinion: '오피니언' 
+                      };
                       const categoryText = userItem.is_ai ? (userItem.category ? (catMap[userItem.category] || userItem.category) : '-') : '일반 유저';
                       const badgeClass = 'bg-purple-100 text-purple-700';
                       
@@ -164,9 +173,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                           </td>
                           <td className="p-3 hidden sm:table-cell">
                             <span className="text-sm font-medium text-gray-700 capitalize">{categoryText}</span>
-                          </td>
-                          <td className="p-3 hidden sm:table-cell">
-                            <span className="text-xs text-gray-500 line-clamp-1" title={identityText}>{identityText}</span>
                           </td>
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-1.5 flex-wrap">

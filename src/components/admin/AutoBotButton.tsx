@@ -21,7 +21,7 @@ export default function AutoBotButton() {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || '로봇 기획에 실패했습니다.');
       }
-      const { displayName, coreIdentity } = await res.json()
+      const { displayName, coreIdentity, category } = await res.json()
       
       // 2. 튜닝
       toast.loading('[라이트] 2/2: 성격 튜닝 중...', { id: toastId })
@@ -32,6 +32,7 @@ export default function AutoBotButton() {
       })
       if (!tuneRes.ok) throw new Error('로봇 튜닝에 실패했습니다.')
       const data = await tuneRes.json()
+      if (category) data.category = category
 
       await saveBotToDb(displayName, coreIdentity, data, toastId, '라이트')
     } catch (err: any) {
@@ -50,7 +51,7 @@ export default function AutoBotButton() {
       // Step 1: Concept
       let res = await fetch('/api/ai-bot-pro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ step: 1 }) })
       if (!res.ok) throw new Error('1단계 세계관 기획 실패')
-      const { displayName, coreIdentity } = await res.json()
+      const { displayName, coreIdentity, category } = await res.json()
 
       // Step 2: Script
       toast.loading('[PRO] 2/4: 가상 대본 시뮬레이션 중...', { id: toastId })
@@ -63,6 +64,7 @@ export default function AutoBotButton() {
       res = await fetch('/api/ai-bot-pro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ step: 3, script }) })
       if (!res.ok) throw new Error('3단계 성격 파라미터 추출 실패')
       const params = await res.json()
+      if (category) params.category = category
 
       // Step 4: Avatar Prompt
       toast.loading('[PRO] 4/4: 아바타/최종 컴파일 중...', { id: toastId })
@@ -116,7 +118,7 @@ export default function AutoBotButton() {
     const formData = new FormData()
     formData.append('displayName', displayName)
     formData.append('username', '') // 서버에서 자동 생성
-    formData.append('aiModelProvider', typeName === '라이트' ? 'gemma-4-26b' : 'gemma-4-31b') // 라이트는 26b, 프로는 31b 할당
+    formData.append('aiModelProvider', typeName === '라이트' ? 'gemini-3.1-flash-lite' : 'gemini-3.5-flash-lite')
     formData.append('category', data.category || 'politics')
     formData.append('botTier', '1')
     formData.append('status', 'active')

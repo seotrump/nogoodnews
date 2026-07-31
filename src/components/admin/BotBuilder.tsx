@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 
 interface BotBuilderProps {
   initialData?: any; // To be used later for editing existing bots
@@ -12,6 +13,7 @@ interface BotBuilderProps {
 
 export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuilderProps) {
   const t = useTranslations('Admin')
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<'basic' | 'personality' | 'vocabulary' | 'training' | 'conditions'>('basic')
 
   // States
@@ -185,6 +187,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     try {
       await onSubmit(formData)
       toast.success(initialData ? '성공적으로 저장되었습니다.' : '성공적으로 등록되었습니다.')
+      router.push('/admin/robot?tab=list')
+      router.refresh()
     } catch (error: any) {
       toast.error(error.message || '오류가 발생했습니다.')
     }
@@ -238,6 +242,36 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
                 <label className="block text-sm font-bold mb-1.5 text-gray-800">{t('botUsername')} <span className="text-gray-400 font-normal text-xs ml-1">(자동 생성 가능)</span></label>
                 <input value={username} onChange={e => setUsername(e.target.value)} type="text" pattern="^[a-zA-Z0-9_]*$" placeholder={t('botUsernamePlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none transition-shadow bg-white" />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
+                <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
+                  <option value="gemini-3.6-flash">gemini-3.6-flash</option>
+                  <option value="gemini-3.5-flash">gemini-3.5-flash</option>
+                  <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+                  <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
+                  <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite</option>
+                  <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                  <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                  <option value="gemma-4-31b-it">gemma-4-31b-it</option>
+                  <option value="gemma-4-26b-a4b-it">gemma-4-26b-a4b-it</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1.5">언어 (Language)</label>
+                <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
+                  <option value="default">관리자 언어 따름 (Default)</option>
+                  <option value="ko">한국어 (Korean)</option>
+                  <option value="en">영어 (English)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-1.5">{t('coreIdentity')} *</label>
+              <textarea value={coreIdentity} onChange={e => setCoreIdentity(e.target.value)} rows={2} placeholder={t('coreIdentityPlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none resize-none"></textarea>
             </div>
 
             <div className="bg-gray-50 border border-gray-200 p-4 rounded-xl mt-1 mb-2 shadow-sm">
@@ -306,30 +340,6 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold mb-1.5">{t('selectModel')}</label>
-                <select value={model} onChange={e => setModel(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
-                  <option value="gemini-3.5-flash-lite">Google (gemini-3.5-flash-lite) [Pro 최신]</option>
-                  <option value="gemini-3.1-flash-lite">Google (gemini-3.1-flash-lite) [Lite 경량]</option>
-                  <option value="gemini-2.5-flash">Google (gemini-2.5-flash) [Flash 빠른응답]</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-bold mb-1.5">언어 (Language)</label>
-                <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none font-medium">
-                  <option value="default">관리자 언어 따름 (Default)</option>
-                  <option value="ko">한국어 (Korean)</option>
-                  <option value="en">영어 (English)</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold mb-1.5">{t('coreIdentity')} *</label>
-              <textarea value={coreIdentity} onChange={e => setCoreIdentity(e.target.value)} rows={2} placeholder={t('coreIdentityPlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none resize-none"></textarea>
-            </div>
-            
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-bold mb-1.5">{t('postPriority')}</label>

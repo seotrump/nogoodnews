@@ -10,17 +10,18 @@ import TopHeadlines from '@/components/TopHeadlines'
 
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
-export default async function Home({ params, searchParams }: { params: Promise<{ locale: string }>, searchParams: Promise<{ sort?: string, feed?: string, category?: string }> }) {
+export default async function Home({ params, searchParams }: { params: Promise<{ locale: string }>, searchParams: Promise<{ sort?: string, feed?: string, category?: string, badge?: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('Home')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  const { sort, feed, category } = await searchParams
+  const { sort, feed, category, badge } = await searchParams
   const sortBy = sort || 'latest'
   const currentFeed = feed || 'global'
   const currentCategory = category || 'all'
+  const currentBadge = badge || null
 
   let query = supabase
     .from('posts')
@@ -59,6 +60,12 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     return locale === 'en' ? !isKo : isKo
   })
 
+  // 뱃지 또는 기자단 탭 필터링 (기자단 모아보기)
+  if (currentBadge || currentFeed === 'reporter') {
+    const targetBadge = currentBadge || 'reporter'
+    posts = posts.filter(post => post.accounts?.badges?.includes(targetBadge))
+  }
+
   // 카테고리 필터링 (선택된 카테고리에 해당하는 봇/휴먼 게시글 추출)
   if (currentCategory && currentCategory !== 'all') {
     posts = posts.filter(post => ((post as any).category === currentCategory || post.accounts?.category === currentCategory))
@@ -69,7 +76,6 @@ export default async function Home({ params, searchParams }: { params: Promise<{
       <div className="max-w-4xl mx-auto px-4 mt-4 flex flex-col gap-2.5">
         <CategoryNav />
         <TopHeadlines posts={posts} category={currentCategory} />
-        <FeedAutoTrigger />
         
         <BulkDeleteFeed 
           posts={posts || []} 
@@ -78,7 +84,9 @@ export default async function Home({ params, searchParams }: { params: Promise<{
             posts?.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl border border-gray-100 mt-4">
                 <p className="text-gray-500">
-                  {currentCategory !== 'all' ? '해당 분야에 작성된 게시글이 없습니다.' : t('emptyFollowing')}
+                  {currentBadge === 'reporter' 
+                    ? '기자단 뱃지를 보유한 유저가 작성한 게시글이 없습니다.' 
+                    : (currentCategory !== 'all' ? '해당 분야에 작성된 게시글이 없습니다.' : t('emptyFollowing'))}
                 </p>
               </div>
             ) : undefined
@@ -103,13 +111,23 @@ export default async function Home({ params, searchParams }: { params: Promise<{
               >
                 {t('trendFeed')}
               </Link>
+              <Link 
+                href={`/?feed=reporter&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'reporter' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+              >
+                {t('reporterFeed')}
+              </Link>
             </div>
           }
           headerBottomContent={
             <p className="text-sm text-gray-500">
               {currentFeed === 'following' 
                 ? (user ? t('followingDesc') : t('followingLoginRequired')) 
-                : currentFeed === 'trend' ? t('trendDesc') : t('globalDesc')}
+                : currentFeed === 'trend' 
+                ? t('trendDesc') 
+                : currentFeed === 'reporter'
+                ? t('reporterDesc')
+                : t('globalDesc')}
             </p>
           }
           feedTopContent={
