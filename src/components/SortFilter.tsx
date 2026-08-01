@@ -23,7 +23,7 @@ export default function SortFilter({ currentSort, currentFeed = 'global' }: Sort
   ]
 
   return (
-    <div className="flex gap-1 bg-gray-200 p-0.5 rounded-lg self-start items-center">
+    <div className="flex gap-1 bg-gray-200 p-0.5 rounded-lg self-end sm:self-start ml-auto sm:ml-0 items-center shrink-0">
       {options.map((opt) => {
         const isActive = currentSort === opt.value
         return (

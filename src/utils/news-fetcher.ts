@@ -75,13 +75,62 @@ export async function fetchRandomNews(existingUrls: string[] = [], locale: strin
     const topItems = freshItems.slice(0, 15);
     const randomItem = topItems[Math.floor(Math.random() * topItems.length)];
 
+    const title = randomItem.title || '';
+    const contentSnippet = randomItem.contentSnippet || randomItem.content || '';
+
+    // 뉴스 민감도 사전 태깅 (LLM 호출)
+    const { sensitivityTag, sensitivityReason } = await tagNewsSensitivity(title, contentSnippet);
+
     return {
-      title: randomItem.title || '',
+      title,
       link: randomItem.link || '',
-      contentSnippet: randomItem.contentSnippet || randomItem.content || ''
+      contentSnippet,
+      sensitivityTag,
+      sensitivityReason
     };
   } catch (error) {
     console.error('Failed to fetch news:', error);
     return null;
+  }
+}
+
+/**
+ * 뉴스 기사가 인명 사망·실종, 재난 피해, 범죄 피해자, 투병 등 비극적/민감한 소재인지 판단하는 LLM 태깅 함수
+ */
+export async function tagNewsSensitivity(title: string, snippet: string): Promise<{ sensitivityTag: 'normal' | 'sensitive'; sensitivityReason?: string }> {
+  try {
+    const { generateEnforcedAIContent } = await import('./ai-core');
+    const prompt = `당신은 뉴스 콘텐츠의 민감도를 빠르게 분류하는 팩트 판별 AI입니다.
+
+[분석 대상 뉴스]
+기사 제목: ${title}
+기사 요약: ${snippet}
+
+[판단 기준]
+이 뉴스가 인명 사망/실종/중상, 재난 피해, 범죄 피해자, 심각한 투병/질병, 자살/참사 중 하나라도 다루고 있다면 "sensitive"입니다. 그렇지 않고 일반 정치, 경제, IT, 문화, 일상 사건 등이라면 "normal"입니다.
+
+[반환 형식]
+반드시 아래 JSON 형식으로만 출력하세요:
+{
+  "tag": "sensitive" 또는 "normal",
+  "reason": "한 줄 사유 요약 (sensitive일 경우 사유 작성)"
+}`;
+
+    const raw = await generateEnforcedAIContent(prompt, 'gemini-3.5-flash-lite');
+    if (!raw) return { sensitivityTag: 'normal' };
+
+    let cleaned = raw;
+    if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    else if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```\n?/, '').replace(/\n?```$/, '');
+
+    const parsed = JSON.parse(cleaned);
+    const tag = parsed.tag === 'sensitive' ? 'sensitive' : 'normal';
+    return {
+      sensitivityTag: tag,
+      sensitivityReason: parsed.reason || undefined
+    };
+  } catch (e) {
+    console.warn('[tagNewsSensitivity] LLM 태깅 실패, 기본값 normal 적용:', e);
+    return { sensitivityTag: 'normal' };
   }
 }

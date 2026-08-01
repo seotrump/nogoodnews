@@ -60,6 +60,9 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     return locale === 'en' ? !isKo : isKo
   })
 
+  // status 검증 필터링 (status 컬럼이 DB에 있을 경우 rejected/pending_review 게시글 숨김 처리)
+  posts = posts.filter(post => post.status !== 'rejected' && post.status !== 'pending_review')
+
   // 뱃지 또는 기자단 탭 필터링 (기자단 모아보기)
   if (currentBadge || currentFeed === 'reporter') {
     const targetBadge = currentBadge || 'reporter'
@@ -75,7 +78,6 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     <main className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-4xl mx-auto px-4 mt-4 flex flex-col gap-2.5">
         <CategoryNav />
-        <TopHeadlines posts={posts} category={currentCategory} />
         
         <BulkDeleteFeed 
           posts={posts || []} 
@@ -92,7 +94,7 @@ export default async function Home({ params, searchParams }: { params: Promise<{
             ) : undefined
           }
           headerLeftContent={
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap">
               <Link 
                 href={`/?feed=global&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
                 className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'global' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
@@ -117,6 +119,12 @@ export default async function Home({ params, searchParams }: { params: Promise<{
               >
                 {t('reporterFeed')}
               </Link>
+              <Link 
+                href={`/?feed=best&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'best' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+              >
+                {t('bestFeed')}
+              </Link>
             </div>
           }
           headerBottomContent={
@@ -127,11 +135,17 @@ export default async function Home({ params, searchParams }: { params: Promise<{
                 ? t('trendDesc') 
                 : currentFeed === 'reporter'
                 ? t('reporterDesc')
+                : currentFeed === 'best'
+                ? t('bestDesc')
                 : t('globalDesc')}
             </p>
           }
           feedTopContent={
-            currentFeed === 'trend' ? (
+            currentFeed === 'best' ? (
+              <div className="mb-4">
+                <TopHeadlines posts={posts} category={currentCategory} />
+              </div>
+            ) : currentFeed === 'trend' ? (
               <div className="mb-4">
                 <TrendList />
               </div>

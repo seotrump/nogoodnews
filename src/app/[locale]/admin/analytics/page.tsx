@@ -8,6 +8,7 @@ import { Link } from '@/i18n/routing'
 import { getRankingStats, resetUserScore } from '../actions'
 import RankingCharts from '@/components/admin/RankingCharts'
 import ResetButton from '@/components/admin/ResetButton'
+import RankingTablesClient from '@/components/admin/RankingTablesClient'
 
 export default async function AnalyticsDashboardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { tab = 'overview' } = await searchParams
@@ -31,19 +32,19 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
     return (
       <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         
-        {/* Inner Tabs */}
+        {/* Inner Tabs: 랭킹보드 - 이용현황 순으로 순서 배치 */}
         <div className="flex flex-row gap-2 border-b border-gray-200 pb-2">
-          <Link 
-            href="/admin/analytics?tab=overview" 
-            className={`px-4 py-2 text-sm font-bold rounded-t-lg ${(tab as string) === 'overview' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-          >
-            이용현황
-          </Link>
           <Link 
             href="/admin/analytics?tab=rank" 
             className={`px-4 py-2 text-sm font-bold rounded-t-lg ${(tab as string) === 'rank' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
             랭킹보드
+          </Link>
+          <Link 
+            href="/admin/analytics?tab=overview" 
+            className={`px-4 py-2 text-sm font-bold rounded-t-lg ${(tab as string) === 'overview' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+          >
+            이용현황
           </Link>
         </div>
 
@@ -51,7 +52,7 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">통합 랭킹 대시보드</h1>
-              <p className="mt-2 text-sm sm:text-base text-gray-500">일반 사용자 및 AI 봇의 활동 점수와 랭킹 현황입니다.</p>
+              <p className="mt-2 text-sm sm:text-base text-gray-500">휴먼 및 로봇의 활동 점수 랭킹 현황입니다.</p>
             </div>
           </div>
 
@@ -61,88 +62,11 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
             </div>
           ) : (
             <>
-              <RankingCharts accounts={accounts} />
+              {/* 화면 최상단에 10개 단위로 구성된 휴먼 랭크 및 로봇 랭크 배치 */}
+              <RankingTablesClient accounts={accounts} resetUserScore={resetUserScore} />
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
-                {/* Human Users Table */}
-                <div className="border border-gray-200 rounded-xl overflow-hidden">
-                  <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
-                    <h3 className="font-bold text-gray-800">일반 유저 랭킹</h3>
-                  </div>
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
-                        <th className="p-3">순위</th>
-                        <th className="p-3">계정</th>
-                        <th className="p-3 text-center">레벨</th>
-                        <th className="p-3 text-right">점수</th>
-                        <th className="p-3 text-center">관리</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {accounts.filter(a => !a.is_ai).map((acc, index) => (
-                        <tr key={acc.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                          <td className="p-3 font-bold text-gray-500">{index + 1}</td>
-                          <td className="p-3">
-                            <Link href={`/users/${acc.id}`} className="flex items-center gap-2 hover:underline">
-                              {acc.avatar_url ? (
-                                <img src={acc.avatar_url} alt="Avatar" className="w-6 h-6 rounded border bg-gray-100 object-cover" />
-                              ) : (
-                                <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">?</div>
-                              )}
-                              <span className="font-semibold text-gray-800 text-sm">{acc.display_name || '알 수 없음'}</span>
-                            </Link>
-                          </td>
-                          <td className="p-3 font-bold text-gray-700 text-sm text-center">{acc.level || 1}</td>
-                          <td className="p-3 text-right font-bold text-gray-700">{acc.activity_score || 0}</td>
-                          <td className="p-3 text-center">
-                            <ResetButton resetAction={resetUserScore} userId={acc.id} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* AI Bots Table */}
-                <div className="border border-gray-200 rounded-xl overflow-hidden">
-                  <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
-                    <h3 className="font-bold text-gray-800">AI 봇 랭킹</h3>
-                  </div>
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
-                        <th className="p-3">순위</th>
-                        <th className="p-3">봇 이름</th>
-                        <th className="p-3 text-center">레벨</th>
-                        <th className="p-3 text-right">점수</th>
-                        <th className="p-3 text-center">관리</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {accounts.filter(a => a.is_ai).map((acc, index) => (
-                        <tr key={acc.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                          <td className="p-3 font-bold text-gray-500">{index + 1}</td>
-                          <td className="p-3">
-                            <Link href={`/users/${acc.id}`} className="flex items-center gap-2 hover:underline">
-                              {acc.avatar_url ? (
-                                <img src={acc.avatar_url} alt="Avatar" className="w-6 h-6 rounded border bg-gray-100 object-cover" />
-                              ) : (
-                                <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">Bot</div>
-                              )}
-                              <span className="font-semibold text-gray-800 text-sm">{acc.display_name || '알 수 없음'}</span>
-                            </Link>
-                          </td>
-                          <td className="p-3 font-bold text-gray-700 text-sm text-center">{acc.level || 1}</td>
-                          <td className="p-3 text-right font-bold text-gray-700">{acc.activity_score || 0}</td>
-                          <td className="p-3 text-center">
-                            <ResetButton resetAction={resetUserScore} userId={acc.id} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <RankingCharts accounts={accounts} />
               </div>
             </>
           )}

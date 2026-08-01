@@ -65,7 +65,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
             href="/admin/users?tab=suspended" 
             className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'suspended' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
-            정지된 사용자
+            휴먼 정지
           </Link>
           <Link 
             href="/admin/users?tab=badges" 

@@ -119,30 +119,65 @@ export async function POST(request: Request) {
       }
     }
 
-    // 7. 봇의 전문 분야에 특화된 뉴스 수집 및 피드 내용 생성
+    // 7. 봇의 전문 분야에 특화된 뉴스 수집
     const botCategory = randomAi.category || 'society'
     const newsItem = await fetchRandomNews(existingUrls, targetLocale, botCategory)
     if (!newsItem) {
       return NextResponse.json({ error: 'Failed to fetch fresh news' }, { status: 500 })
     }
 
+    // 7-1. [2-2 민감도 검사 및 봇 조율] 뉴스가 sensitive일 경우 냉소/조롱형 봇 필터링
+    let finalBot = randomAi;
+    if (newsItem.sensitivityTag === 'sensitive') {
+      const isCynicalBot = (b: any) => {
+        const adv = typeof b.advanced_settings === 'string' ? JSON.parse(b.advanced_settings || '{}') : (b.advanced_settings || {});
+        const attitude = adv.axisAttitude || 5;
+        const tone = adv.axisTone || 5;
+        return attitude >= 7 || tone >= 8; // 냉소/조롱/자극 성향 판단
+      };
+
+      if (isCynicalBot(randomAi)) {
+        console.warn(`[ai-feed-trigger] 민감 뉴스 (${newsItem.title}) 감지됨. 냉소형 봇 (${randomAi.display_name}) 대신 중립/온건형 봇으로 교체 탐색.`);
+        const gentleBots = dueBots.map(d => d.bot).filter(b => !isCynicalBot(b));
+        if (gentleBots.length > 0) {
+          finalBot = gentleBots[Math.floor(Math.random() * gentleBots.length)];
+        }
+      }
+    }
+
     const PRO_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemma-4-31b-it', 'gemma-4-31b']
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
-    const baseFeedPrompt = PRO_MODELS.includes(randomAi.ai_model_provider)
+    const baseFeedPrompt = PRO_MODELS.includes(finalBot.ai_model_provider)
       ? settings?.feed_prompt_pro 
       : settings?.feed_prompt_lite
 
-    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
+    const content = await generatePost(newsItem, finalBot.persona_prompt, finalBot.ai_model_provider, targetLocale, baseFeedPrompt)
 
-    // 8. 게시글 저장 (우리 봇이 생성한 어그로 헤드라인 저장 & 원문 기사 제목은 link_title 저장)
+    // 8. 독립 콘텐츠 안전 검증기 (content-validator.ts) 실행
+    const { validateContent } = await import('@/utils/content-validator');
     const firstLineHeadline = content.split('\n')[0].replace(/^#+\s*/, '').trim() || newsItem.title
+
+    const validation = await validateContent({
+      headline: firstLineHeadline,
+      content: content,
+      sourceUrl: newsItem.link,
+      sensitivityTag: newsItem.sensitivityTag,
+      sensitivityReason: newsItem.sensitivityReason
+    });
+
+    const finalStatus = validation.passed ? 'published' : 'rejected';
 
     let insertedPost: any = null
     const insertPayload = {
-      author_id: randomAi.id,
+      author_id: finalBot.id,
       headline: firstLineHeadline,
       content: content,
-      url: newsItem.link
+      url: newsItem.link,
+      status: finalStatus,
+      sensitivity_tag: newsItem.sensitivityTag || 'normal',
+      sensitivity_reason: newsItem.sensitivityReason || null,
+      validation_result: validation.results,
+      validated_at: new Date().toISOString()
     }
 
     const { data: resData, error: insertError } = await supabaseAdmin.from('posts').insert({
@@ -151,11 +186,31 @@ export async function POST(request: Request) {
     }).select().single()
 
     if (insertError) {
-      const { data: fallbackData, error: fallbackError } = await supabaseAdmin.from('posts').insert(insertPayload).select().single()
+      // 신규 컬럼이 없는 스키마 환경을 고려한 호환성 폴백
+      const cleanPayload = {
+        author_id: finalBot.id,
+        headline: firstLineHeadline,
+        content: content,
+        url: newsItem.link
+      }
+      const { data: fallbackData, error: fallbackError } = await supabaseAdmin.from('posts').insert(cleanPayload).select().single()
       if (fallbackError) throw fallbackError
       insertedPost = fallbackData
     } else {
       insertedPost = resData
+    }
+
+    // 통과하지 않은(rejected) 경우 알림 로그 남기고 댓글 자동 달기 스킵
+    if (!validation.passed) {
+      console.warn(`[ai-feed-trigger] 피드가 가이드라인 위반으로 검증 실패 (rejected):`, validation.results);
+      return NextResponse.json({ 
+        success: false, 
+        rejected: true, 
+        aiName: finalBot.display_name, 
+        category: botCategory, 
+        post: insertedPost,
+        validation: validation.results 
+      });
     }
 
     // 9. 해시태그 업데이트

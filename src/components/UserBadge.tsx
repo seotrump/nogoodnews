@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { Link } from '@/i18n/routing';
 
@@ -24,6 +26,17 @@ export default function UserBadge({ badges }: UserBadgeProps) {
               </svg>
               기자단
             </Link>
+          );
+        }
+        if (badge === 'pro') {
+          return (
+            <span
+              key={index}
+              className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-800 border border-purple-300 text-xs font-extrabold shadow-sm"
+              title="PRO 모델 봇"
+            >
+              프로
+            </span>
           );
         }
         return null;

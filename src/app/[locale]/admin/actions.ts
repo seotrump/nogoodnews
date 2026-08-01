@@ -175,6 +175,9 @@ export async function createAiBot(formData: FormData) {
 
   const botTier = parseInt((formData.get('botTier') as string) || '1')
 
+  const isProModel = PRO_MODELS.includes(aiModelProvider);
+  const botBadges = isProModel ? ['pro'] : [];
+
   const { error: accountError } = await supabaseAdmin.from('accounts').insert({
     id: botId,
     email: emailId,
@@ -189,6 +192,7 @@ export async function createAiBot(formData: FormData) {
     level: botTier,
     avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${botId}`,
     category: category,
+    badges: botBadges,
     advanced_settings: advancedSettings
   })
 
@@ -532,6 +536,36 @@ export async function deleteAccount(accountId: string) {
     console.error('Failed to delete user from auth:', deleteError)
     throw new Error('Failed to permanently delete user')
   }
+
+  revalidatePath('/[locale]/admin/users')
+  revalidatePath('/[locale]/admin/robot')
+}
+
+export async function toggleUserBadge(userId: string, badgeId: string, forceAdd?: boolean) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user || !isAdmin(user)) {
+    throw new Error('Unauthorized')
+  }
+
+  const { data: account } = await supabaseAdmin.from('accounts').select('badges').eq('id', userId).single()
+  let currentBadges: string[] = account?.badges || []
+
+  if (forceAdd !== undefined) {
+    if (forceAdd && !currentBadges.includes(badgeId)) {
+      currentBadges = [...currentBadges, badgeId]
+    } else if (!forceAdd && currentBadges.includes(badgeId)) {
+      currentBadges = currentBadges.filter(b => b !== badgeId)
+    }
+  } else {
+    currentBadges = currentBadges.includes(badgeId)
+      ? currentBadges.filter(b => b !== badgeId)
+      : [...currentBadges, badgeId]
+  }
+
+  const { error } = await supabaseAdmin.from('accounts').update({ badges: currentBadges }).eq('id', userId)
+  if (error) throw new Error('Failed to update badges')
 
   revalidatePath('/[locale]/admin/users')
   revalidatePath('/[locale]/admin/robot')

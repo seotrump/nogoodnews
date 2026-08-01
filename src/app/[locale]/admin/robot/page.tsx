@@ -10,6 +10,7 @@ import AdminNav from '@/components/admin/AdminNav'
 import Pagination from '@/components/Pagination'
 import { getTranslations, getLocale } from 'next-intl/server'
 import UserBadge from '@/components/UserBadge'
+import RobotTableClient from '@/components/admin/RobotTableClient'
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string, page?: string, query?: string, category?: string }> }) {
   const t = await getTranslations('Admin')
@@ -78,7 +79,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             href="/admin/robot?tab=suspended" 
             className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'suspended' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
-            정지된 로봇
+            정지 로봇
           </Link>
           <Link 
             href="/admin/robot?tab=badges" 
@@ -109,93 +110,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               
               <AdminFilter />
 
-              <div className="overflow-x-auto mt-2">
-                <table className="w-full text-left border-collapse sm:min-w-[800px]">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50 text-xs text-gray-500 font-bold uppercase tracking-wider">
-                      <th className="p-3 w-16 text-center">등급</th>
-                      <th className="p-3 w-32 sm:w-40">닉네임</th>
-                      <th className="p-3 w-16 text-center">얼굴</th>
-                      <th className="p-3 w-28 sm:w-32">아이디</th>
-                      <th className="p-3 w-32 hidden sm:table-cell">전문성</th>
-                      <th className="p-3 w-40 text-center">관리</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {aiBots?.map(userItem => {
-                      const advancedSettings = userItem.advanced_settings || {};
-                      const identityText = userItem.is_ai ? (advancedSettings.coreIdentity || '-') : (userItem.bio || '-');
-                      const catMap: Record<string, string> = { 
-                        politics: '정치', 
-                        economy: '경제', 
-                        society: '사회', 
-                        tech: 'IT/기술', 
-                        world: '세계', 
-                        entertainment: '연예', 
-                        sports: '스포츠', 
-                        culture: '생활/문화', 
-                        opinion: '오피니언' 
-                      };
-                      const categoryText = userItem.is_ai ? (userItem.category ? (catMap[userItem.category] || userItem.category) : '-') : '일반 유저';
-                      const badgeClass = 'bg-purple-100 text-purple-700';
-                      
-                      return (
-                        <tr key={userItem.id} className="hover:bg-gray-50 transition group">
-                          <td className="p-3 text-center">
-                            <span className={`${badgeClass} px-2 py-1 rounded text-xs font-bold inline-block min-w-[32px]`}>
-                              {userItem.level || 1}
-                            </span>
-                          </td>
-                          <td className="p-3">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <Link href={`/users/${userItem.id}`} className="font-bold text-gray-900 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">
-                                {userItem.display_name}
-                              </Link>
-                              {userItem.badges && userItem.badges.length > 0 && (
-                                <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold shadow-sm whitespace-nowrap">
-                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                                    <path d="M2.695 14.763l-1.262 3.152a.5.5 0 00.65.65l3.151-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
-                                  </svg>
-                                  기자단
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-3 text-center">
-                            <img src={userItem.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${userItem.id}`} alt="avatar" className="w-8 h-8 rounded-full border shadow-sm mx-auto bg-white object-cover min-w-[32px]" />
-                          </td>
-                          <td className="p-3">
-                            {userItem.username ? (
-                              <Link href={`/users/${userItem.id}`} className="text-gray-500 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">@{userItem.username}</Link>
-                            ) : (
-                              <Link href={`/users/${userItem.id}`} className="text-gray-300 text-sm block truncate max-w-[100px] sm:max-w-none hover:underline">@{userItem.id.substring(0, 8)}</Link>
-                            )}
-                          </td>
-                          <td className="p-3 hidden sm:table-cell">
-                            <span className="text-sm font-medium text-gray-700 capitalize">{categoryText}</span>
-                          </td>
-                          <td className="p-3 text-center">
-                            <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                              {tab === 'list' && (
-                                <Link href={`/admin/bots/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-3 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
-                                  수정
-                                </Link>
-                              )}
-                              <div className="flex items-center gap-2">
-                                <RobotActionButtons userId={userItem.id} userName={userItem.display_name} currentTab={tab} badges={userItem.badges || []} />
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {aiBots?.length === 0 && (
-                <div className="text-center py-10 text-gray-500 font-medium">검색 결과가 없습니다.</div>
-              )}
+              <RobotTableClient aiBots={aiBots || []} currentTab={tab} />
 
               <Pagination totalPages={totalPages} currentPage={currentPage} />
 

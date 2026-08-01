@@ -129,7 +129,7 @@ export default function UsersClient({ accounts, currentUserEmail, currentTab = '
                             onClick={() => handleSuspend(userItem.id, true)}
                             className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
                           >
-                            정지
+                            휴먼 정지
                           </button>
                         </>
                       )}
