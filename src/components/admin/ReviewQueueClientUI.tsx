@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { approvePost, deletePostPermanently } from '@/app/[locale]/admin/guidelines-actions'
-import Link from 'next/link'
+import PostCard from '@/components/PostCard'
 
 export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: any[] }) {
   const [posts, setPosts] = useState(initialPosts)
@@ -42,63 +42,76 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* 1. 피드 목록 */}
+      {/* 1. 피드 목록 (메인 전체 피드와 동일한 PostCard 및 수정 레이아웃 활용) */}
       <div className="lg:col-span-2 flex flex-col gap-4">
         {posts.map((post) => {
-          const validationResults = post.validation_result as any[] || []
+          const validationResults = (post.validation_result as any[]) || []
           const failedRules = validationResults.filter(r => !r.passed)
 
           return (
             <div 
               key={post.id} 
               onClick={() => setSelectedPost(post)}
-              className={`bg-white p-5 rounded-xl border transition cursor-pointer ${selectedPost?.id === post.id ? 'border-black ring-2 ring-black/10' : 'border-gray-200 hover:border-gray-400'}`}
+              className={`bg-white rounded-xl border transition cursor-pointer overflow-hidden shadow-sm ${selectedPost?.id === post.id ? 'border-black ring-2 ring-black/10' : 'border-gray-200 hover:border-gray-300'}`}
             >
-              <div className="flex justify-between items-start gap-3 mb-2">
-                <div className="flex items-center gap-2">
-                  <img src={post.accounts?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${post.author_id}`} className="w-6 h-6 rounded-full border" />
-                  <span className="text-xs font-bold text-gray-800">{post.accounts?.display_name}</span>
-                  {post.sensitivity_tag === 'sensitive' && (
-                    <span className="text-[10px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded">민감뉴스</span>
-                  )}
+              {/* 메인 전체 피드 및 수정 화면과 완전히 동일한 Card 컴포넌트 재사용 */}
+              <PostCard post={post} currentUser={{ id: 'admin' }} hideDeleteButton={true} />
+
+              {/* 검토대기 툴바 및 위반 사유 표시 */}
+              <div className="bg-gray-50 border-t border-gray-100 p-4 flex flex-col gap-3">
+                {failedRules.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    <span className="text-xs font-bold text-red-600">🚨 위반 항목:</span>
+                    {failedRules.map((f, idx) => (
+                      <span key={idx} className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200">
+                        {f.rule_label || f.rule_key}: {f.reason}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleApprove(post.id)
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition shadow-sm"
+                  >
+                    ✓ 수동 발행 승인
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(post.id)
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition shadow-sm"
+                  >
+                    🗑️ 영구 삭제
+                  </button>
                 </div>
-                <span className="text-[11px] text-gray-400">{new Date(post.created_at).toLocaleString()}</span>
-              </div>
-
-              <h3 className="font-bold text-gray-900 text-sm mb-2 line-clamp-1">{post.headline}</h3>
-              <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed mb-3">{post.content}</p>
-
-              {/* 검증 위반 사유 배지 */}
-              <div className="flex flex-wrap gap-1.5 border-t pt-3">
-                {failedRules.map((f, idx) => (
-                  <span key={idx} className="text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded">
-                    🚫 {f.rule_label || f.rule_key}: {f.reason}
-                  </span>
-                ))}
               </div>
             </div>
           )
         })}
       </div>
 
-      {/* 2. 상세 내역 & 모더레이션 패널 */}
+      {/* 2. 상세 검증 리포트 패널 */}
       <div className="lg:col-span-1">
         {selectedPost ? (
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-md sticky top-6 flex flex-col gap-4">
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-md sticky top-20 flex flex-col gap-4">
             <div className="flex justify-between items-center border-b pb-3">
-              <span className="text-xs font-bold text-red-600">REJECTED 상세 사유</span>
+              <span className="text-xs font-bold text-red-600">AI 검증 리포트 상세</span>
               <button onClick={() => setSelectedPost(null)} className="text-xs text-gray-400 hover:text-black">✕ 닫기</button>
             </div>
 
             <div>
-              <h4 className="font-bold text-gray-900 text-base mb-2">{selectedPost.headline}</h4>
-              <div className="text-xs text-gray-600 max-h-40 overflow-y-auto whitespace-pre-wrap bg-gray-50 p-3 rounded border border-gray-100 leading-relaxed mb-4">
-                {selectedPost.content}
-              </div>
+              <h4 className="font-bold text-gray-900 text-sm mb-1">{selectedPost.headline}</h4>
+              <p className="text-xs text-gray-500 line-clamp-3">{selectedPost.content}</p>
             </div>
 
             <div>
-              <h5 className="text-xs font-bold text-gray-700 mb-2">📋 AI 검증 상세 결과 리포트</h5>
+              <h5 className="text-xs font-bold text-gray-700 mb-2">📋 규정 준수 검사 항목</h5>
               <div className="flex flex-col gap-2">
                 {(selectedPost.validation_result || []).map((res: any, idx: number) => (
                   <div key={idx} className={`p-2.5 rounded text-xs border ${res.passed ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
@@ -115,21 +128,21 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
             <div className="flex gap-2 pt-2 border-t mt-2">
               <button
                 onClick={() => handleApprove(selectedPost.id)}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold text-xs py-2.5 rounded-lg transition"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-lg transition"
               >
-                ✓ 수동 발행 승인
+                ✓ 승인
               </button>
               <button
                 onClick={() => handleDelete(selectedPost.id)}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold text-xs py-2.5 rounded-lg transition"
               >
-                🗑️ 영구 삭제
+                🗑️ 삭제
               </button>
             </div>
           </div>
         ) : (
           <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-center text-xs text-gray-400">
-            좌측 목록에서 검토할 피드를 선택하면 AI 검증 결과 리포트 및 승인/삭제 옵션이 표시됩니다.
+            좌측 목록에서 검토할 피드를 클릭하시면 AI 규정 검사 리포트 및 세부 통과 내역을 확인하실 수 있습니다.
           </div>
         )}
       </div>
