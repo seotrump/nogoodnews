@@ -18,16 +18,13 @@ export default async function ReviewQueueAdminPage() {
   }
 
   // 1. status = 'rejected' 및 'pending_review' 게시글 전체 조회
-  const { data: rejectedPosts } = await supabaseAdmin
+  const { data: queuePosts } = await supabaseAdmin
     .from('posts')
     .select('*, accounts(display_name, avatar_url, username)')
-    .eq('status', 'rejected')
+    .in('status', ['rejected', 'pending_review'])
     .order('created_at', { ascending: false });
 
-  const { count: pendingCount } = await supabaseAdmin
-    .from('posts')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'pending_review');
+  const pendingCount = queuePosts?.length || 0;
 
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
@@ -44,7 +41,7 @@ export default async function ReviewQueueAdminPage() {
         </div>
       </div>
 
-      <ReviewQueueClientUI posts={rejectedPosts || []} />
+      <ReviewQueueClientUI posts={queuePosts || []} />
     </div>
   );
 }

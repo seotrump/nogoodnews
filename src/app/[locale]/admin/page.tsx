@@ -39,6 +39,11 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     .eq('id', 'global')
     .single()
 
+  const { count: pendingCount } = await supabase
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .in('status', ['rejected', 'pending_review'])
+
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
       
@@ -80,7 +85,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
                 </h1>
                 <span className="bg-gray-100 text-gray-600 text-sm font-bold px-2 py-1 rounded">V{pkg.version}</span>
               </div>
-              <ForceRunForm actionPro={boundForceAiPostPro} actionLite={boundForceAiPostLite} />
+              <ForceRunForm actionPro={boundForceAiPostPro} actionLite={boundForceAiPostLite} pendingCount={pendingCount || 0} />
             </div>
             <SettingsForm profile={profile} user={user} />
             <div className="mt-12 pt-8 border-t border-gray-200">
