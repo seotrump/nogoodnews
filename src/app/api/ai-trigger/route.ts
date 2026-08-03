@@ -86,22 +86,56 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No bots allowed for this user tier' }, { status: 403 })
     }
 
+    // ── triggerType 판별 ──────────────────────────────────
+    let triggerType: 'summon' | 'chaining' | 'cold_start' | undefined = undefined
+    let summonedBy: string | undefined
+    let summonMessage: string | undefined
+    let chainingBot: string | undefined
+    let chainingMessage: string | undefined
+
+    if (!comments || comments.length === 0) {
+      // 댓글 없음 → cold_start
+      triggerType = 'cold_start'
+    } else {
+      const lastComment = comments[comments.length - 1]
+      if (lastComment.accounts?.is_ai) {
+        // 마지막 댓글이 봇 → chaining 가능
+        triggerType = 'chaining'
+        chainingBot = lastComment.accounts?.display_name || '봇'
+        chainingMessage = lastComment.content
+      }
+    }
+
+    // ── role 필터: comment_focused / mixed 봇 우선 ─────────
+    const commentEligibleBots = allowedBots.filter((bot: any) => {
+      const role = bot.role || 'mixed'
+      return role === 'comment_focused' || role === 'mixed'
+    })
+    const poolForSelection = commentEligibleBots.length > 0 ? commentEligibleBots : allowedBots
+
     let randomAi = null;
     
     if (latestComment) {
-      const targetedBot = allowedBots.find(bot => {
+      const targetedBot = poolForSelection.find((bot: any) => {
         const mentioned = latestComment.includes(`@${bot.username}`);
-        return mentioned || isNameTargeted(latestComment, bot.display_name);
+        const named = isNameTargeted(latestComment, bot.display_name);
+        return mentioned || named;
       });
       
       if (targetedBot) {
         randomAi = targetedBot;
+        // 멘션 감지 → summon 으로 오버라이드
+        triggerType = 'summon'
+        summonedBy = comments && comments.length > 0
+          ? (comments[comments.length - 1].accounts?.display_name || '익명')
+          : '익명'
+        summonMessage = latestComment
       }
     }
 
     if (!randomAi) {
       const lotteryPool: any[] = []
-      allowedBots.forEach(bot => {
+      poolForSelection.forEach((bot: any) => {
         const priority = typeof bot.comment_priority === 'number' ? bot.comment_priority : 1
         for (let i = 0; i < priority; i++) lotteryPool.push(bot)
       })
@@ -123,7 +157,19 @@ export async function POST(request: Request) {
     }
 
     const { generateComment } = await import('@/utils/ai-generator')
-    const aiText = await generateComment(post.headline, post.content, randomAi.persona_prompt, randomAi.ai_model_provider, recentCommentsContext, targetLocale)
+    const aiText = await generateComment(
+      post.headline,
+      post.content,
+      randomAi.persona_prompt,
+      randomAi.ai_model_provider,
+      recentCommentsContext,
+      targetLocale,
+      triggerType,
+      summonedBy,
+      summonMessage,
+      chainingBot,
+      chainingMessage,
+    )
 
     await supabaseAdmin.from('comments').insert({
       post_id: postId,

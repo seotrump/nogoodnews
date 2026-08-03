@@ -3,19 +3,48 @@ import { generateEnforcedAIContent } from './ai-core'
 // ==========================================
 // 1. 댓글 생성 함수
 // ==========================================
+export interface CommentContext {
+  headline: string;
+  content: string;
+  personaPrompt: string;
+  provider?: string;
+  recentComments?: string;
+  locale?: string;
+  triggerType?: 'summon' | 'chaining' | 'cold_start';
+  summonedBy?: string;       // 소환한 사람 이름
+  summonMessage?: string;    // 소환 메시지
+  chainingBot?: string;      // 체이닝 대상 봇 이름
+  chainingMessage?: string;  // 체이닝 대상 봇 댓글
+}
+
 export async function generateComment(
   headline: string,
   content: string,
   personaPrompt: string,
   provider: string = 'local', // defaults to local
   recentComments: string = '',
-  locale: string = 'ko'
+  locale: string = 'ko',
+  triggerType?: 'summon' | 'chaining' | 'cold_start',
+  summonedBy?: string,
+  summonMessage?: string,
+  chainingBot?: string,
+  chainingMessage?: string,
 ) {
-  console.log("🚨 [디버그-댓글] generateComment 함수가 호출되었습니다!", { provider });
+  console.log("🚨 [디버그-댓글] generateComment 함수가 호출되었습니다!", { provider, triggerType });
 
   const languageInstruction = locale === 'ko' 
     ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL COMMENT ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
     : 'CRITICAL WARNING: YOU MUST WRITE THE ENTIRE COMMENT IN ENGLISH. DO NOT USE KOREAN AT ALL.';
+
+  // ── triggerType별 반응 지침 블록 ─────────────────────────
+  let triggerInstruction = ''
+  if (triggerType === 'summon' && summonedBy) {
+    triggerInstruction = `\n[반응 지침 - 소환]\n당신이 직접 호출되었습니다. 방금 ${summonedBy}의 말: "${summonMessage || ''}"에 캐릭터답게 반응하세요. 호출된 것에 대해 직접적으로 응답하는 형태로 작성하세요.`
+  } else if (triggerType === 'chaining' && chainingBot) {
+    triggerInstruction = `\n[반응 지침 - 체이닝]\n${chainingBot}이(가) 방금 이렇게 말했습니다: "${chainingMessage || ''}". 당신의 캐릭터로 되받아치거나 맞장구치세요. 최대 2~3턴까지만 이어가고 자연스럽게 마무리하세요.`
+  } else if (triggerType === 'cold_start') {
+    triggerInstruction = `\n[반응 지침 - 무응답 개입]\n아직 아무도 반응하지 않았습니다. 당신이 먼저 스레드에 활기를 불어넣으세요. 뉴스를 보고 가장 먼저 하고 싶은 말을 캐릭터답게 던지세요.`
+  }
 
   let prompt = `
 당신은 뉴스/이슈 커뮤니티의 자동 댓글 봇입니다. 
@@ -31,6 +60,7 @@ ${personaPrompt}
 
 [최근 댓글 문맥 (이전 댓글들에 이어서 반박하거나 동조하며 자연스럽게 대화에 참여하세요)]
 ${recentComments || '(이전 댓글 없음)'}
+${triggerInstruction}
 
 [작성 규칙]
 1. 인삿말, 부연 설명 없이 오직 '댓글 내용'만 출력하세요.
@@ -39,7 +69,8 @@ ${recentComments || '(이전 댓글 없음)'}
 4. [문맥 우선 규칙]: '최근 댓글 문맥'이 존재한다면, 단순히 기사 내용만 혼자 떠들지 말고 **반드시 이전 댓글들의 흐름을 읽고 누군가의 의견에 동조하거나 반박하는 등 대화에 직접 참여하는 형태**로 작성하세요.
 5. [공통 규칙]: 페르소나에 묘사된 문장이나 유행어를 매번 똑같이 앵무새처럼 복사+붙여넣기 하지 마세요. 항상 문맥에 맞게 어휘와 문장 구조를 다르게 변형하세요.
 6. [예외 규칙]: 단, 페르소나 설정에 특정 유행어나 대사를 '반드시 반복하라'거나 '예외 규칙'으로 명시한 경우에는 공통 규칙을 무시하고 해당 지시를 최우선으로 따르세요.
-7. ${languageInstruction}
+7. 가능하면 마지막 문장은 질문형이나 미완결형으로 끝내 사람이 끼어들 여지를 남기세요.
+8. ${languageInstruction}
 `
 
   if (locale === 'en') {
@@ -56,6 +87,7 @@ ${prompt}
   }
   return await generateEnforcedAIContent(prompt, provider);
 }
+
 
 // ==========================================
 // 2. 피드 생성 함수

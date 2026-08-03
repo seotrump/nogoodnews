@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
+import { generateTypeCode, quantizeAxis, quantizeLabelKo, buildAxisDbFields, type AxisProfile } from '@/utils/type-code'
 
 interface BotBuilderProps {
   initialData?: any; // To be used later for editing existing bots
@@ -36,6 +37,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const [axisVocab, setAxisVocab] = useState(initialData?.advanced_settings?.axisVocab ?? 5)
   const [axisAttitude, setAxisAttitude] = useState(initialData?.advanced_settings?.axisAttitude ?? 5)
   const [axisAffection, setAxisAffection] = useState(initialData?.advanced_settings?.axisAffection ?? 5)
+  // Phase 1: 6번째 판단축 — 반응 속도감 (axisPace)
+  const [axisPace, setAxisPace] = useState(initialData?.advanced_settings?.axisPace ?? initialData?.axis_profile?.pace ?? 5)
   const [formality, setFormality] = useState(initialData?.advanced_settings?.formality || 'informal')
 
   // Arrays for Tags
@@ -51,6 +54,48 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const [isBasicMode, setIsBasicMode] = useState(false)
 
   const [language, setLanguage] = useState(initialData?.advanced_settings?.language || 'default')
+
+  // 구조화 봇 필드 (v5.04)
+  const [existenceCategory, setExistenceCategory] = useState(initialData?.existence_category || '')
+  const [existenceDetail, setExistenceDetail] = useState(initialData?.existence_detail || '')
+  const [realmCategory, setRealmCategory] = useState(initialData?.realm_category || '')
+  const [realmDetail, setRealmDetail] = useState(initialData?.realm_detail || '')
+  const [speechStyle, setSpeechStyle] = useState(initialData?.speech_style || '')
+  const [botRole, setBotRole] = useState(initialData?.role || 'mixed')
+  const [botGender, setBotGender] = useState(initialData?.gender || 'unknown')
+
+  const EXISTENCE_CATEGORY_OPTIONS = [
+    { value: 'human', label: '인간 (Human)' },
+    { value: 'creature', label: '동식물/생물 (Creature)' },
+    { value: 'mechanical', label: '기계/AI (Mechanical)' },
+    { value: 'spiritual', label: '귀신/영혼 (Spiritual)' },
+    { value: 'extraterrestrial', label: '외계/타차원 (Extraterrestrial)' },
+    { value: 'conceptual', label: '개념/감정 의인화 (Conceptual)' },
+    { value: 'hybrid', label: '혼합형 (Hybrid)' },
+    { value: 'other', label: '기타 (Other)' },
+  ]
+
+  const REALM_CATEGORY_OPTIONS = [
+    { value: 'earth_physical', label: '지구 물리 공간 (Earth Physical)' },
+    { value: 'earth_metaphysical', label: '지구 내부/몸속/마음속 (Earth Metaphysical)' },
+    { value: 'celestial', label: '천상/사후 세계 (Celestial)' },
+    { value: 'extraterrestrial', label: '우주/외계 (Extraterrestrial)' },
+    { value: 'dimensional', label: '다차원/이세계 (Dimensional)' },
+    { value: 'digital', label: '디지털 공간 (Digital)' },
+  ]
+
+  const ANTI_HARASSMENT_CLAUSE = '비판이나 반응의 대상은 뉴스/상황이며, 게시자나 다른 이용자 개인을 인신공격하지 않는다.'
+
+  const generateStructuredPrompt = () => {
+    if (!existenceDetail || !speechStyle) {
+      toast.error('존재유형 세부설정과 말투는 필수 입력 항목입니다.')
+      return
+    }
+    const realmPart = realmDetail ? `${realmDetail}에 있습니다.` : ''
+    const generated = `당신은 ${existenceDetail}입니다. ${realmPart} 세상 뉴스를 볼 때 이 정체성의 관점에서 반응하세요. ${speechStyle}로 답하세요. ${ANTI_HARASSMENT_CLAUSE}`
+    setCoreIdentity(generated.trim())
+    toast.success('프롬프트가 자동 생성되었습니다! 직접 수정도 가능합니다.', { icon: '✨' })
+  }
 
   const triggerAutoTune = async (identityString: string) => {
     setIsAutoTuning(true)
@@ -114,6 +159,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     setAxisVocab(5)
     setAxisAttitude(5)
     setAxisAffection(5)
+    setAxisPace(5)
     setFormality('informal')
     setCatchphrases([])
     setForbiddenWords([])
@@ -122,16 +168,32 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     toast.success('튜닝이 초기화되었습니다. 순수 코어 정체성만 적용됩니다.', { icon: '🔄' })
   }
 
+  // Phase 1: axis_profile + type_code 실시간 계산
+  const currentAxisProfile = useMemo<AxisProfile>(() => ({
+    target:    axisTarget,
+    affection: axisAffection,
+    mask:      axisAttitude,
+    pace:      axisPace,
+    tone_temp: axisTone,
+    vocab:     axisVocab,
+  }), [axisTarget, axisAffection, axisAttitude, axisPace, axisTone, axisVocab])
+
+  const currentTypeCode = useMemo(
+    () => generateTypeCode(currentAxisProfile),
+    [currentAxisProfile]
+  )
+
   const compilePrompt = () => {
     let prompt = `# Core Identity\n${coreIdentity}\n\n`
     if (isBasicMode) return prompt.trim()
 
     prompt += `# Personality Axes (Scale 1-10)\n`
-    prompt += `- Tone (1: ${t('axisToneLeft')}, 10: ${t('axisToneRight')}): ${axisTone}\n`
-    prompt += `- Target (1: ${t('axisTargetLeft')}, 10: ${t('axisTargetRight')}): ${axisTarget}\n`
-    prompt += `- Vocabulary (1: ${t('axisVocabLeft')}, 10: ${t('axisVocabRight')}): ${axisVocab}\n`
-    prompt += `- Attitude (1: ${t('axisAttitudeLeft')}, 10: ${t('axisAttitudeRight')}): ${axisAttitude}\n`
-    prompt += `- Affection (1: ${t('axisAffectionLeft')}, 10: ${t('axisAffectionRight')}): ${axisAffection}\n\n`
+    prompt += `- Tone/판단: Target (1: ${t('axisTargetLeft')}, 10: ${t('axisTargetRight')}): ${axisTarget}\n`
+    prompt += `- Tone/판단: Affection (1: ${t('axisAffectionLeft')}, 10: ${t('axisAffectionRight')}): ${axisAffection}\n`
+    prompt += `- Tone/판단: Attitude (1: ${t('axisAttitudeLeft')}, 10: ${t('axisAttitudeRight')}): ${axisAttitude}\n`
+    prompt += `- Tone/판단: Pace (1: 신중·지연 반응, 10: 즉각·충동 반응): ${axisPace}\n`
+    prompt += `- Tone/표현: Tone Temperature (1: ${t('axisToneLeft')}, 10: ${t('axisToneRight')}): ${axisTone}\n`
+    prompt += `- Tone/표현: Vocabulary (1: ${t('axisVocabLeft')}, 10: ${t('axisVocabRight')}): ${axisVocab}\n\n`
     
     prompt += `# Rules\n`
     prompt += `- Formality: ${formality === 'informal' ? t('formalityInformal') : formality === 'formal' ? t('formalityFormal') : t('formalitySarcastic')}\n`
@@ -159,10 +221,14 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     const advancedSettings = {
       coreIdentity, language,
       axisTone, axisTarget, axisVocab, axisAttitude, axisAffection,
+      axisPace,  // Phase 1: 6번째 판단축
       formality, catchphrases, forbiddenWords, triggerKeywords, fewShots
     }
 
     const compiledPrompt = compilePrompt()
+
+    // Phase 1: axis_profile + type_code 계산
+    const { axis_profile, type_code } = buildAxisDbFields(currentAxisProfile)
     
     const formData = new FormData()
     formData.append('displayName', displayName)
@@ -176,6 +242,17 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     formData.append('postPriority', postPriority.toString())
     formData.append('commentPriority', commentPriority.toString())
     formData.append('interval', interval.toString())
+    // Phase 1: Layer 1 — axis_profile, type_code
+    formData.append('axisProfile', JSON.stringify(axis_profile))
+    formData.append('typeCode', type_code)
+    // 구조화 봇 필드 (v5.04)
+    formData.append('existenceCategory', existenceCategory)
+    formData.append('existenceDetail', existenceDetail)
+    formData.append('realmCategory', realmCategory)
+    formData.append('realmDetail', realmDetail)
+    formData.append('speechStyle', speechStyle)
+    formData.append('botRole', botRole)
+    formData.append('botGender', botGender)
     
     if (initialData) {
       formData.append('botId', initialData.id)
@@ -269,6 +346,114 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
               </div>
             </div>
 
+            {/* 구조화 존재 스펙트럼 입력 폼 (v5.04) */}
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 p-4 rounded-xl shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-bold text-indigo-800 flex items-center gap-1.5">
+                  <span>🧬</span> 존재 스펙트럼 설정
+                  <span className="text-indigo-500 font-normal text-xs ml-1">(입력 후 자동생성 버튼으로 핵심 정체성을 채울 수 있습니다)</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={generateStructuredPrompt}
+                  className="text-xs bg-indigo-600 text-white hover:bg-indigo-700 font-bold py-1.5 px-3 rounded-lg transition flex items-center gap-1"
+                >
+                  ✨ 프롬프트 자동생성
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-indigo-700 mb-1">존재유형 *</label>
+                  <select
+                    value={existenceCategory}
+                    onChange={e => setExistenceCategory(e.target.value)}
+                    className="w-full border border-indigo-200 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                  >
+                    <option value="">-- 선택 --</option>
+                    {EXISTENCE_CATEGORY_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-indigo-700 mb-1">세부설정 * <span className="font-normal">(예: 사람 위벽에 사는 세포)</span></label>
+                  <input
+                    type="text"
+                    value={existenceDetail}
+                    onChange={e => setExistenceDetail(e.target.value)}
+                    placeholder="자유 서술..."
+                    className="w-full border border-indigo-200 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-indigo-700 mb-1">거주지 <span className="font-normal text-indigo-400">(선택)</span></label>
+                  <select
+                    value={realmCategory}
+                    onChange={e => setRealmCategory(e.target.value)}
+                    className="w-full border border-indigo-200 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                  >
+                    <option value="">-- 선택 --</option>
+                    {REALM_CATEGORY_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-indigo-700 mb-1">거주지 세부 <span className="font-normal text-indigo-400">(선택)</span></label>
+                  <input
+                    type="text"
+                    value={realmDetail}
+                    onChange={e => setRealmDetail(e.target.value)}
+                    placeholder="예: 한국인 중년 직장인의 소장"
+                    className="w-full border border-indigo-200 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-indigo-700 mb-1">말투 * <span className="font-normal">(예: 능청스럽고 짧게 말함)</span></label>
+                  <input
+                    type="text"
+                    value={speechStyle}
+                    onChange={e => setSpeechStyle(e.target.value)}
+                    placeholder="말투를 짧게 서술..."
+                    className="w-full border border-indigo-200 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-indigo-700 mb-1">역할 *</label>
+                  <select
+                    value={botRole}
+                    onChange={e => setBotRole(e.target.value)}
+                    className="w-full border border-indigo-200 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                  >
+                    <option value="mixed">혼합 (Mixed) — 피드·댓글 모두</option>
+                    <option value="feed_focused">피드 전담 (Feed Only)</option>
+                    <option value="comment_focused">댓글 전담 (Comment Only)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-indigo-700 mb-1">
+                    성별 <span className="font-normal text-indigo-400">(관리자 확인/변경)</span>
+                  </label>
+                  <select
+                    value={botGender}
+                    onChange={e => setBotGender(e.target.value)}
+                    className="w-full border border-indigo-200 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                  >
+                    <option value="unknown">미지정 (Unknown)</option>
+                    <option value="male">남성 (Male)</option>
+                    <option value="female">여성 (Female)</option>
+                    <option value="non_binary">논바이너리 (Non-binary)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-2 p-2 bg-indigo-100 rounded-lg">
+                <p className="text-xs text-indigo-700 flex items-center gap-1">
+                  <span>🔒</span>
+                  <strong>반응 대상 원칙 (자동 포함):</strong> 비판이나 반응의 대상은 뉴스/상황이며, 게시자나 다른 이용자 개인을 인신공격하지 않는다.
+                </p>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-bold mb-1.5">{t('coreIdentity')} *</label>
               <textarea value={coreIdentity} onChange={e => setCoreIdentity(e.target.value)} rows={2} placeholder={t('coreIdentityPlaceholder')} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none resize-none"></textarea>
@@ -359,25 +544,52 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
 
         {activeTab === 'personality' && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="text-xs text-gray-500 mb-4 flex items-center justify-between">
-                <span>10단계 슬라이더로 봇의 성격을 튜닝하세요.</span>
-              </p>
-              
-              <div className="flex flex-col gap-5">
+
+            {/* Phase 1: type_code 미리보기 */}
+            <div className="bg-black text-white rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs text-gray-400 font-medium mb-0.5">Type Code (판단축 조합 ID)</p>
+                <p className="text-lg font-black tracking-widest font-mono">{currentTypeCode}</p>
+              </div>
+              <div className="flex gap-3 text-xs text-gray-300">
+                <div className="text-center">
+                  <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisTarget))}</div>
+                  <div className="text-gray-500">공격대상</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisAffection))}</div>
+                  <div className="text-gray-500">애정</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisAttitude))}</div>
+                  <div className="text-gray-500">표정/태도</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisPace))}</div>
+                  <div className="text-gray-500">속도감</div>
+                </div>
+              </div>
+            </div>
+
+            {/* 판단축 — type_code에 반영됨 */}
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="bg-gray-900 text-white px-4 py-2.5 flex items-center gap-2">
+                <span className="text-sm font-bold">🎯 판단축 (Decision Axes)</span>
+                <span className="text-xs text-gray-400">— 상황별 행동 분기에 반영됩니다</span>
+              </div>
+              <div className="bg-gray-50 p-4 flex flex-col gap-5">
                 {[
-                  { label: t('axisTone'), val: axisTone, set: setAxisTone, left: t('axisToneLeft'), right: t('axisToneRight') },
-                  { label: t('axisTarget'), val: axisTarget, set: setAxisTarget, left: t('axisTargetLeft'), right: t('axisTargetRight') },
-                  { label: t('axisVocab'), val: axisVocab, set: setAxisVocab, left: t('axisVocabLeft'), right: t('axisVocabRight') },
-                  { label: t('axisAttitude'), val: axisAttitude, set: setAxisAttitude, left: t('axisAttitudeLeft'), right: t('axisAttitudeRight') },
-                  { label: t('axisAffection'), val: axisAffection, set: setAxisAffection, left: t('axisAffectionLeft'), right: t('axisAffectionRight') }
+                  { label: t('axisTarget'),    val: axisTarget,    set: setAxisTarget,    left: t('axisTargetLeft'),    right: t('axisTargetRight') },
+                  { label: t('axisAffection'), val: axisAffection, set: setAxisAffection, left: t('axisAffectionLeft'), right: t('axisAffectionRight') },
+                  { label: t('axisAttitude'),  val: axisAttitude,  set: setAxisAttitude,  left: t('axisAttitudeLeft'),  right: t('axisAttitudeRight') },
+                  { label: '반응 속도감',        val: axisPace,      set: setAxisPace,      left: '신중·지연 반응',        right: '즉각·충동 반응' },
                 ].map((item, i) => (
                   <div key={i} className="flex flex-col gap-1.5">
                     <div className="flex justify-between text-sm font-bold text-gray-700">
                       <span>{item.label}</span>
-                      <span className="text-black bg-gray-200 px-2 py-0.5 rounded text-xs">{item.val} / 10</span>
+                      <span className="text-black bg-gray-200 px-2 py-0.5 rounded text-xs">{item.val} / 10 ({quantizeLabelKo(quantizeAxis(item.val))})</span>
                     </div>
-                    <input type="range" min="1" max="10" step="1" value={item.val} onChange={e => { item.set(Number(e.target.value)); setIsBasicMode(false); }} className="w-full accent-black cursor-pointer" />
+                    <input type="range" min="0" max="10" step="1" value={item.val} onChange={e => { item.set(Number(e.target.value)); setIsBasicMode(false); }} className="w-full accent-black cursor-pointer" />
                     <div className="flex justify-between text-xs text-gray-500 font-medium">
                       <span>{item.left}</span>
                       <span>{item.right}</span>
@@ -386,6 +598,33 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
                 ))}
               </div>
             </div>
+
+            {/* 표현축 — 프롬프트에 직접 삽입 */}
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="bg-gray-100 text-gray-700 px-4 py-2.5 flex items-center gap-2">
+                <span className="text-sm font-bold">✏️ 표현축 (Rendering Axes)</span>
+                <span className="text-xs text-gray-400">— 결과 문장의 톤/어휘에만 영향 (type_code 미반영)</span>
+              </div>
+              <div className="bg-gray-50 p-4 flex flex-col gap-5">
+                {[
+                  { label: t('axisTone'), val: axisTone, set: setAxisTone, left: t('axisToneLeft'), right: t('axisToneRight') },
+                  { label: t('axisVocab'), val: axisVocab, set: setAxisVocab, left: t('axisVocabLeft'), right: t('axisVocabRight') },
+                ].map((item, i) => (
+                  <div key={i} className="flex flex-col gap-1.5">
+                    <div className="flex justify-between text-sm font-bold text-gray-700">
+                      <span>{item.label}</span>
+                      <span className="text-black bg-gray-200 px-2 py-0.5 rounded text-xs">{item.val} / 10</span>
+                    </div>
+                    <input type="range" min="0" max="10" step="1" value={item.val} onChange={e => { item.set(Number(e.target.value)); setIsBasicMode(false); }} className="w-full accent-gray-400 cursor-pointer opacity-80" />
+                    <div className="flex justify-between text-xs text-gray-500 font-medium">
+                      <span>{item.left}</span>
+                      <span>{item.right}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
 

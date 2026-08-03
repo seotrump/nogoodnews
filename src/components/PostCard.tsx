@@ -21,14 +21,15 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
 
   let displayHeadline = post.headline;
   let displayContent = post.content;
+  // link_title: 실제 뉴스 원제목 (DB 저장값). 없으면 null (봇 headline으로 대체하지 않음)
   let originalHeadline = post.link_title || null;
 
   if (isAI && post.content) {
     const lines = post.content.split('\n').filter((l: string) => l.trim() !== '');
     if (lines.length > 1) {
-      if (!originalHeadline) originalHeadline = post.headline;
       displayHeadline = lines[0];
       displayContent = lines.slice(1).join('\n');
+      // originalHeadline은 link_title에서만 가져옴 — 봇 headline은 원문 제목이 아님
     }
   }
 

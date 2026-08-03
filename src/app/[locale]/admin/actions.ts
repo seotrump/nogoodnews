@@ -178,6 +178,7 @@ export async function createAiBot(formData: FormData) {
   const isProModel = PRO_MODELS.includes(aiModelProvider);
   const botBadges = isProModel ? ['pro'] : [];
 
+  // ── 1단계: 핵심 필드 INSERT (기존 스키마, 항상 동작) ────
   const { error: accountError } = await supabaseAdmin.from('accounts').insert({
     id: botId,
     email: emailId,
@@ -185,7 +186,7 @@ export async function createAiBot(formData: FormData) {
     username: finalUsername,
     is_ai: true,
     persona_prompt: personaPrompt,
-    ai_model_provider: aiModelProvider, // 기존 단일 컬럼만 사용
+    ai_model_provider: aiModelProvider,
     auto_post_interval_minutes: interval,
     post_priority: postPriority,
     comment_priority: commentPriority,
@@ -196,7 +197,56 @@ export async function createAiBot(formData: FormData) {
     advanced_settings: advancedSettings
   })
 
-  if (accountError) throw new Error('Failed to update AI account')
+  if (accountError) {
+    console.error('createAiBot INSERT error:', accountError)
+    throw new Error('Failed to update AI account')
+  }
+
+  // ── 2단계: 구조화 필드 UPDATE (v5.04 마이그레이션 이후) ────
+  // SQL 마이그레이션 미실행 시에도 봇 생성은 정상 완료되고 아래만 스킵됨
+  const existenceCategory = (formData.get('existenceCategory') as string) || null
+  const existenceDetail = (formData.get('existenceDetail') as string) || null
+  const realmCategory = (formData.get('realmCategory') as string) || null
+  const realmDetail = (formData.get('realmDetail') as string) || null
+  const speechStyle = (formData.get('speechStyle') as string) || null
+  const botRole = (formData.get('botRole') as string) || 'mixed'
+  const topicKeyword = (formData.get('topicKeyword') as string) || null
+  const botGender = (formData.get('botGender') as string) || null
+
+  const structuredFields: Record<string, any> = {}
+  if (existenceCategory) structuredFields.existence_category = existenceCategory
+  if (existenceDetail) structuredFields.existence_detail = existenceDetail
+  if (realmCategory) structuredFields.realm_category = realmCategory
+  if (realmDetail) structuredFields.realm_detail = realmDetail
+  if (speechStyle) structuredFields.speech_style = speechStyle
+  structuredFields.role = botRole || 'mixed'
+  if (topicKeyword) structuredFields.topic_keyword = topicKeyword
+  if (botGender) structuredFields.gender = botGender
+  structuredFields.chemistry_good_with = []
+  structuredFields.chemistry_rival_with = []
+
+  // ── Phase 1 (Layer 1): axis_profile + type_code 저장 ────
+  // 마이그레이션(20260803000001_trait_axes_layer1.sql) 실행 후 활성화됨
+  // 실행 전에는 WARN만 출력하고 계속 진행 (봇 생성 자체는 성공)
+  const axisProfileRaw = formData.get('axisProfile') as string | null
+  const typeCode = formData.get('typeCode') as string | null
+  if (axisProfileRaw) {
+    try {
+      structuredFields.axis_profile = JSON.parse(axisProfileRaw)
+    } catch {
+      console.warn('[createAiBot] axis_profile JSON 파싱 실패, 건너뜁니다.')
+    }
+  }
+  if (typeCode) structuredFields.type_code = typeCode
+
+  const { error: structuredError } = await supabaseAdmin
+    .from('accounts')
+    .update(structuredFields)
+    .eq('id', botId)
+  if (structuredError) {
+    // 마이그레이션 미실행 시 경고만 (봇 생성 자체는 성공)
+    console.warn('[createAiBot] 구조화 필드 UPDATE 실패 (SQL 마이그레이션 필요):', structuredError.message)
+  }
 
   revalidatePath('/admin')
 }
@@ -347,6 +397,40 @@ export async function updateAiBotSettings(formData: FormData) {
   if (category) updateData.category = category
   if (advancedSettings) updateData.advanced_settings = advancedSettings
 
+  // 구조화 봇 필드 (v5.04) — 값이 있을 때만 업데이트
+  const existenceCategoryUp = formData.get('existenceCategory') as string
+  const existenceDetailUp = formData.get('existenceDetail') as string
+  const realmCategoryUp = formData.get('realmCategory') as string
+  const realmDetailUp = formData.get('realmDetail') as string
+  const speechStyleUp = formData.get('speechStyle') as string
+  const botRoleUp = formData.get('botRole') as string
+  const topicKeywordUp = formData.get('topicKeyword') as string
+  const botGenderUp = formData.get('botGender') as string
+
+  // 구조화 필드는 분리된 UPDATE로 처리 (마이그레이션 전후 안전)
+  const structuredUpdate: Record<string, any> = {}
+  if (existenceCategoryUp !== null && existenceCategoryUp !== undefined) structuredUpdate.existence_category = existenceCategoryUp || null
+  if (existenceDetailUp !== null && existenceDetailUp !== undefined) structuredUpdate.existence_detail = existenceDetailUp || null
+  if (realmCategoryUp !== null && realmCategoryUp !== undefined) structuredUpdate.realm_category = realmCategoryUp || null
+  if (realmDetailUp !== null && realmDetailUp !== undefined) structuredUpdate.realm_detail = realmDetailUp || null
+  if (speechStyleUp !== null && speechStyleUp !== undefined) structuredUpdate.speech_style = speechStyleUp || null
+  // role: BotBuilder에서 항상 전송 (기본값 'mixed'). null-safe 처리
+  structuredUpdate.role = botRoleUp || 'mixed'
+  if (topicKeywordUp !== null && topicKeywordUp !== undefined) structuredUpdate.topic_keyword = topicKeywordUp || null
+  if (botGenderUp !== null && botGenderUp !== undefined) structuredUpdate.gender = botGenderUp || null
+
+  // Phase 1 (Layer 1): axis_profile + type_code 수정 저장
+  const axisProfileRawUp = formData.get('axisProfile') as string | null
+  const typeCodeUp = formData.get('typeCode') as string | null
+  if (axisProfileRawUp) {
+    try {
+      structuredUpdate.axis_profile = JSON.parse(axisProfileRawUp)
+    } catch {
+      console.warn('[updateAiBotSettings] axis_profile JSON 파싱 실패, 건너뜁니다.')
+    }
+  }
+  if (typeCodeUp) structuredUpdate.type_code = typeCodeUp
+
   const { error } = await supabaseAdmin.from('accounts').update(updateData).eq('id', botId)
   if (error) {
     if (error.code === '23505') { // Postgres unique_violation
@@ -354,6 +438,15 @@ export async function updateAiBotSettings(formData: FormData) {
     }
     throw new Error('Failed to update settings')
   }
+
+  // 구조화 필드 별도 UPDATE (마이그레이션 미실행 시 경고만)
+  if (Object.keys(structuredUpdate).length > 0) {
+    const { error: structErr } = await supabaseAdmin.from('accounts').update(structuredUpdate).eq('id', botId)
+    if (structErr) {
+      console.warn('[updateAiBotSettings] 구조화 필드 UPDATE 실패 (SQL 마이그레이션 필요):', structErr.message)
+    }
+  }
+
 
   const loginEmail = formData.get('loginEmail') as string
   const loginPassword = formData.get('loginPassword') as string
