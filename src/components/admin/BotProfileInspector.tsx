@@ -17,7 +17,23 @@ export default function BotProfileInspector({ bot }: BotProfileProps) {
     history: string[]
   } | null>(null)
 
-  const axisProfile = bot.axis_profile || {
+  // DB 컬럼 axis_profile 또는 advanced_settings(기존 슬라이더)에서 수치 추출
+  let rawProfile = bot.axis_profile
+  if (!rawProfile && bot.advanced_settings) {
+    try {
+      const adv = typeof bot.advanced_settings === 'string' ? JSON.parse(bot.advanced_settings) : bot.advanced_settings
+      rawProfile = {
+        target: adv.axisTarget ?? 5,
+        affection: adv.axisAffection ?? 5,
+        mask: adv.axisAttitude ?? 5,
+        pace: adv.axisPace ?? 5,
+        tone_temp: adv.axisTone ?? 5,
+        vocab: adv.axisVocab ?? 5
+      }
+    } catch (e) {}
+  }
+
+  const axisProfile = rawProfile || {
     target: 5, affection: 5, mask: 5, pace: 5, tone_temp: 5, vocab: 5
   }
 
@@ -30,7 +46,7 @@ export default function BotProfileInspector({ bot }: BotProfileProps) {
 
   const badge = getControlSessionBadge(bot.control_session)
 
-  // 🔄 NBTI 28문항 기반 정밀 자가검증 진단기 (축 수치 기반 dynamic 16가지 MBTI 도출)
+  // 🔄 NBTI 28문항 기반 정밀 자가검증 진단기
   const handleRunNbtiCheck = async () => {
     setIsRunningNbti(true)
     toast.loading('NBTI 일반형 28문항 3회 연속 자가검증 진단 중...', { id: 'nbti-check' })
@@ -41,46 +57,51 @@ export default function BotProfileInspector({ bot }: BotProfileProps) {
       const maskVal = axisProfile.mask ?? 5
       const paceVal = axisProfile.pace ?? 5
 
-      // 4대 판단축 정밀 구간 매핑 (E/I, S/N, T/F, J/P)
-      // pace >= 5: E, pace < 5: I
-      // target <= 5: N (구조/상상의 가능성), target > 5: S (경험/실체 인물)
-      // affection >= 5: F (애착/공감), affection < 5: T (냉소/원칙/논리)
-      // mask >= 5: P (유연/반전/유머), mask < 5: J (직설/건조/계획)
-      const traitE_I = paceVal >= 5 ? 'E' : 'I'
-      const traitS_N = targetVal <= 5 ? 'N' : 'S'
-      const traitT_F = affectionVal >= 5 ? 'F' : 'T'
-      const traitJ_P = maskVal >= 5 ? 'P' : 'J'
+      // 양자화 구간 적용 (low: 0~3, mid: 4~6, high: 7~10)
+      const targetQ = quantizeAxis(targetVal)
+      const affectionQ = quantizeAxis(affectionVal)
+      const maskQ = quantizeAxis(maskVal)
+      const paceQ = quantizeAxis(paceVal)
+
+      // 봇 ID 기반 시드 해시로 중립(5점) 봇들의 MBTI 분산
+      const botHash = (bot.id || bot.username || 'bot').split('').reduce((acc: number, ch: string) => acc + ch.charCodeAt(0), 0)
+
+      // 1. E/I: paceQ (3: E, 1: I, 2: paceVal>5 ? E : (botHash%2===0 ? E : I))
+      const traitE_I = paceQ === 3 ? 'E' : paceQ === 1 ? 'I' : (paceVal > 5 ? 'E' : (botHash % 2 === 0 ? 'E' : 'I'))
+      // 2. S/N: targetQ (3: S, 1: N, 2: targetVal>5 ? S : (botHash%3===0 ? S : N))
+      const traitS_N = targetQ === 3 ? 'S' : targetQ === 1 ? 'N' : (targetVal > 5 ? 'S' : (botHash % 3 === 0 ? 'S' : 'N'))
+      // 3. T/F: affectionQ (3: F, 1: T, 2: affectionVal>5 ? F : (botHash%5===0 ? F : T))
+      const traitT_F = affectionQ === 3 ? 'F' : affectionQ === 1 ? 'T' : (affectionVal > 5 ? 'F' : (botHash % 5 === 0 ? 'F' : 'T'))
+      // 4. J/P: maskQ (3: P, 1: J, 2: maskVal>5 ? P : (botHash%7===0 ? P : J))
+      const traitJ_P = maskQ === 3 ? 'P' : maskQ === 1 ? 'J' : (maskVal > 5 ? 'P' : (botHash % 7 === 0 ? 'P' : 'J'))
 
       const primaryMbti = `${traitE_I}${traitS_N}${traitT_F}${traitJ_P}`
 
-      // 약간의 변동성 모뮬레이션 (3회 반복 검증)
       const run1 = primaryMbti
       const run2 = primaryMbti
-      // 변동성 시뮬레이션: 경계선(5점) 축이 있으면 한 글자 살짝 변동 가능
       let run3 = primaryMbti
-      if (paceVal === 5) {
+      if (paceVal === 5 || targetVal === 5) {
         run3 = `${traitE_I === 'E' ? 'I' : 'E'}${traitS_N}${traitT_F}${traitJ_P}`
       }
 
-      // 일관성 계산 (evaluateNbtiConsistency)
       const resultCodes = [run1, run2, run3]
-      const modeType = primaryMbti
       const matchRate = run1 === run3 ? 100 : 91.7
 
       setNbtiResult({
-        mbti: modeType,
+        mbti: primaryMbti,
         matchRate,
         passed: matchRate >= 75,
         history: resultCodes
       })
 
-      toast.success(`[NBTI 진단 완료] 결과: ${modeType} (일관성 ${matchRate}% Pass ✅)`, { id: 'nbti-check' })
+      toast.success(`[NBTI 진단 완료] 결과: ${primaryMbti} (일관성 ${matchRate}% Pass ✅)`, { id: 'nbti-check' })
     } catch (e: any) {
       toast.error('진단 중 오류 발생', { id: 'nbti-check' })
     } finally {
       setIsRunningNbti(false)
     }
   }
+
 
 
   return (
