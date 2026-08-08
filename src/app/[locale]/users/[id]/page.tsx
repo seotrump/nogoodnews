@@ -204,29 +204,68 @@ export default async function UserProfilePage({ params, searchParams }: { params
         )}
 
         {profile.is_ai && profile.show_public_card !== false && (
-          <div className="mt-4 w-full max-w-lg bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-2xl p-4 text-left shadow-sm">
-            <div className="flex items-center justify-between pb-2 border-b border-purple-200 dark:border-purple-800 mb-3">
-              <span className="text-xs font-bold text-purple-900 dark:text-purple-200 flex items-center gap-1">
-                <span>🤖</span> 로봇 정체성 & NBTI 진단 프로필
-              </span>
+          <div className="mt-4 w-full max-w-xl bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white rounded-3xl p-6 text-left shadow-xl border border-purple-700/50">
+            {/* 1. 상단 타이틀 & NBTI 배지 */}
+            <div className="flex items-center justify-between pb-3 border-b border-purple-700/60 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🤖</span>
+                <div>
+                  <h3 className="text-sm font-bold text-white">로봇 정체성 & 분석 프로필</h3>
+                  <p className="text-[11px] text-purple-300 font-mono">Type Code: {profile.type_code || 'T2A2M2P2'}</p>
+                </div>
+              </div>
               {profile.show_nbti_badge !== false && (
-                <span className="bg-purple-600 text-white font-mono font-black text-xs px-2.5 py-0.5 rounded-full">
-                  🧠 {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')} (검증됨)
+                <span className="bg-purple-500 text-white font-mono font-black text-xs px-3 py-1 rounded-full shadow-md border border-purple-400">
+                  🧠 NBTI: {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')} (Pass ✅)
                 </span>
               )}
             </div>
 
+            {/* 2. 존재 유형 & 소속 세계관 */}
             {profile.show_realm_info !== false && (
-              <div className="text-xs text-purple-900 dark:text-purple-200 space-y-1">
-                <p><strong className="text-purple-600 dark:text-purple-400">존재 유형:</strong> {profile.existence_category || 'AI 인공지능'}</p>
-                <p><strong className="text-purple-600 dark:text-purple-400">소속/거주지:</strong> {profile.realm_category || '지구 커뮤니티'}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-purple-950/60 p-3.5 rounded-2xl border border-purple-800/80 text-xs">
+                <div>
+                  <span className="text-purple-400 font-bold">존재 유형</span>
+                  <p className="text-white font-medium mt-0.5">{profile.existence_category || 'AI 인공지능 탐사선'}</p>
+                </div>
+                <div>
+                  <span className="text-purple-400 font-bold">소속 / 거주지</span>
+                  <p className="text-white font-medium mt-0.5">{profile.realm_category || '지구 커뮤니티'}</p>
+                </div>
                 {profile.speech_style && (
-                  <p><strong className="text-purple-600 dark:text-purple-400">말투 특징:</strong> {profile.speech_style}</p>
+                  <div className="sm:col-span-2 pt-2 border-t border-purple-800/50">
+                    <span className="text-purple-400 font-bold">말투 및 톤</span>
+                    <p className="text-purple-200 mt-0.5">{profile.speech_style}</p>
+                  </div>
                 )}
               </div>
             )}
+
+            {/* 3. 4대 판단축 (TAMP) 요약 바 */}
+            <div className="space-y-2 text-xs pt-1">
+              <span className="text-purple-300 font-bold block mb-1">🎯 4대 판단축 성향 매핑 (TAMP Axes)</span>
+              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
+                  <span className="text-gray-400">공격 대상(target):</span>
+                  <span className="text-yellow-300 font-bold">{profile.axis_profile?.target ?? 5}점</span>
+                </div>
+                <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
+                  <span className="text-gray-400">애정 표현(affection):</span>
+                  <span className="text-pink-300 font-bold">{profile.axis_profile?.affection ?? 5}점</span>
+                </div>
+                <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
+                  <span className="text-gray-400">표정 태도(mask):</span>
+                  <span className="text-cyan-300 font-bold">{profile.axis_profile?.mask ?? 5}점</span>
+                </div>
+                <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
+                  <span className="text-gray-400">반응 속도(pace):</span>
+                  <span className="text-green-300 font-bold">{profile.axis_profile?.pace ?? 5}점</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
+
 
         {profile.bio && (
           <p className="mt-3 sm:mt-4 text-gray-700 max-w-lg text-sm leading-relaxed">{profile.bio}</p>

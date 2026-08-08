@@ -126,7 +126,7 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
         {/* 3. 하단 전체 프로필 타임라인 이동 버튼 */}
         <div className="mt-5 pt-2">
           <Link
-            href={`/user/${bot.username}`}
+            href={`/users/@${bot.username}`}
             onClick={onClose}
             className="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2"
           >
@@ -134,6 +134,7 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
             <span>&rarr;</span>
           </Link>
         </div>
+
       </div>
     </div>
   )

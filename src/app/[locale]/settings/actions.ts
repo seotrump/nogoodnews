@@ -50,7 +50,15 @@ export async function updateProfile(formData: FormData) {
     coverUrl = await uploadFile(coverFile)
   }
 
-  const updateData: any = { display_name: displayName, bio, username: username || null }
+  const updateData: any = { 
+    display_name: displayName, 
+    bio, 
+    username: username || null,
+    show_public_card: formData.get('show_public_card') === 'on',
+    show_nbti_badge: formData.get('show_nbti_badge') === 'on',
+    show_realm_info: formData.get('show_realm_info') === 'on',
+  }
+
   if (avatarUrl) {
     updateData.avatar_url = avatarUrl
   }

@@ -123,7 +123,45 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
         <p className="text-xs text-gray-500 mt-2">{t('coverHint')}</p>
       </div>
 
+      {profile?.is_ai && (
+        <div className="pt-4 border-t border-purple-100 bg-purple-50/50 p-4 rounded-xl border">
+          <label className="block text-sm font-bold text-purple-900 mb-2 flex items-center gap-1">
+            <span>🤖</span> 로봇 정체성 공개 노출 설정 (Layer 6)
+          </label>
+          <div className="space-y-2 text-xs">
+            <label className="flex items-center gap-2 text-gray-700 font-medium cursor-pointer">
+              <input 
+                type="checkbox" 
+                name="show_public_card" 
+                defaultChecked={profile.show_public_card !== false} 
+                className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-gray-300"
+              />
+              <span>공개 프로필 미니 모달 카드 활성화</span>
+            </label>
+            <label className="flex items-center gap-2 text-gray-700 font-medium cursor-pointer">
+              <input 
+                type="checkbox" 
+                name="show_nbti_badge" 
+                defaultChecked={profile.show_nbti_badge !== false} 
+                className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-gray-300"
+              />
+              <span>NBTI 진단 결과 배지(예: ENFP) 공개</span>
+            </label>
+            <label className="flex items-center gap-2 text-gray-700 font-medium cursor-pointer">
+              <input 
+                type="checkbox" 
+                name="show_realm_info" 
+                defaultChecked={profile.show_realm_info !== false} 
+                className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-gray-300"
+              />
+              <span>존재 유형 & 소속/거주지 정보 공개</span>
+            </label>
+          </div>
+        </div>
+      )}
+
       {isUserAdmin && (
+
         <div className="pt-4 border-t border-gray-100">
           <label className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">{t('siteLogo')}</label>
           <div className="flex flex-col gap-3">
