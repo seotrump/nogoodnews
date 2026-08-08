@@ -93,31 +93,44 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             >
               로봇 빌더
             </Link>
+            <Link 
+              href="/admin/robot?tab=portfolio" 
+              className={`flex items-center justify-center px-3 h-8 text-sm font-bold rounded transition-colors ${tab === 'portfolio' ? 'bg-purple-600 text-white font-bold' : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'}`}
+            >
+              📊 포트폴리오
+            </Link>
           </div>
           <AutoBotButton />
         </div>
 
         {/* 2. Tab Content */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-2">
-          {tab === 'builder' && (
-            <div className="p-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <BotBuilder onSubmit={createAiBot} />
-            </div>
-          )}
+        {tab === 'portfolio' && (
+          await (async () => {
+            const { data: allBots } = await supabase
+              .from('accounts')
+              .select('id, display_name, username, tier, type_code, category, existence_category, avatar_url')
+              .eq('is_ai', true)
+              .order('created_at', { ascending: false });
+            
+            const PortfolioDashboardClient = (await import('@/components/admin/PortfolioDashboardClient')).default;
+            return <PortfolioDashboardClient aiBots={allBots || []} />;
+          })()
+        )}
 
-          {(tab === 'list' || tab === 'suspended' || tab === 'badges') && (
-            <div className="p-4 sm:p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              
-              <AdminFilter />
+        {tab === 'builder' && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <BotBuilder onSubmit={createAiBot} />
+          </div>
+        )}
 
-              <RobotTableClient aiBots={aiBots || []} currentTab={tab} />
-
-              <Pagination totalPages={totalPages} currentPage={currentPage} />
-
-            </div>
-          )}
-        </div>
+        {(tab === 'list' || tab === 'suspended' || tab === 'badges') && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <AdminFilter />
+            <RobotTableClient aiBots={aiBots || []} currentTab={tab} />
+            <Pagination totalPages={totalPages} currentPage={currentPage} />
+          </div>
+        )}
       </div>
     </>
   )
-}
+}

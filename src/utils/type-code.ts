@@ -186,6 +186,132 @@ export function buildAxisDbFields(profile: AxisProfile): {
 }
 
 // ──────────────────────────────────────────────
+// Phase 3 (Layer 6): 노출 범위 (Visibility Scope) 필터링
+// ──────────────────────────────────────────────
+/**
+ * 공개용 봇 프로필 DTO 변환 함수
+ * 판단축 원본 수치(axis_profile)는 always_private 대상이므로 서버 응답에서
+ * 완전 제거하고, 공개용 type_code 및 서사 문구 표현으로만 변환하여 반환한다.
+ */
+export function sanitizePublicBotProfile<T extends Record<string, any>>(bot: T): Omit<T, 'axis_profile' | 'persona_prompt'> & {
+  type_code?: string;
+  public_personality_summary?: string;
+} {
+  const { axis_profile, persona_prompt, ...publicData } = bot;
+
+  let summary = '';
+  if (axis_profile) {
+    const profile = axis_profile as AxisProfile;
+    const dominant = calculateDominantAxis(profile);
+    const dominantLabels: Record<DecisionAxisKey, string> = {
+      target: profile.target >= 7 ? '직설적인 인물 조명 스타일' : '사안의 구조 중심 탐구 스타일',
+      affection: profile.affection >= 7 ? '뜨거운 공감과 애착 표현' : '건조하고 시니컬한 관점',
+      mask: profile.mask >= 7 ? '은근히 뼈 때리는 유머 감각' : '단도직입적이고 명확한 스타일',
+      pace: profile.pace >= 7 ? '즉각적이고 활발한 반응' : '신중하고 침착한 템포',
+    };
+    summary = dominantLabels[dominant.axis_key] || '';
+  }
+
+  return {
+    ...publicData,
+    public_personality_summary: summary,
+  };
+}
+
+// ──────────────────────────────────────────────
+// Phase 5 (Layer 4): 조종 세션 (Control Layer) 뱃지 렌더링 유틸리티
+// ──────────────────────────────────────────────
+export interface ControlSessionInfo {
+  controller_type: 'autonomous' | 'boarded';
+  human_handle?: string;
+  is_human_public?: boolean;
+}
+
+export function getControlSessionBadge(session?: ControlSessionInfo | null): {
+  icon: string;
+  label: string;
+  fullBadgeText: string;
+} {
+  if (!session || session.controller_type === 'autonomous') {
+    return {
+      icon: '🤖',
+      label: '자율 운항',
+      fullBadgeText: '🤖 자율 운항',
+    };
+  }
+
+  if (session.is_human_public && session.human_handle) {
+    return {
+      icon: '🚀',
+      label: `${session.human_handle} 탑승`,
+      fullBadgeText: `🚀 @${session.human_handle} 탑승`,
+    };
+  }
+
+  return {
+    icon: '🚀',
+    label: '인간 탑승',
+    fullBadgeText: '🚀 탑승',
+  };
+}
+
+// ──────────────────────────────────────────────
+// Phase 6b (Layer 9b): NBTI 자가검증 루프 일관성 판정 유틸리티
+// ──────────────────────────────────────────────
+/**
+ * 3회 반복 실행된 NBTI result_code(예: ['ENFP', 'ENFP', 'ENTP'])들의
+ * 일관성을 검증한다. 4글자 중 3글자 이상(75%+) 일치 시 Pass(true).
+ */
+export function evaluateNbtiConsistency(resultCodes: string[]): {
+  passed: boolean;
+  matchRate: number;
+  modeType: string;
+} {
+  if (!resultCodes || resultCodes.length < 2) {
+    return { passed: false, matchRate: 0, modeType: resultCodes[0] || 'NONE' };
+  }
+
+  // 최빈 타입 산출
+  const counts: Record<string, number> = {};
+  resultCodes.forEach(code => { counts[code] = (counts[code] || 0) + 1; });
+
+  let modeType = resultCodes[0];
+  let maxCount = 0;
+  for (const [code, count] of Object.entries(counts)) {
+    if (count > maxCount) {
+      maxCount = count;
+      modeType = code;
+    }
+  }
+
+  // 최빈 타입 기준 글자 단위 유사도 계산
+  let totalMatchChars = 0;
+  let totalChars = 0;
+
+  for (const code of resultCodes) {
+    for (let i = 0; i < 4; i++) {
+      if (code[i] && modeType[i] && code[i] === modeType[i]) {
+        totalMatchChars++;
+      }
+      totalChars++;
+    }
+  }
+
+  const matchRate = totalChars > 0 ? (totalMatchChars / totalChars) * 100 : 0;
+  // 3글자 이상 일치(75%+) 기준
+  const passed = matchRate >= 75.0;
+
+  return {
+    passed,
+    matchRate: Math.round(matchRate * 10) / 10,
+    modeType,
+  };
+}
+
+
+
+
+// ──────────────────────────────────────────────
 // 단위 테스트 (런타임에서도 호출 가능한 형태)
 // ──────────────────────────────────────────────
 export function runTypeCodeTests(): { passed: number; failed: number; errors: string[] } {

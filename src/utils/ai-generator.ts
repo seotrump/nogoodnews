@@ -1,9 +1,92 @@
 import { generateEnforcedAIContent } from './ai-core'
+import { calculateDominantAxis, quantizeAxis, STAGE_ROLES, type AxisProfile } from './type-code'
+
+
+import { createClient } from '@supabase/supabase-js'
+
+// ──────────────────────────────────────────────
+// Phase 4 (Layer 2 & Layer 2b): 프롬프트 파이프라인 조합 유틸리티
+// ──────────────────────────────────────────────
+export async function buildStructuredPipelineInstruction(params: {
+  axisProfile?: AxisProfile;
+  situationKey?: string;
+}): Promise<string> {
+  const { axisProfile, situationKey } = params;
+  if (!axisProfile) return '';
+
+  const dominant = calculateDominantAxis(axisProfile);
+  const poles: Record<1 | 2 | 3, 'low' | 'mid' | 'high'> = { 1: 'low', 2: 'mid', 3: 'high' };
+
+  let instruction = `\n[구조화 행동 파이프라인 (Persona Architecture Layer 2/2b)]\n`;
+  instruction += `- 주도축(Dominant Axis): ${dominant.label} (${dominant.stage_role})\n`;
+
+  // 1. Layer 2: 시튜에이션 조각 (Behavior Fragments) DB 조회 시도
+  let fragmentFound = false;
+  if (situationKey && situationKey !== 'sensitive_news_match') {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+      const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+
+
+      const decisionAxes: ('target' | 'affection' | 'mask' | 'pace')[] = ['target', 'affection', 'mask', 'pace'];
+      const fetchedFragments: string[] = [];
+
+      for (const axis of decisionAxes) {
+        const qVal = quantizeAxis(axisProfile[axis] ?? 5);
+        const poleKey = poles[qVal];
+        const { data } = await supabaseAdmin
+          .from('axis_behavior_fragments')
+          .select('fragment_text')
+          .eq('axis_key', axis)
+          .eq('pole', poleKey)
+          .eq('situation_key', situationKey)
+          .maybeSingle();
+
+        if (data?.fragment_text) {
+          fetchedFragments.push(`- [${axis.toUpperCase()} ${poleKey.toUpperCase()}]: ${data.fragment_text}`);
+        }
+      }
+
+      if (fetchedFragments.length > 0) {
+        fragmentFound = true;
+        instruction += `[상황별 행동 정밀 지침 - ${situationKey}]\n` + fetchedFragments.join('\n') + '\n';
+      }
+    } catch (e) {
+      console.warn('[buildStructuredPipelineInstruction] 행동 조각 DB 조회 실패, Layer 2b 경로로 전환합니다:', e);
+    }
+  }
+
+  // 2. Layer 2b: 일반화 경로 (상황 미등록 시 주도축 기반 동적 사고 순서 결합)
+  if (!fragmentFound) {
+    const decisionAxes: ('target' | 'affection' | 'mask' | 'pace')[] = ['target', 'affection', 'mask', 'pace'];
+    // 주도축을 1순위로 배치하고 나머지 순서 유지
+    const orderedAxes = [dominant.axis_key, ...decisionAxes.filter(a => a !== dominant.axis_key)];
+
+    instruction += `[사고 처리 순서 (Layer 2b 동적 순서)]\n`;
+    orderedAxes.forEach((axis, idx) => {
+      const qVal = quantizeAxis(axisProfile[axis] ?? 5);
+      const poleKey = poles[qVal];
+      const stage = STAGE_ROLES[axis];
+      instruction += `${idx + 1}. ${stage.label} (${poleKey.toUpperCase()}): ${stage.desc} 수치[${axisProfile[axis] ?? 5}/10]\n`;
+    });
+  }
+
+  // 3. 표현축 (Rendering Axes) 지침 결합
+  const toneTemp = axisProfile.tone_temp ?? 5;
+  const vocab = axisProfile.vocab ?? 5;
+  instruction += `[표현축 톤 지침]\n`;
+  instruction += `- 말투 온도: ${toneTemp <= 3 ? '공손하고 따뜻한 톤' : toneTemp >= 7 ? '냉소적이고 자극적인 조롱 톤' : '절제된 표준 톤'}\n`;
+  instruction += `- 어휘 스타일: ${vocab <= 3 ? '격식 있고 정제된 어휘 사용' : vocab >= 7 ? '비속어/인터넷 커뮤니티 은어 적극 활용' : '표준적인 어휘 사용'}\n`;
+
+  return instruction;
+}
 
 // ==========================================
 // 1. 댓글 생성 함수
 // ==========================================
 export interface CommentContext {
+
   headline: string;
   content: string;
   personaPrompt: string;
