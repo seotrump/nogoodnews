@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
-import { generateTypeCode, quantizeAxis, quantizeLabelKo, buildAxisDbFields, type AxisProfile } from '@/utils/type-code'
+import { generateTypeCode, quantizeAxis, quantizeLabelKo, buildAxisDbFields, calculateDominantAxis, type AxisProfile } from '@/utils/type-code'
 
 interface BotBuilderProps {
   initialData?: any; // To be used later for editing existing bots
