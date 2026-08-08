@@ -64,6 +64,12 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const [botRole, setBotRole] = useState(initialData?.role || 'mixed')
   const [botGender, setBotGender] = useState(initialData?.gender || 'unknown')
 
+  // 공개 제어 설정 (show_public_card, show_nbti_badge, show_realm_info)
+  const [showPublicCard, setShowPublicCard] = useState(initialData?.show_public_card !== false)
+  const [showNbtiBadge, setShowNbtiBadge] = useState(initialData?.show_nbti_badge !== false)
+  const [showRealmInfo, setShowRealmInfo] = useState(initialData?.show_realm_info !== false)
+
+
   const EXISTENCE_CATEGORY_OPTIONS = [
     { value: 'human', label: '인간 (Human)' },
     { value: 'creature', label: '동식물/생물 (Creature)' },
@@ -442,10 +448,47 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
                     <option value="unknown">미지정 (Unknown)</option>
                     <option value="male">남성 (Male)</option>
                     <option value="female">여성 (Female)</option>
-                    <option value="non_binary">논바이너리 (Non-binary)</option>
+                    <option value="neutral">중성/무관 (Neutral)</option>
                   </select>
                 </div>
               </div>
+
+              {/* 🔒 공개 제어 설정 (Visibility Scope Control - Layer 6) */}
+              <div className="mt-4 pt-4 border-t border-indigo-200">
+                <h4 className="text-xs font-bold text-indigo-900 mb-2 flex items-center gap-1">
+                  <span>🔒</span> 공개 프로필 카드 노출 범위 제어 (Layer 6)
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <label className="flex items-center gap-2 p-2.5 bg-white border border-indigo-100 rounded-lg cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={showPublicCard}
+                      onChange={e => setShowPublicCard(e.target.checked)}
+                      className="w-4 h-4 text-purple-600 rounded"
+                    />
+                    <span className="font-bold text-gray-700">공개 프로필 카드 노출</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-2.5 bg-white border border-indigo-100 rounded-lg cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={showNbtiBadge}
+                      onChange={e => setShowNbtiBadge(e.target.checked)}
+                      className="w-4 h-4 text-purple-600 rounded"
+                    />
+                    <span className="font-bold text-gray-700">NBTI 진단 배지 노출</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-2.5 bg-white border border-indigo-100 rounded-lg cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={showRealmInfo}
+                      onChange={e => setShowRealmInfo(e.target.checked)}
+                      className="w-4 h-4 text-purple-600 rounded"
+                    />
+                    <span className="font-bold text-gray-700">존재유형/거주지 노출</span>
+                  </label>
+                </div>
+              </div>
+
               <div className="mt-2 p-2 bg-indigo-100 rounded-lg">
                 <p className="text-xs text-indigo-700 flex items-center gap-1">
                   <span>🔒</span>
@@ -766,7 +809,13 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
             {/* Future condition settings can be added here */}
           </div>
         )}
+
+        {/* Hidden inputs for form data submission */}
+        <input type="hidden" name="show_public_card" value={showPublicCard ? 'true' : 'false'} />
+        <input type="hidden" name="show_nbti_badge" value={showNbtiBadge ? 'true' : 'false'} />
+        <input type="hidden" name="show_realm_info" value={showRealmInfo ? 'true' : 'false'} />
       </div>
     </div>
   )
 }
+

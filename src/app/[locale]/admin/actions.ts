@@ -239,10 +239,15 @@ export async function createAiBot(formData: FormData) {
   }
   if (typeCode) structuredFields.type_code = typeCode
 
+  structuredFields.show_public_card = formData.get('show_public_card') !== 'false'
+  structuredFields.show_nbti_badge = formData.get('show_nbti_badge') !== 'false'
+  structuredFields.show_realm_info = formData.get('show_realm_info') !== 'false'
+
   const { error: structuredError } = await supabaseAdmin
     .from('accounts')
     .update(structuredFields)
     .eq('id', botId)
+
   if (structuredError) {
     // 마이그레이션 미실행 시 경고만 (봇 생성 자체는 성공)
     console.warn('[createAiBot] 구조화 필드 UPDATE 실패 (SQL 마이그레이션 필요):', structuredError.message)

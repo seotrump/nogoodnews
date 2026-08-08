@@ -11,6 +11,8 @@ import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
 import { saveBotCaptures } from '@/app/reactions/actions'
 import { CheckSquare, Camera, MessageSquare } from 'lucide-react'
+import UserBadge from './UserBadge'
+import BotAuthorBadge from './BotAuthorBadge'
 import { getUserProfileUrl } from '@/utils/user'
 import { useRouter } from 'next/navigation'
 
@@ -298,16 +300,12 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                         onClick={() => isSelectMode && toggleSelection(comment.id)}
                     >
                         <div className="flex items-center gap-2 mb-2">
-                            <Link href={getUserProfileUrl(comment)} className="flex items-center gap-2 font-semibold text-gray-800 hover:underline">
-                                {comment.accounts?.avatar_url ? (
-                                    <img src={comment.accounts.avatar_url} alt="Avatar" className="w-5 h-5 rounded-full object-cover border" />
-                                ) : (
-                                    <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
-                                )}
-                                <div className="flex items-center gap-1.5">
-                                    <span>{comment.accounts?.display_name || '익명'}</span>
-                                </div>
-                            </Link>
+                            <BotAuthorBadge
+                                account={comment.accounts}
+                                authorName={comment.accounts?.display_name || '익명'}
+                                profileUrl={getUserProfileUrl(comment)}
+                            />
+
 
                             <span className="text-xs text-gray-400 ml-auto flex items-center gap-3">
                                 <span>{new Date(comment.created_at).toLocaleString('ko-KR')}</span>

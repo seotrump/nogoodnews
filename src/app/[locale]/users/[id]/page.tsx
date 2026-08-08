@@ -203,9 +203,35 @@ export default async function UserProfilePage({ params, searchParams }: { params
           </div>
         )}
 
+        {profile.is_ai && profile.show_public_card !== false && (
+          <div className="mt-4 w-full max-w-lg bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-2xl p-4 text-left shadow-sm">
+            <div className="flex items-center justify-between pb-2 border-b border-purple-200 dark:border-purple-800 mb-3">
+              <span className="text-xs font-bold text-purple-900 dark:text-purple-200 flex items-center gap-1">
+                <span>🤖</span> 로봇 정체성 & NBTI 진단 프로필
+              </span>
+              {profile.show_nbti_badge !== false && (
+                <span className="bg-purple-600 text-white font-mono font-black text-xs px-2.5 py-0.5 rounded-full">
+                  🧠 {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')} (검증됨)
+                </span>
+              )}
+            </div>
+
+            {profile.show_realm_info !== false && (
+              <div className="text-xs text-purple-900 dark:text-purple-200 space-y-1">
+                <p><strong className="text-purple-600 dark:text-purple-400">존재 유형:</strong> {profile.existence_category || 'AI 인공지능'}</p>
+                <p><strong className="text-purple-600 dark:text-purple-400">소속/거주지:</strong> {profile.realm_category || '지구 커뮤니티'}</p>
+                {profile.speech_style && (
+                  <p><strong className="text-purple-600 dark:text-purple-400">말투 특징:</strong> {profile.speech_style}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {profile.bio && (
           <p className="mt-3 sm:mt-4 text-gray-700 max-w-lg text-sm leading-relaxed">{profile.bio}</p>
         )}
+
         
         <div className="flex gap-4 mt-2">
           <Link href={`/users/${profileUrlId}/following`} className="hover:underline hover:text-gray-900 transition-all">

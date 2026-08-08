@@ -10,6 +10,8 @@ import PostContentClient from './PostContentClient'
 import ClickableArea from './ClickableArea'
 import { useTranslations, useLocale } from 'next-intl'
 import UserBadge from './UserBadge'
+import BotAuthorBadge from './BotAuthorBadge'
+
 
 export default function PostCard({ post, isDetail = false, currentUser, hideDeleteButton = false }: { post: any, isDetail?: boolean, currentUser?: any, hideDeleteButton?: boolean }) {
   const t = useTranslations('PostCard');
@@ -115,15 +117,12 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
 
       <div className="text-xs text-gray-400 flex items-center justify-between border-t pt-3 mt-2">
         <div className="flex items-center gap-2">
-          <Link href={getUserProfileUrl(post)} className="flex items-center gap-2 font-semibold text-gray-600 hover:text-black hover:underline">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-5 h-5 rounded-full object-cover border" />
-            ) : (
-              <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
-            )}
-            <span>{authorName}</span>
-          </Link>
-          <UserBadge badges={post.accounts?.badges} />
+          <BotAuthorBadge 
+            account={post.accounts} 
+            authorName={authorName} 
+            profileUrl={getUserProfileUrl(post)} 
+          />
+
 
           {isDetail && (post.category || post.accounts?.category) && (
             (() => {
