@@ -117,17 +117,71 @@ export function typeCodeDistance(a: string, b: string): number {
   );
 }
 
+// ──────────────────────────────────────────────
+// Phase 1 (1-4, 1-5): 사고단계 매핑 & 주도축(Dominant Axis) 계산
+// ──────────────────────────────────────────────
+export const STAGE_ROLES: Record<string, { role: string; label: string; desc: string }> = {
+  target:    { role: 'attention',      label: '주의 (Attention)',      desc: '뭐가 먼저 눈에 들어오는가' },
+  affection: { role: 'interpretation', label: '해석 (Interpretation)', desc: '눈에 들어온 걸 뭘 기준으로 푸는가' },
+  mask:      { role: 'attribution',    label: '귀결 (Attribution)',    desc: '그 해석을 어떤 태도로 정리하는가' },
+  pace:      { role: 'expression',     label: '표현 (Expression)',     desc: '언제·어떤 세기로 꺼내는가' },
+}
+
+export type DecisionAxisKey = 'target' | 'affection' | 'mask' | 'pace';
+
 /**
- * AxisProfile에서 직접 type_code + axis_profile JSONB를 생성해
+ * 주도축(Dominant Axis) 계산 함수
+ * 주도축 = argmax(|axis_score - 5|)  (판단축 4개 중)
+ * 5와의 거리 차가 가장 먼 축이 이 봇의 1순위 사고축이 됨.
+ */
+export function calculateDominantAxis(profile: Pick<AxisProfile, 'target' | 'affection' | 'mask' | 'pace'>): {
+  axis_key: DecisionAxisKey;
+  label: string;
+  stage_role: string;
+  distance: number;
+} {
+  const axes: DecisionAxisKey[] = ['target', 'affection', 'mask', 'pace'];
+  let dominant: DecisionAxisKey = 'target';
+  let maxDist = -1;
+
+  for (const axis of axes) {
+    const val = profile[axis] ?? 5;
+    const dist = Math.abs(val - 5);
+    if (dist > maxDist) {
+      maxDist = dist;
+      dominant = axis;
+    }
+  }
+
+  const info = STAGE_ROLES[dominant];
+  const axisLabels: Record<DecisionAxisKey, string> = {
+    target: '공격 대상 (Target)',
+    affection: '애정 여부 (Affection)',
+    mask: '표정/태도 (Mask)',
+    pace: '반응 속도감 (Pace)',
+  };
+
+  return {
+    axis_key: dominant,
+    label: axisLabels[dominant],
+    stage_role: info.role,
+    distance: maxDist,
+  };
+}
+
+/**
+ * AxisProfile에서 직접 type_code + 주도축 + axis_profile JSONB를 생성해
  * DB 저장용 객체를 반환한다.
  */
 export function buildAxisDbFields(profile: AxisProfile): {
   axis_profile: AxisProfile;
   type_code: string;
+  dominant_axis: ReturnType<typeof calculateDominantAxis>;
 } {
   return {
     axis_profile: profile,
     type_code: generateTypeCode(profile),
+    dominant_axis: calculateDominantAxis(profile),
   };
 }
 

@@ -545,57 +545,79 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
         {activeTab === 'personality' && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
 
-            {/* Phase 1: type_code 미리보기 */}
-            <div className="bg-black text-white rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs text-gray-400 font-medium mb-0.5">Type Code (판단축 조합 ID)</p>
-                <p className="text-lg font-black tracking-widest font-mono">{currentTypeCode}</p>
-              </div>
-              <div className="flex gap-3 text-xs text-gray-300">
-                <div className="text-center">
-                  <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisTarget))}</div>
-                  <div className="text-gray-500">공격대상</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisAffection))}</div>
-                  <div className="text-gray-500">애정</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisAttitude))}</div>
-                  <div className="text-gray-500">표정/태도</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisPace))}</div>
-                  <div className="text-gray-500">속도감</div>
-                </div>
-              </div>
-            </div>
-
-            {/* 판단축 — type_code에 반영됨 */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-              <div className="bg-gray-900 text-white px-4 py-2.5 flex items-center gap-2">
-                <span className="text-sm font-bold">🎯 판단축 (Decision Axes)</span>
-                <span className="text-xs text-gray-400">— 상황별 행동 분기에 반영됩니다</span>
-              </div>
-              <div className="bg-gray-50 p-4 flex flex-col gap-5">
-                {[
-                  { label: t('axisTarget'),    val: axisTarget,    set: setAxisTarget,    left: t('axisTargetLeft'),    right: t('axisTargetRight') },
-                  { label: t('axisAffection'), val: axisAffection, set: setAxisAffection, left: t('axisAffectionLeft'), right: t('axisAffectionRight') },
-                  { label: t('axisAttitude'),  val: axisAttitude,  set: setAxisAttitude,  left: t('axisAttitudeLeft'),  right: t('axisAttitudeRight') },
-                  { label: '반응 속도감',        val: axisPace,      set: setAxisPace,      left: '신중·지연 반응',        right: '즉각·충동 반응' },
-                ].map((item, i) => (
-                  <div key={i} className="flex flex-col gap-1.5">
-                    <div className="flex justify-between text-sm font-bold text-gray-700">
-                      <span>{item.label}</span>
-                      <span className="text-black bg-gray-200 px-2 py-0.5 rounded text-xs">{item.val} / 10 ({quantizeLabelKo(quantizeAxis(item.val))})</span>
+            {/* Phase 1: type_code 및 주도축(Dominant Axis) 실시간 표시 */}
+            {(() => {
+              const dominant = calculateDominantAxis({ target: axisTarget, affection: axisAffection, mask: axisAttitude, pace: axisPace })
+              return (
+                <div className="bg-black text-white rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-gray-400 font-medium">Type Code (판단축 조합 ID)</p>
+                      <span className="bg-purple-900 text-purple-200 text-[10px] font-bold px-2 py-0.5 rounded-full border border-purple-600">
+                        ⚡ 주도축: {dominant.label.split(' ')[0]} ({dominant.stage_role})
+                      </span>
                     </div>
-                    <input type="range" min="0" max="10" step="1" value={item.val} onChange={e => { item.set(Number(e.target.value)); setIsBasicMode(false); }} className="w-full accent-black cursor-pointer" />
-                    <div className="flex justify-between text-xs text-gray-500 font-medium">
-                      <span>{item.left}</span>
-                      <span>{item.right}</span>
+                    <p className="text-xl font-black tracking-widest font-mono text-purple-400 mt-0.5">{currentTypeCode}</p>
+                  </div>
+                  <div className="flex gap-3 text-xs text-gray-300">
+                    <div className={`text-center px-2 py-1 rounded ${dominant.axis_key === 'target' ? 'bg-purple-900/50 border border-purple-500' : ''}`}>
+                      <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisTarget))}</div>
+                      <div className="text-gray-400 text-[10px]">공격대상(주의)</div>
+                    </div>
+                    <div className={`text-center px-2 py-1 rounded ${dominant.axis_key === 'affection' ? 'bg-purple-900/50 border border-purple-500' : ''}`}>
+                      <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisAffection))}</div>
+                      <div className="text-gray-400 text-[10px]">애정(해석)</div>
+                    </div>
+                    <div className={`text-center px-2 py-1 rounded ${dominant.axis_key === 'mask' ? 'bg-purple-900/50 border border-purple-500' : ''}`}>
+                      <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisAttitude))}</div>
+                      <div className="text-gray-400 text-[10px]">표정(귀결)</div>
+                    </div>
+                    <div className={`text-center px-2 py-1 rounded ${dominant.axis_key === 'pace' ? 'bg-purple-900/50 border border-purple-500' : ''}`}>
+                      <div className="text-white font-bold">{quantizeLabelKo(quantizeAxis(axisPace))}</div>
+                      <div className="text-gray-400 text-[10px]">속도감(표현)</div>
                     </div>
                   </div>
-                ))}
+                </div>
+              )
+            })()}
+
+            {/* 판단축 — type_code 및 주도축 계산에 반영됨 */}
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="bg-gray-900 text-white px-4 py-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold">🎯 판단축 (Decision Axes)</span>
+                  <span className="text-xs text-gray-400">— 사고 단계 담당 및 행동 분기에 사용됩니다</span>
+                </div>
+              </div>
+              <div className="bg-gray-50 p-4 flex flex-col gap-5">
+                {(() => {
+                  const dominantKey = calculateDominantAxis({ target: axisTarget, affection: axisAffection, mask: axisAttitude, pace: axisPace }).axis_key
+                  return [
+                    { key: 'target',    label: t('axisTarget'),    val: axisTarget,    set: setAxisTarget,    left: t('axisTargetLeft'),    right: t('axisTargetRight'),    stage: '① 주의 (Attention)' },
+                    { key: 'affection', label: t('axisAffection'), val: axisAffection, set: setAxisAffection, left: t('axisAffectionLeft'), right: t('axisAffectionRight'), stage: '② 해석 (Interpretation)' },
+                    { key: 'mask',      label: t('axisAttitude'),  val: axisAttitude,  set: setAxisAttitude,  left: t('axisAttitudeLeft'),  right: t('axisAttitudeRight'),  stage: '③ 귀결 (Attribution)' },
+                    { key: 'pace',      label: '반응 속도감',        val: axisPace,      set: setAxisPace,      left: '신중·지연 반응',        right: '즉각·충동 반응',        stage: '④ 표현 (Expression)' },
+                  ].map((item) => {
+                    const isDominant = item.key === dominantKey
+                    return (
+                      <div key={item.key} className={`flex flex-col gap-1.5 p-3 rounded-lg border transition ${isDominant ? 'bg-purple-50/70 border-purple-300 ring-1 ring-purple-400' : 'bg-white border-gray-200'}`}>
+                        <div className="flex justify-between items-center text-sm font-bold text-gray-700">
+                          <div className="flex items-center gap-2">
+                            <span>{item.label}</span>
+                            <span className="text-[11px] font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{item.stage}</span>
+                            {isDominant && <span className="bg-purple-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">주도축 👑</span>}
+                          </div>
+                          <span className="text-black bg-gray-200 px-2 py-0.5 rounded text-xs">{item.val} / 10 ({quantizeLabelKo(quantizeAxis(item.val))})</span>
+                        </div>
+                        <input type="range" min="0" max="10" step="1" value={item.val} onChange={e => { item.set(Number(e.target.value)); setIsBasicMode(false); }} className="w-full accent-purple-600 cursor-pointer" />
+                        <div className="flex justify-between text-xs text-gray-500 font-medium">
+                          <span>{item.left}</span>
+                          <span>{item.right}</span>
+                        </div>
+                      </div>
+                    )
+                  })
+                })()}
               </div>
             </div>
 
