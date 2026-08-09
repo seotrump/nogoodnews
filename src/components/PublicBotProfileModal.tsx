@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Link } from '@/i18n/routing'
+import { Link, useRouter } from '@/i18n/routing'
 import { getControlSessionBadge, getExistenceCategoryLabel, getRealmCategoryLabel, getBotCategoryLabel } from '@/utils/type-code'
 import { getUserProfileUrl } from '@/utils/user'
 
@@ -14,7 +14,9 @@ interface PublicBotProfileModalProps {
 }
 
 export default function PublicBotProfileModal({ isOpen, onClose, bot, profileUrl: propProfileUrl }: PublicBotProfileModalProps) {
+  const router = useRouter()
   if (!isOpen || !bot) return null
+
 
   const badge = getControlSessionBadge(bot.control_session)
   const isCardPublic = bot.show_public_card !== false
@@ -203,16 +205,22 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot, profileUrl
           </div>
         )}
 
-        {/* 3. 하단 전체 프로필 보기 버튼 (404 원천 방지) */}
+        {/* 3. 하단 전체 프로필 보기 버튼 (100% 이동 보장) */}
         <div className="mt-4 pt-2 text-center">
-          <Link
-            href={targetProfileUrl}
-            onClick={onClose}
-            className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md transition-all gap-1.5"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onClose()
+              router.push(targetProfileUrl)
+            }}
+            className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md transition-all gap-1.5 cursor-pointer"
           >
             <span>전체 프로필 보기 ➔</span>
-          </Link>
+          </button>
         </div>
+
 
       </div>
     </div>
