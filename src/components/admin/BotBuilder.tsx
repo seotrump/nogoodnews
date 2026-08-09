@@ -15,7 +15,8 @@ interface BotBuilderProps {
 export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuilderProps) {
   const t = useTranslations('Admin')
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'basic' | 'personality' | 'vocabulary' | 'training' | 'conditions'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'feed' | 'comment' | 'personality' | 'advanced'>('basic')
+
 
   // States
   const [displayName, setDisplayName] = useState(initialData?.display_name || '')
@@ -191,40 +192,33 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     [currentAxisProfile]
   )
 
+  // 자동 프롬프트 동적 합성 엔진 (피드 전용 + 댓글 전용 분리)
   const compilePrompt = () => {
-    let prompt = `# Core Identity\n${coreIdentity}\n\n`
-    if (isBasicMode) return prompt.trim()
+    const activeExistence = existenceDetail || `${displayName || '로봇'}의 고유 정체성`
+    const activeRealm = realmDetail ? `${realmDetail}에 있습니다.` : ''
+    const activeSpeech = speechStyle || '거침없고 직설적인 말투'
+    const activeCategory = category || '일반'
+    const activeGender = botGender === 'male' ? '남성' : botGender === 'female' ? '여성' : '중성/무관'
 
-    prompt += `# Personality Axes (Scale 1-10)\n`
-    prompt += `- Tone/판단: Target (1: ${t('axisTargetLeft')}, 10: ${t('axisTargetRight')}): ${axisTarget}\n`
-    prompt += `- Tone/판단: Affection (1: ${t('axisAffectionLeft')}, 10: ${t('axisAffectionRight')}): ${axisAffection}\n`
-    prompt += `- Tone/판단: Attitude (1: ${t('axisAttitudeLeft')}, 10: ${t('axisAttitudeRight')}): ${axisAttitude}\n`
-    prompt += `- Tone/판단: Pace (1: 신중·지연 반응, 10: 즉각·충동 반응): ${axisPace}\n`
-    prompt += `- Tone/표현: Tone Temperature (1: ${t('axisToneLeft')}, 10: ${t('axisToneRight')}): ${axisTone}\n`
-    prompt += `- Tone/표현: Vocabulary (1: ${t('axisVocabLeft')}, 10: ${t('axisVocabRight')}): ${axisVocab}\n\n`
+    let prompt = `# Core Identity\n당신은 ${activeExistence}입니다. ${activeRealm} 전문분야는 ${activeCategory}이며 성별은 ${activeGender}입니다. ${activeSpeech}로 반응하세요. ${ANTI_HARASSMENT_CLAUSE}\n\n`
     
-    prompt += `# Rules\n`
-    prompt += `- Formality: ${formality === 'informal' ? t('formalityInformal') : formality === 'formal' ? t('formalityFormal') : t('formalitySarcastic')}\n`
-    if (catchphrases.length > 0) prompt += `- Catchphrases: ${catchphrases.join(', ')}\n`
-    if (forbiddenWords.length > 0) prompt += `- Forbidden Words: ${forbiddenWords.join(', ')}\n`
+    prompt += `# Feed Instructions\n피드 작성 시 뉴스 이슈의 관점을 고유 캐릭터 성격과 말투를 100% 유지하며 생생하게 전달하세요.\n\n`
     
-    if (fewShots.some(s => s.situation || s.response)) {
-      prompt += `\n# Few-Shot Examples\n`
-      fewShots.forEach((shot, i) => {
-        if (shot.situation && shot.response) {
-          prompt += `[Situation ${i+1}]: ${shot.situation}\n[Response ${i+1}]: ${shot.response}\n\n`
-        }
-      })
-    }
+    prompt += `# Comment Instructions\n댓글 작성 시 1~2문장으로 캐릭터 특유의 어조를 살려 짧고 강렬하게 반응하세요.\n\n`
+
+    prompt += `# Personality Type Code\n${currentTypeCode}\n`
+    
     return prompt.trim()
   }
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!displayName || !coreIdentity) {
-      toast.error('로봇 빌더 필수 조건(닉네임, 핵심 정체성)을 모두 입력해주세요.')
+    if (!displayName) {
+      toast.error('로봇 빌더 필수 조건(닉네임)을 입력해주세요.')
       return
     }
+
 
     const advancedSettings = {
       coreIdentity, language,
@@ -280,12 +274,13 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   }
 
   const tabs = [
-    { id: 'basic', label: t('tabBasic') },
-    { id: 'personality', label: t('tabPersonality') },
-    { id: 'vocabulary', label: t('tabVocabulary') },
-    { id: 'training', label: t('tabTraining') },
-    { id: 'conditions', label: t('tabConditions') }
+    { id: 'basic', label: '기본 설정' },
+    { id: 'feed', label: '피드 설정' },
+    { id: 'comment', label: '댓글 설정' },
+    { id: 'personality', label: '성향 튜닝 (선택)' },
+    { id: 'advanced', label: '고급 튜닝 (선택)' }
   ] as const
+
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -705,8 +700,29 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
           </div>
         )}
 
-        {activeTab === 'vocabulary' && (
+        {activeTab === 'feed' && (
+          <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs">
+            <h4 className="font-bold text-sm text-gray-900 border-b pb-2">📰 피드(게시글) 생성 조건 및 작성 스타일</h4>
+            <p className="text-gray-500">봇이 뉴스 이슈를 물어와 새로운 피드를 작성할 때 사용되는 지침입니다. (Pro 및 기자단 봇 전용)</p>
+            <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 leading-relaxed text-purple-900 font-mono">
+              ✨ 봇의 정체성과 말투, 성향 지표에 맞춰 피드 프롬프트가 동적으로 자동 합성됩니다.
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'comment' && (
+          <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs">
+            <h4 className="font-bold text-sm text-gray-900 border-b pb-2">💬 댓글 작성 및 반응 스타일</h4>
+            <p className="text-gray-500">모든 봇(Lite, Pro, 기자단)이 다른 피드나 댓글에 반응할 때 1~2문장의 단문으로 소통하는 전용 지침입니다.</p>
+            <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 leading-relaxed text-blue-900 font-mono">
+              ✨ 봇의 어조와 캐릭터에 맞춰 1~2문장 짤막한 반응 댓글 프롬프트가 동적으로 자동 반영됩니다.
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'advanced' && (
           <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <h4 className="font-bold text-sm text-gray-900 border-b pb-2">⚙️ 고급 수동 튜닝 (선택)</h4>
             <div>
               <label className="block text-sm font-bold mb-1.5">{t('formality')}</label>
               <div className="flex flex-wrap gap-4">
@@ -745,56 +761,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
               </div>
               <input type="text" placeholder={t('catchphrasesHint')} onKeyDown={e => handleKeyDown(e, setForbiddenWords)} className="w-full border border-red-200 p-2.5 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm" />
             </div>
-          </div>
-        )}
 
-        {activeTab === 'training' && (
-          <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {fewShots.map((shot, index) => (
-              <div key={shot.id} className="p-3 border border-gray-200 rounded-lg bg-gray-50 relative group">
-                <button type="button" onClick={() => {
-                  setFewShots(prev => prev.filter(s => s.id !== shot.id))
-                  toast(t('exampleRemoved'), { icon: '🗑️' })
-                }} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 hidden group-hover:block transition p-1">
-                  ✕
-                </button>
-                <div className="mb-2">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">#{index + 1} {t('situation')}</label>
-                  <input type="text" value={shot.situation} onChange={e => {
-                    const newShots = [...fewShots]
-                    newShots[index].situation = e.target.value
-                    setFewShots(newShots)
-                  }} className="w-full border border-gray-200 p-2 rounded focus:ring-1 focus:ring-black outline-none text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-purple-600 mb-1">#{index + 1} {t('botResponse')}</label>
-                  <textarea rows={2} value={shot.response} onChange={e => {
-                    const newShots = [...fewShots]
-                    newShots[index].response = e.target.value
-                    setFewShots(newShots)
-                  }} className="w-full border border-purple-200 p-2 rounded focus:ring-1 focus:ring-purple-500 outline-none text-sm resize-none"></textarea>
-                </div>
-              </div>
-            ))}
-            <button type="button" onClick={() => setFewShots(prev => [...prev, { id: Date.now(), situation: '', response: '' }])} className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-medium hover:border-black hover:text-black transition text-sm flex items-center justify-center gap-2">
-              <span>+</span> {t('addExample')}
-            </button>
-          </div>
-        )}
-
-        {activeTab === 'conditions' && (
-          <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div>
-              <label className="block text-sm font-bold mb-1.5">{t('triggerKeywords')}</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {triggerKeywords.map((tag, i) => (
-                  <span key={i} className="bg-yellow-100 text-yellow-800 text-xs px-2.5 py-1 rounded-full flex items-center gap-1 font-medium border border-yellow-200">
-                    {tag} <button type="button" onClick={() => removeTag(i, setTriggerKeywords)} className="hover:text-black">×</button>
-                  </span>
-                ))}
-              </div>
-              <input type="text" placeholder={t('catchphrasesHint')} onKeyDown={e => handleKeyDown(e, setTriggerKeywords)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm" />
-            </div>
             {/* 규칙 가이드 */}
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mt-2">
               <details className="group cursor-pointer">
@@ -817,10 +784,10 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
                 </div>
               </details>
             </div>
-            
-            {/* Future condition settings can be added here */}
           </div>
         )}
+
+
 
         {/* Hidden inputs for form data submission */}
         <input type="hidden" name="show_public_card" value={showPublicCard ? 'true' : 'false'} />
