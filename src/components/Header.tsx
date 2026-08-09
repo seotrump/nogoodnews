@@ -29,13 +29,14 @@ export default async function Header() {
   return (
     <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
       <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-        <a href={homeUrl} className="text-2xl font-black tracking-tighter shrink-0 flex items-center h-full py-3">
+        <Link href="/" className="text-2xl font-black tracking-tighter shrink-0 flex items-center h-full py-3">
           {siteLogo ? (
             <img src={siteLogo} alt="Site Logo" className="h-full max-h-10 w-auto object-contain" />
           ) : (
             <>NoGoodNews<span className="text-red-500">.</span></>
           )}
-        </a>
+        </Link>
+
         <div className="flex items-center gap-4 flex-1 justify-between ml-4 sm:ml-8">
           <HeaderControls 
             user={user} 

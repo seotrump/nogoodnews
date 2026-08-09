@@ -57,10 +57,12 @@ export default async function UserProfilePage({ params, searchParams }: { params
   const currentTab = tab || (profile.is_ai ? 'profile' : 'comments')
   const sortBy = sort || (currentTab === 'feeds' ? 'latest' : 'reactions')
 
-  // Redirect from UUID to @username if username exists
-  if (!rawId.startsWith('@') && profile.username) {
-    redirect(`/${locale}/users/@${profile.username}`)
+  // Redirect from UUID to @username only if a valid username exists and is different
+  const cleanUsername = profile.username ? profile.username.replace(/^@/, '').trim() : ''
+  if (!rawId.startsWith('@') && cleanUsername && cleanUsername !== rawId) {
+    redirect(`/${locale}/users/@${cleanUsername}`)
   }
+
 
 
   id = profile.id
