@@ -204,7 +204,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
         )}
 
         {profile.is_ai && profile.show_public_card !== false && (
-          <div className="mt-4 w-full max-w-xl bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white rounded-3xl p-6 text-left shadow-xl border border-purple-700/50">
+          <div className="mt-4 w-full bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white rounded-3xl p-6 text-left shadow-xl border border-purple-700/50">
             {/* 1. 상단 타이틀 & NBTI 배지 */}
             <div className="flex items-center justify-between pb-3 border-b border-purple-700/60 mb-4">
               <div className="flex items-center gap-2">
@@ -216,21 +216,35 @@ export default async function UserProfilePage({ params, searchParams }: { params
               </div>
               {profile.show_nbti_badge !== false && (
                 <span className="bg-purple-500 text-white font-mono font-black text-xs px-3 py-1 rounded-full shadow-md border border-purple-400">
-                  🧠 NBTI: {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')} (Pass ✅)
+                  🧠 NBTI: {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')}
                 </span>
               )}
             </div>
 
-            {/* 2. 존재 유형 & 소속 세계관 */}
+            {/* 2. 존재 유형 & 소속 세계관 & 성별 */}
             {profile.show_realm_info !== false && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-purple-950/60 p-3.5 rounded-2xl border border-purple-800/80 text-xs">
+                {profile.gender && profile.gender !== 'unknown' && (
+                  <div>
+                    <span className="text-purple-400 font-bold">성별</span>
+                    <p className="text-white font-medium mt-0.5">
+                      {profile.gender === 'male' ? '♂️ 남성' : profile.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <span className="text-purple-400 font-bold">존재 유형</span>
-                  <p className="text-white font-medium mt-0.5">{profile.existence_category || 'AI 인공지능 탐사선'}</p>
+                  <p className="text-white font-medium mt-0.5">
+                    <strong className="text-purple-300">{profile.existence_category || '기계/AI'}</strong>
+                    {profile.existence_detail ? ` (${profile.existence_detail})` : ''}
+                  </p>
                 </div>
-                <div>
+                <div className={profile.gender && profile.gender !== 'unknown' ? 'sm:col-span-2' : ''}>
                   <span className="text-purple-400 font-bold">소속 / 거주지</span>
-                  <p className="text-white font-medium mt-0.5">{profile.realm_category || '지구 커뮤니티'}</p>
+                  <p className="text-white font-medium mt-0.5">
+                    <strong className="text-purple-300">{profile.realm_category || '지구 커뮤니티'}</strong>
+                    {profile.realm_detail ? ` (${profile.realm_detail})` : ''}
+                  </p>
                 </div>
                 {profile.speech_style && (
                   <div className="sm:col-span-2 pt-2 border-t border-purple-800/50">
@@ -241,7 +255,21 @@ export default async function UserProfilePage({ params, searchParams }: { params
               </div>
             )}
 
-            {/* 3. 4대 판단축 (TAMP) 요약 바 */}
+            {/* 3. 📜 페르소나 시스템 프롬프트 (스플릿/스크롤 없이 전체 노출) */}
+            {profile.show_prompt !== false && profile.persona_prompt && (
+              <div className="mb-4 pt-1">
+                <span className="text-purple-300 font-bold text-xs block mb-1.5 flex items-center gap-1">
+                  <span>📜</span> 페르소나 시스템 프롬프트 (System Prompt)
+                </span>
+                <div className="bg-black/80 text-green-400 p-4 rounded-xl font-mono text-[11px] leading-relaxed border border-purple-800/60 whitespace-pre-wrap break-words">
+                  {profile.persona_prompt}
+                </div>
+              </div>
+            )}
+
+            {/* 4. 4대 판단축 (TAMP) 요약 바 */}
+
+
             <div className="space-y-2 text-xs pt-1">
               <span className="text-purple-300 font-bold block mb-1">🎯 4대 판단축 성향 매핑 (TAMP Axes)</span>
               <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">

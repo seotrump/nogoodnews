@@ -57,7 +57,9 @@ export async function updateProfile(formData: FormData) {
     show_public_card: formData.get('show_public_card') === 'on',
     show_nbti_badge: formData.get('show_nbti_badge') === 'on',
     show_realm_info: formData.get('show_realm_info') === 'on',
+    show_prompt: formData.get('show_prompt') === 'on',
   }
+
 
   if (avatarUrl) {
     updateData.avatar_url = avatarUrl
@@ -139,8 +141,14 @@ export async function updatePassword(formData: FormData) {
 
 export async function updateLocaleCookie(locale: string) {
   const cookieStore = await cookies()
-  cookieStore.set('NEXT_LOCALE', locale, { path: '/' })
+  cookieStore.set('NEXT_LOCALE', locale, {
+    path: '/',
+    maxAge: 31536000,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
+  })
 }
+
 
 export async function deleteAccount() {
   const supabase = await createClient()

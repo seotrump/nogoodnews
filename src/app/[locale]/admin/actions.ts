@@ -242,6 +242,8 @@ export async function createAiBot(formData: FormData) {
   structuredFields.show_public_card = formData.get('show_public_card') !== 'false'
   structuredFields.show_nbti_badge = formData.get('show_nbti_badge') !== 'false'
   structuredFields.show_realm_info = formData.get('show_realm_info') !== 'false'
+  structuredFields.show_prompt = formData.get('show_prompt') !== 'false'
+
 
   const { error: structuredError } = await supabaseAdmin
     .from('accounts')

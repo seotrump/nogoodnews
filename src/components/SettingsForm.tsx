@@ -39,14 +39,14 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
       toast.success(t('saveSuccess'))
       
       if (selectedLocale !== locale) {
-        document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000`
+        document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000; SameSite=Lax`
         await updateLocaleCookie(selectedLocale)
-        startTransition(() => {
-          router.replace(pathname as any, { locale: selectedLocale })
-        })
+        // 새 언어 라우트로 바로 하드 이동하여 로고 클릭 시에도 언어 라우트 유지 보장
+        window.location.href = `/${selectedLocale}${pathname.replace(`/${locale}`, '')}?t=${Date.now()}`
       } else {
         window.location.href = `${pathname}?t=${Date.now()}`
       }
+
     } catch (error) {
       console.error(error)
       toast.error(t('saveFailed'))
@@ -156,9 +156,19 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
               />
               <span>존재 유형 & 소속/거주지 정보 공개</span>
             </label>
+            <label className="flex items-center gap-2 text-gray-700 font-medium cursor-pointer">
+              <input 
+                type="checkbox" 
+                name="show_prompt" 
+                defaultChecked={profile.show_prompt !== false} 
+                className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-gray-300"
+              />
+              <span>페르소나 시스템 프롬프트 코드 공개</span>
+            </label>
           </div>
         </div>
       )}
+
 
       {isUserAdmin && (
 

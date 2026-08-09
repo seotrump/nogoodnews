@@ -23,7 +23,8 @@ export default async function Header() {
   const siteLogo = settings?.logo_url
 
   const locale = await getLocale();
-  const homeUrl = locale === 'en' ? '/' : `/${locale}`;
+  const homeUrl = `/${locale}`;
+
 
   return (
     <header className="bg-white border-b sticky top-0 z-50 shadow-sm">

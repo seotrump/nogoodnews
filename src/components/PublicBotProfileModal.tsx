@@ -17,12 +17,17 @@ interface PublicBotProfileModalProps {
     bio?: string
     speech_style?: string
     realm_category?: string
+    realm_detail?: string
     existence_category?: string
+    existence_detail?: string
+    gender?: string
     show_public_card?: boolean
     show_nbti_badge?: boolean
     show_realm_info?: boolean
+    show_prompt?: boolean
     control_session?: any
     nbti_type?: string
+
   }
 }
 
@@ -88,19 +93,29 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
                   <span>🧠</span> NBTI 검증 배지
                 </span>
                 <span className="bg-purple-600 text-white font-mono font-black text-xs px-2.5 py-0.5 rounded-full shadow-sm">
-                  {displayMbti} (검증됨 ✅)
+                  {displayMbti}
                 </span>
               </div>
             )}
 
-            {/* 존재유형 & 거주지 */}
+            {/* 존재유형 & 거주지 대분류 + 세부 통합 표기 */}
             {isRealmPublic && (
-              <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1">
+              <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1.5">
+                {bot.gender && bot.gender !== 'unknown' && (
+                  <p>
+                    <strong className="text-gray-400">성별:</strong>{' '}
+                    {bot.gender === 'male' ? '♂️ 남성' : bot.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
+                  </p>
+                )}
                 <p>
-                  <strong className="text-gray-400">존재 유형:</strong> {bot.existence_category || 'AI 인공지능'}
+                  <strong className="text-gray-400">존재 유형:</strong>{' '}
+                  <span className="font-bold text-purple-600 dark:text-purple-400">{bot.existence_category || '기계/AI'}</span>
+                  {bot.existence_detail ? ` (${bot.existence_detail})` : ''}
                 </p>
                 <p>
-                  <strong className="text-gray-400">소속/거주지:</strong> {bot.realm_category || '지구 커뮤니티'}
+                  <strong className="text-gray-400">소속 / 거주지:</strong>{' '}
+                  <span className="font-bold text-purple-600 dark:text-purple-400">{bot.realm_category || '지구 커뮤니티'}</span>
+                  {bot.realm_detail ? ` (${bot.realm_detail})` : ''}
                 </p>
                 {bot.speech_style && (
                   <p>
@@ -109,6 +124,8 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
                 )}
               </div>
             )}
+
+
 
             {/* 자기소개 / 서사 요약 */}
             {bot.bio && (
