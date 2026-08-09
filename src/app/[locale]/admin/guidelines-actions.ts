@@ -28,13 +28,17 @@ export async function toggleModerationRule(ruleId: string, isActive: boolean) {
     .from('moderation_rules')
     .update({ 
       is_active: isActive, 
-      updated_at: new Date().toISOString(),
-      updated_by: user.email 
+      updated_at: new Date().toISOString()
     })
     .eq('id', ruleId);
 
-  if (error) throw new Error(`규칙 활성화 변경 실패: ${error.message}`);
-  revalidatePath('/admin/guidelines');
+  if (error) {
+    if (error.message.includes('schema cache') || error.message.includes('relation "public.moderation_rules" does not exist')) {
+      throw new Error('Supabase DB에 moderation_rules 테이블 생성이 필요합니다. 마이그레이션 SQL(supabase/migrations/20260809000002_create_moderation_rules.sql)을 실행해 주세요.');
+    }
+    throw new Error(`규칙 활성화 변경 실패: ${error.message}`);
+  }
+  revalidatePath('/admin');
 }
 
 export async function updateModerationRule(formData: FormData) {
@@ -50,13 +54,17 @@ export async function updateModerationRule(formData: FormData) {
       rule_label: ruleLabel,
       rule_prompt: rulePrompt,
       severity: severity,
-      updated_at: new Date().toISOString(),
-      updated_by: user.email
+      updated_at: new Date().toISOString()
     })
     .eq('id', ruleId);
 
-  if (error) throw new Error(`규칙 수정 실패: ${error.message}`);
-  revalidatePath('/admin/guidelines');
+  if (error) {
+    if (error.message.includes('schema cache') || error.message.includes('relation "public.moderation_rules" does not exist')) {
+      throw new Error('Supabase DB에 moderation_rules 테이블 생성이 필요합니다. 마이그레이션 SQL(supabase/migrations/20260809000002_create_moderation_rules.sql)을 실행해 주세요.');
+    }
+    throw new Error(`규칙 수정 실패: ${error.message}`);
+  }
+  revalidatePath('/admin');
 }
 
 export async function createModerationRule(formData: FormData) {
@@ -77,13 +85,18 @@ export async function createModerationRule(formData: FormData) {
       rule_label: ruleLabel,
       rule_prompt: rulePrompt,
       severity: severity,
-      is_active: true,
-      updated_by: user.email
+      is_active: true
     });
 
-  if (error) throw new Error(`새 규칙 추가 실패: ${error.message}`);
-  revalidatePath('/admin/guidelines');
+  if (error) {
+    if (error.message.includes('schema cache') || error.message.includes('relation "public.moderation_rules" does not exist')) {
+      throw new Error('Supabase DB에 moderation_rules 테이블 생성이 필요합니다. 마이그레이션 SQL(supabase/migrations/20260809000002_create_moderation_rules.sql)을 실행해 주세요.');
+    }
+    throw new Error(`새 규칙 추가 실패: ${error.message}`);
+  }
+  revalidatePath('/admin');
 }
+
 
 // ----------------------------------------------------
 // 2. 검토대기함 (posts status) 관련 Actions
