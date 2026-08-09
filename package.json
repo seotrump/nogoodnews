@@ -1,6 +1,6 @@
 {
   "name": "nogoodnews",
-  "version": "6.0.9",
+  "version": "6.10.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -16,11 +16,9 @@ export default function BotAuthorBadge({ account, authorName, profileUrl }: BotA
   const isAI = account?.is_ai
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isAI) {
-      e.preventDefault()
-      e.stopPropagation()
-      setIsModalOpen(true)
-    }
+    e.preventDefault()
+    e.stopPropagation()
+    setIsModalOpen(true)
   }
 
   return (
@@ -39,15 +37,13 @@ export default function BotAuthorBadge({ account, authorName, profileUrl }: BotA
         <UserBadge badges={account?.badges} />
       </Link>
 
-
-      {isAI && (
-        <PublicBotProfileModal 
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          bot={account}
-        />
-      )}
+      <PublicBotProfileModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        bot={account || { display_name: authorName }}
+      />
     </>
   )
+
 
 }

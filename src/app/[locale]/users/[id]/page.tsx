@@ -24,35 +24,44 @@ export default async function UserProfilePage({ params, searchParams }: { params
   // Get current user for admin checks
   const { data: { user: currentUser } } = await supabase.auth.getUser()
 
-  // Get user profile
+  // Get user profile with multi fallback
   const rawId = decodeURIComponent(id);
+  const cleanId = rawId.startsWith('@') ? rawId.substring(1) : rawId
 
-  const isUsername = rawId.startsWith('@')
-  const lookupValue = isUsername ? rawId.substring(1) : rawId
+  let profile = null
 
-  let profileQuery = supabase
+  // 1차: username 조건 조회
+  const { data: byUsername } = await supabase
     .from('accounts')
     .select('*')
+    .eq('username', cleanId)
+    .maybeSingle()
 
-  if (isUsername) {
-    profileQuery = profileQuery.eq('username', lookupValue)
-  } else {
-    profileQuery = profileQuery.eq('id', lookupValue)
+  profile = byUsername
+
+  // 2차: id(UUID) 조건 조회
+  if (!profile) {
+    const { data: byId } = await supabase
+      .from('accounts')
+      .select('*')
+      .eq('id', cleanId)
+      .maybeSingle()
+    profile = byId
   }
 
-  const { data: profile, error } = await profileQuery.single()
-
-  if (error || !profile) {
+  if (!profile) {
     notFound()
   }
+
 
   const currentTab = tab || (profile.is_ai ? 'profile' : 'comments')
   const sortBy = sort || (currentTab === 'feeds' ? 'latest' : 'reactions')
 
   // Redirect from UUID to @username if username exists
-  if (!isUsername && profile.username) {
+  if (!rawId.startsWith('@') && profile.username) {
     redirect(`/${locale}/users/@${profile.username}`)
   }
+
 
   id = profile.id
   const profileUrlId = profile.username ? `@${profile.username}` : profile.id
@@ -257,63 +266,62 @@ export default async function UserProfilePage({ params, searchParams }: { params
           {currentTab === 'profile' && profile.is_ai ? (
             profile.show_public_card !== false ? (
               <div className="w-full bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white rounded-3xl p-6 text-left shadow-xl border border-purple-700/50">
-                {/* 1. 상단 타이틀 ("프로필 분석") & NBTI 배지 & Type Code */}
+                {/* 1. 상단 타이틀 ("프로필 분석") & NBTI (왼쪽) & Type Code (우측 배지) */}
                 <div className="flex items-center justify-between pb-3 border-b border-purple-700/60 mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🤖</span>
-                    <div>
-                      <h3 className="text-sm font-bold text-white">프로필 분석</h3>
-                      <p className="text-[11px] text-purple-300 font-mono">Type Code: {profile.type_code || 'T2A2M2P2'}</p>
-                    </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-1">
+                      <span>🤖</span> 프로필 분석
+                    </h3>
+                    {profile.show_nbti_badge !== false && (
+                      <p className="text-xs font-black text-purple-300 font-mono mt-0.5">
+                        🧠 NBTI: {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')}
+                      </p>
+                    )}
                   </div>
-                  {profile.show_nbti_badge !== false && (
-                    <span className="bg-purple-500 text-white font-mono font-black text-xs px-3 py-1 rounded-full shadow-md border border-purple-400">
-                      🧠 NBTI: {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')}
-                    </span>
-                  )}
+                  <span className="bg-purple-950/80 text-purple-200 font-mono font-bold text-[11px] px-3 py-1 rounded-full border border-purple-700/80 shadow-md">
+                    Type Code: {profile.type_code || 'T2A2M2P2'}
+                  </span>
                 </div>
 
-                {/* 2. 존재 유형 & 소속 세계관 & 역할 & 전문분야 & 성별 */}
+                {/* 2. 존재 유형 & 소속 세계관 (타이틀과 대분류는 한 줄에 완벽 배치) */}
                 {profile.show_realm_info !== false && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-purple-950/60 p-3.5 rounded-2xl border border-purple-800/80 text-xs">
+                  <div className="space-y-3 mb-4 bg-purple-950/60 p-4 rounded-2xl border border-purple-800/80 text-xs">
                     <div>
-                      <span className="text-purple-400 font-bold">존재 유형</span>
-                      <p className="text-white font-medium mt-0.5">
-                        <strong className="text-purple-300">{getExistenceCategoryLabel(profile.existence_category, true)}</strong>
+                      <p className="font-bold text-white">
+                        <span className="text-purple-400 font-normal">존재 유형:</span>{' '}
+                        <span className="text-purple-300">{getExistenceCategoryLabel(profile.existence_category, true)}</span>
+                        {profile.existence_detail ? ` (${profile.existence_detail})` : ''}
                       </p>
-                      {profile.existence_detail && (
-                        <p className="text-[11px] text-purple-200 pl-2 mt-0.5 border-l-2 border-purple-400">
-                          {profile.existence_detail}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-purple-400 font-bold">소속 / 거주지</span>
-                      <p className="text-white font-medium mt-0.5">
-                        <strong className="text-purple-300">{getRealmCategoryLabel(profile.realm_category, true)}</strong>
-                      </p>
-                      {profile.realm_detail && (
-                        <p className="text-[11px] text-purple-200 pl-2 mt-0.5 border-l-2 border-purple-400">
-                          {profile.realm_detail}
-                        </p>
-                      )}
                     </div>
 
-                    {/* 말투, 역할, 전문분야, 성별 (같은 줄 가로 배치) */}
-                    <div className="sm:col-span-2 pt-2 border-t border-purple-800/50 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
-                      {profile.speech_style && (
-                        <p><strong className="text-purple-400">말투:</strong> {profile.speech_style}</p>
+                    <div>
+                      <p className="font-bold text-white">
+                        <span className="text-purple-400 font-normal">소속 / 거주지:</span>{' '}
+                        <span className="text-purple-300">{getRealmCategoryLabel(profile.realm_category, true)}</span>
+                        {profile.realm_detail ? ` (${profile.realm_detail})` : ''}
+                      </p>
+                    </div>
+
+                    {/* 말투는 다른 줄에 독자적 분리 구성 */}
+                    {profile.speech_style && (
+                      <p className="pt-2 border-t border-purple-800/50">
+                        <strong className="text-purple-400">말투 특징:</strong>{' '}
+                        <span className="text-purple-200 font-medium">{profile.speech_style}</span>
+                      </p>
+                    )}
+
+                    {/* 전문분야 - 역할 - 성별 순서 배치 */}
+                    <div className="pt-2 border-t border-purple-800/50 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+                      {profile.category && (
+                        <p>
+                          <strong className="text-purple-400">전문분야:</strong>{' '}
+                          <span className="text-blue-300 font-semibold">{getBotCategoryLabel(profile.category, true)}</span>
+                        </p>
                       )}
                       {profile.role && (
                         <p>
-                          <strong className="text-purple-400">역할:</strong>{' '}
+                          <strong className="text-purple-400">전담 역할:</strong>{' '}
                           <span>{profile.role === 'feed_focused' ? '피드 전담' : profile.role === 'comment_focused' ? '댓글 전담' : '혼합'}</span>
-                        </p>
-                      )}
-                      {profile.category && (
-                        <p>
-                          <strong className="text-purple-400">분야:</strong>{' '}
-                          <span className="text-blue-300 font-semibold">{getBotCategoryLabel(profile.category, true)}</span>
                         </p>
                       )}
                       {profile.gender && profile.gender !== 'unknown' && (
@@ -326,22 +334,23 @@ export default async function UserProfilePage({ params, searchParams }: { params
                   </div>
                 )}
 
-                {/* 3. 📜 페르소나 정체성 프롬프트 (핵심 정체성만 전체 노출) */}
+                {/* 3. 📜 페르소나 정체성 프롬프트 (핵심 정체성 문장만 추출 노출) */}
                 {profile.show_prompt !== false && profile.persona_prompt && (
                   <div className="mb-4 pt-1">
                     <span className="text-purple-300 font-bold text-xs block mb-1.5 flex items-center gap-1">
-                      <span>📜</span> 핵심 정체성 (Core Identity)
+                      <span>📜</span> 핵심 정체성
                     </span>
                     <div className="bg-black/80 text-green-400 p-4 rounded-xl font-mono text-[11px] leading-relaxed border border-purple-800/60 whitespace-pre-wrap break-words">
                       {(() => {
                         const prompt = profile.persona_prompt || ''
-                        // # 핵심 정체성 또는 첫 문장만 깨끗하게 잘라내기
                         const match = prompt.match(/# (?:Core Identity|핵심 정체성)[\s\S]*?(?=\n#|$)/i)
-                        return match ? match[0].trim() : prompt.split('\n\n')[0]
+                        if (match) return match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim().split('\n')[0]
+                        return prompt.split('.')[0] + '.'
                       })()}
                     </div>
                   </div>
                 )}
+
 
                 {/* 4. 4대 판단축 (TAMP) 요약 바 */}
                 <div className="space-y-2 text-xs pt-1">
