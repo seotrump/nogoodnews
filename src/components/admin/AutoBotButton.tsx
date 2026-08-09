@@ -168,8 +168,59 @@ export default function AutoBotButton() {
     router.refresh()
   }
 
+  const [settingTab, setSettingTab] = useState<'feed' | 'comment'>('feed')
+
   return (
-    <div className="ml-auto flex flex-col items-end gap-2">
+    <div className="ml-auto flex flex-col items-end gap-3.5 bg-gray-50 dark:bg-gray-800/80 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-lg shadow-sm">
+      {/* 탭 네비게이션: [피드 설정] 바로 옆에 [댓글 설정] 고정 배치 */}
+      <div className="flex items-center gap-1 bg-gray-200/80 dark:bg-gray-900 p-1 rounded-xl w-full">
+        <button
+          type="button"
+          onClick={() => setSettingTab('feed')}
+          className={`flex-1 py-1.5 px-3 text-xs font-black rounded-lg transition flex items-center justify-center gap-1.5 ${
+            settingTab === 'feed'
+              ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-300 shadow-sm'
+              : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+          }`}
+        >
+          <span>📰</span> 피드 설정
+        </button>
+        <button
+          type="button"
+          onClick={() => setSettingTab('comment')}
+          className={`flex-1 py-1.5 px-3 text-xs font-black rounded-lg transition flex items-center justify-center gap-1.5 ${
+            settingTab === 'comment'
+              ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-300 shadow-sm'
+              : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+          }`}
+        >
+          <span>💬</span> 댓글 설정
+        </button>
+      </div>
+
+      {/* 피드 설정 / 댓글 설정 탭별 정보 파라미터 */}
+      <div className="w-full text-xs text-gray-600 dark:text-gray-300">
+        {settingTab === 'feed' ? (
+          <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-purple-100 dark:border-purple-900/50 space-y-1.5">
+            <p className="font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+              <span>📰</span> 피드 작성 모드 (Pro & 기자단 봇 전용)
+            </p>
+            <p className="text-[11px] text-gray-500 leading-relaxed">
+              뉴스 이슈를 수집하여 심층 뉴스 및 칼럼 피드를 게시하는 설정입니다. 낡은 수동 프롬프트 수식 없이 봇의 존재유형/말투 기반으로 자동 튜닝됩니다.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50 space-y-1.5">
+            <p className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+              <span>💬</span> 댓글 설정 (전체 봇 공통 반응 소통)
+            </p>
+            <p className="text-[11px] text-gray-500 leading-relaxed">
+              모든 봇(Lite, Pro, 기자단)이 피드와 대화에 1~2문장의 단문으로 소통하도록 적용하는 댓글 전용 파라미터 설정입니다.
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* 주제어 입력 (선택) */}
       <div className="flex items-center gap-2 w-full">
         <input
@@ -177,39 +228,42 @@ export default function AutoBotButton() {
           value={topicKeyword}
           onChange={e => setTopicKeyword(e.target.value)}
           placeholder="주제어 입력 (선택) — 입력 시 주제 기반 생성"
-          className="flex-1 h-8 px-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-black outline-none bg-white"
+          className="flex-1 h-9 px-3 text-xs border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
           disabled={isLoading}
         />
       </div>
-      <div className="flex items-center gap-2">
+
+      {/* 오토봇 생성 버튼들 */}
+      <div className="flex items-center gap-2 w-full pt-1">
         <button 
           type="button" 
           onClick={handleGeneralBot} 
           disabled={isLoading}
-          className={`px-4 h-8 text-sm font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 h-9 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 ${
             isLoading && loadingType !== 'general' 
               ? 'bg-gray-100 text-gray-400' 
               : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50'
           }`}
         >
-          <span className="text-base">🤖</span>
-          {isLoading && loadingType === 'general' ? '생성 중...' : '오토봇 라이트'}
+          <span className="text-sm">🤖</span>
+          {isLoading && loadingType === 'general' ? '생성 중...' : '오토봇 라이트 (댓글 전문)'}
         </button>
 
         <button 
           type="button" 
           onClick={handleProBot} 
           disabled={isLoading}
-          className={`px-4 h-8 text-sm font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 h-9 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 ${
             isLoading && loadingType !== 'pro'
               ? 'bg-purple-100 text-purple-300'
               : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50'
           }`}
         >
-          <span className="text-base">✨</span>
-          {isLoading && loadingType === 'pro' ? 'PRO 생성 중...' : '오토봇 프로'}
+          <span className="text-sm">✨</span>
+          {isLoading && loadingType === 'pro' ? 'PRO 생성 중...' : '오토봇 프로 (피드+댓글)'}
         </button>
       </div>
     </div>
   )
 }
+

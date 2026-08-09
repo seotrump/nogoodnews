@@ -15,7 +15,8 @@ interface BotBuilderProps {
 export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuilderProps) {
   const t = useTranslations('Admin')
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'basic' | 'feed' | 'comment' | 'personality' | 'advanced'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'personality' | 'vocabulary' | 'training' | 'conditions'>('basic')
+
 
 
   // States
@@ -275,11 +276,12 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
 
   const tabs = [
     { id: 'basic', label: '기본 설정' },
-    { id: 'feed', label: '피드 설정' },
-    { id: 'comment', label: '댓글 설정' },
-    { id: 'personality', label: '성향 튜닝 (선택)' },
-    { id: 'advanced', label: '고급 튜닝 (선택)' }
+    { id: 'personality', label: '성향 튜닝' },
+    { id: 'vocabulary', label: '어휘 규칙' },
+    { id: 'training', label: '반응 훈련' },
+    { id: 'conditions', label: '활동 조건' }
   ] as const
+
 
 
   return (
@@ -700,29 +702,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
           </div>
         )}
 
-        {activeTab === 'feed' && (
-          <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs">
-            <h4 className="font-bold text-sm text-gray-900 border-b pb-2">📰 피드(게시글) 생성 조건 및 작성 스타일</h4>
-            <p className="text-gray-500">봇이 뉴스 이슈를 물어와 새로운 피드를 작성할 때 사용되는 지침입니다. (Pro 및 기자단 봇 전용)</p>
-            <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 leading-relaxed text-purple-900 font-mono">
-              ✨ 봇의 정체성과 말투, 성향 지표에 맞춰 피드 프롬프트가 동적으로 자동 합성됩니다.
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'comment' && (
-          <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs">
-            <h4 className="font-bold text-sm text-gray-900 border-b pb-2">💬 댓글 작성 및 반응 스타일</h4>
-            <p className="text-gray-500">모든 봇(Lite, Pro, 기자단)이 다른 피드나 댓글에 반응할 때 1~2문장의 단문으로 소통하는 전용 지침입니다.</p>
-            <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 leading-relaxed text-blue-900 font-mono">
-              ✨ 봇의 어조와 캐릭터에 맞춰 1~2문장 짤막한 반응 댓글 프롬프트가 동적으로 자동 반영됩니다.
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'advanced' && (
+        {activeTab === 'vocabulary' && (
           <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h4 className="font-bold text-sm text-gray-900 border-b pb-2">⚙️ 고급 수동 튜닝 (선택)</h4>
             <div>
               <label className="block text-sm font-bold mb-1.5">{t('formality')}</label>
               <div className="flex flex-wrap gap-4">
@@ -761,6 +742,57 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
               </div>
               <input type="text" placeholder={t('catchphrasesHint')} onKeyDown={e => handleKeyDown(e, setForbiddenWords)} className="w-full border border-red-200 p-2.5 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm" />
             </div>
+          </div>
+        )}
+
+        {activeTab === 'training' && (
+
+          <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {fewShots.map((shot, index) => (
+              <div key={shot.id} className="p-3 border border-gray-200 rounded-lg bg-gray-50 relative group">
+                <button type="button" onClick={() => {
+                  setFewShots(prev => prev.filter(s => s.id !== shot.id))
+                  toast(t('exampleRemoved'), { icon: '🗑️' })
+                }} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 hidden group-hover:block transition p-1">
+                  ✕
+                </button>
+                <div className="mb-2">
+                  <label className="block text-xs font-bold text-gray-500 mb-1">#{index + 1} {t('situation')}</label>
+                  <input type="text" value={shot.situation} onChange={e => {
+                    const newShots = [...fewShots]
+                    newShots[index].situation = e.target.value
+                    setFewShots(newShots)
+                  }} className="w-full border border-gray-200 p-2 rounded focus:ring-1 focus:ring-black outline-none text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-purple-600 mb-1">#{index + 1} {t('botResponse')}</label>
+                  <textarea rows={2} value={shot.response} onChange={e => {
+                    const newShots = [...fewShots]
+                    newShots[index].response = e.target.value
+                    setFewShots(newShots)
+                  }} className="w-full border border-purple-200 p-2 rounded focus:ring-1 focus:ring-purple-500 outline-none text-sm resize-none"></textarea>
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={() => setFewShots(prev => [...prev, { id: Date.now(), situation: '', response: '' }])} className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-medium hover:border-black hover:text-black transition text-sm flex items-center justify-center gap-2">
+              <span>+</span> {t('addExample')}
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'conditions' && (
+          <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div>
+              <label className="block text-sm font-bold mb-1.5">{t('triggerKeywords')}</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {triggerKeywords.map((tag, i) => (
+                  <span key={i} className="bg-yellow-100 text-yellow-800 text-xs px-2.5 py-1 rounded-full flex items-center gap-1 font-medium border border-yellow-200">
+                    {tag} <button type="button" onClick={() => removeTag(i, setTriggerKeywords)} className="hover:text-black">×</button>
+                  </span>
+                ))}
+              </div>
+              <input type="text" placeholder={t('catchphrasesHint')} onKeyDown={e => handleKeyDown(e, setTriggerKeywords)} className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm" />
+            </div>
 
             {/* 규칙 가이드 */}
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mt-2">
@@ -786,6 +818,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
             </div>
           </div>
         )}
+
 
 
 
