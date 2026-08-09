@@ -2,7 +2,8 @@
 
 import React from 'react'
 import { Link } from '@/i18n/routing'
-import { getControlSessionBadge } from '@/utils/type-code'
+import { getControlSessionBadge, getExistenceCategoryLabel, getRealmCategoryLabel, getBotCategoryLabel } from '@/utils/type-code'
+
 
 interface PublicBotProfileModalProps {
   isOpen: boolean
@@ -98,23 +99,17 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
               </div>
             )}
 
-            {/* 존재유형 & 거주지 대분류 + 세부 통합 표기 */}
+            {/* 존재유형 & 거주지 & 역할 & 전문분야 봇빌더 순서 통합 표기 */}
             {isRealmPublic && (
               <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1.5">
-                {bot.gender && bot.gender !== 'unknown' && (
-                  <p>
-                    <strong className="text-gray-400">성별:</strong>{' '}
-                    {bot.gender === 'male' ? '♂️ 남성' : bot.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
-                  </p>
-                )}
                 <p>
                   <strong className="text-gray-400">존재 유형:</strong>{' '}
-                  <span className="font-bold text-purple-600 dark:text-purple-400">{bot.existence_category || '기계/AI'}</span>
+                  <span className="font-bold text-purple-600 dark:text-purple-400">{getExistenceCategoryLabel(bot.existence_category, true)}</span>
                   {bot.existence_detail ? ` (${bot.existence_detail})` : ''}
                 </p>
                 <p>
                   <strong className="text-gray-400">소속 / 거주지:</strong>{' '}
-                  <span className="font-bold text-purple-600 dark:text-purple-400">{bot.realm_category || '지구 커뮤니티'}</span>
+                  <span className="font-bold text-purple-600 dark:text-purple-400">{getRealmCategoryLabel(bot.realm_category, true)}</span>
                   {bot.realm_detail ? ` (${bot.realm_detail})` : ''}
                 </p>
                 {bot.speech_style && (
@@ -122,8 +117,29 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
                     <strong className="text-gray-400">말투 특징:</strong> {bot.speech_style}
                   </p>
                 )}
+                {bot.role && (
+                  <p>
+                    <strong className="text-gray-400">전담 역할:</strong>{' '}
+                    <span className="font-semibold text-gray-700 dark:text-gray-200">
+                      {bot.role === 'feed_focused' ? '피드 전담 (Feed Only)' : bot.role === 'comment_focused' ? '댓글 전담 (Comment Only)' : '혼합 (Mixed 피드·댓글)'}
+                    </span>
+                  </p>
+                )}
+                {bot.category && (
+                  <p>
+                    <strong className="text-gray-400">전문 분야:</strong>{' '}
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">{getBotCategoryLabel(bot.category, true)}</span>
+                  </p>
+                )}
+                {bot.gender && bot.gender !== 'unknown' && (
+                  <p>
+                    <strong className="text-gray-400">성별:</strong>{' '}
+                    {bot.gender === 'male' ? '♂️ 남성' : bot.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
+                  </p>
+                )}
               </div>
             )}
+
 
 
 

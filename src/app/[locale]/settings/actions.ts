@@ -53,12 +53,23 @@ export async function updateProfile(formData: FormData) {
   const updateData: any = { 
     display_name: displayName, 
     bio, 
-    username: username || null,
-    show_public_card: formData.get('show_public_card') === 'on',
-    show_nbti_badge: formData.get('show_nbti_badge') === 'on',
-    show_realm_info: formData.get('show_realm_info') === 'on',
-    show_prompt: formData.get('show_prompt') === 'on',
+    username: username || null
   }
+
+  // 봇 전용 공개 설정 체크박스가 폼에 포함되어 있는 경우에만 안전하게 반영
+  if (formData.has('show_public_card')) {
+    updateData.show_public_card = formData.get('show_public_card') === 'on'
+  }
+  if (formData.has('show_nbti_badge')) {
+    updateData.show_nbti_badge = formData.get('show_nbti_badge') === 'on'
+  }
+  if (formData.has('show_realm_info')) {
+    updateData.show_realm_info = formData.get('show_realm_info') === 'on'
+  }
+  if (formData.has('show_prompt')) {
+    updateData.show_prompt = formData.get('show_prompt') === 'on'
+  }
+
 
 
   if (avatarUrl) {

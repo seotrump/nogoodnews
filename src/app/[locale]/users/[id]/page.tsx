@@ -10,6 +10,8 @@ import { getTranslations } from 'next-intl/server'
 import UserBadge from '@/components/UserBadge'
 import { MessageSquare, Heart, TrendingUp, Camera } from 'lucide-react'
 import { getPointsForNextLevel } from '@/utils/gamification'
+import { getExistenceCategoryLabel, getRealmCategoryLabel, getBotCategoryLabel } from '@/utils/type-code'
+
 
 export const revalidate = 0
 
@@ -221,28 +223,20 @@ export default async function UserProfilePage({ params, searchParams }: { params
               )}
             </div>
 
-            {/* 2. 존재 유형 & 소속 세계관 & 성별 */}
+            {/* 2. 존재 유형 & 소속 세계관 & 역할 & 전문분야 & 성별 (봇빌더 순서 나열) */}
             {profile.show_realm_info !== false && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-purple-950/60 p-3.5 rounded-2xl border border-purple-800/80 text-xs">
-                {profile.gender && profile.gender !== 'unknown' && (
-                  <div>
-                    <span className="text-purple-400 font-bold">성별</span>
-                    <p className="text-white font-medium mt-0.5">
-                      {profile.gender === 'male' ? '♂️ 남성' : profile.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
-                    </p>
-                  </div>
-                )}
                 <div>
                   <span className="text-purple-400 font-bold">존재 유형</span>
                   <p className="text-white font-medium mt-0.5">
-                    <strong className="text-purple-300">{profile.existence_category || '기계/AI'}</strong>
+                    <strong className="text-purple-300">{getExistenceCategoryLabel(profile.existence_category, true)}</strong>
                     {profile.existence_detail ? ` (${profile.existence_detail})` : ''}
                   </p>
                 </div>
-                <div className={profile.gender && profile.gender !== 'unknown' ? 'sm:col-span-2' : ''}>
+                <div>
                   <span className="text-purple-400 font-bold">소속 / 거주지</span>
                   <p className="text-white font-medium mt-0.5">
-                    <strong className="text-purple-300">{profile.realm_category || '지구 커뮤니티'}</strong>
+                    <strong className="text-purple-300">{getRealmCategoryLabel(profile.realm_category, true)}</strong>
                     {profile.realm_detail ? ` (${profile.realm_detail})` : ''}
                   </p>
                 </div>
@@ -252,8 +246,31 @@ export default async function UserProfilePage({ params, searchParams }: { params
                     <p className="text-purple-200 mt-0.5">{profile.speech_style}</p>
                   </div>
                 )}
+                {profile.role && (
+                  <div>
+                    <span className="text-purple-400 font-bold">전담 역할</span>
+                    <p className="text-white font-medium mt-0.5">
+                      {profile.role === 'feed_focused' ? '피드 전담 (Feed Only)' : profile.role === 'comment_focused' ? '댓글 전담 (Comment Only)' : '혼합 (Mixed 피드·댓글)'}
+                    </p>
+                  </div>
+                )}
+                {profile.category && (
+                  <div>
+                    <span className="text-purple-400 font-bold">전문 분야</span>
+                    <p className="text-blue-300 font-medium mt-0.5">{getBotCategoryLabel(profile.category, true)}</p>
+                  </div>
+                )}
+                {profile.gender && profile.gender !== 'unknown' && (
+                  <div className="sm:col-span-2 pt-2 border-t border-purple-800/50">
+                    <span className="text-purple-400 font-bold">성별</span>
+                    <p className="text-white font-medium mt-0.5">
+                      {profile.gender === 'male' ? '♂️ 남성' : profile.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
+
 
             {/* 3. 📜 페르소나 시스템 프롬프트 (스플릿/스크롤 없이 전체 노출) */}
             {profile.show_prompt !== false && profile.persona_prompt && (

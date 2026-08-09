@@ -298,14 +298,61 @@ export function evaluateNbtiConsistency(resultCodes: string[]): {
   }
 
   const matchRate = totalChars > 0 ? (totalMatchChars / totalChars) * 100 : 0;
-  // 3글자 이상 일치(75%+) 기준
-  const passed = matchRate >= 75.0;
+  // 75% 이상 일치 시 passed: true
+  const passed = matchRate >= 75;
 
   return {
     passed,
     matchRate: Math.round(matchRate * 10) / 10,
-    modeType,
+    modeType
   };
+}
+
+// ──────────────────────────────────────────────
+// 봇빌더 카테고리 영문 ➔ 한국어 다국어 매핑 유틸리티
+// ──────────────────────────────────────────────
+export function getExistenceCategoryLabel(cat?: string, isKo: boolean = true): string {
+  const map: Record<string, { ko: string, en: string }> = {
+    human: { ko: '인간', en: 'Human' },
+    creature: { ko: '동식물/생물', en: 'Creature' },
+    mechanical: { ko: '기계/AI', en: 'Mechanical' },
+    spiritual: { ko: '귀신/영혼', en: 'Spiritual' },
+    extraterrestrial: { ko: '외계/타차원', en: 'Extraterrestrial' },
+    conceptual: { ko: '개념/감정 의인화', en: 'Conceptual' },
+    hybrid: { ko: '혼합형', en: 'Hybrid' },
+    other: { ko: '기타', en: 'Other' },
+  };
+  if (!cat) return isKo ? 'AI 인공지능' : 'AI Bot';
+  return (isKo ? map[cat]?.ko : map[cat]?.en) || cat;
+}
+
+export function getRealmCategoryLabel(cat?: string, isKo: boolean = true): string {
+  const map: Record<string, { ko: string, en: string }> = {
+    earth_physical: { ko: '지구 물리 공간', en: 'Earth Physical' },
+    earth_metaphysical: { ko: '지구 내부/마음속', en: 'Earth Metaphysical' },
+    celestial: { ko: '천상/사후 세계', en: 'Celestial' },
+    extraterrestrial: { ko: '우주/외계', en: 'Extraterrestrial' },
+    dimensional: { ko: '다차원/이세계', en: 'Dimensional' },
+    digital: { ko: '디지털 공간', en: 'Digital' },
+  };
+  if (!cat) return isKo ? '지구 커뮤니티' : 'Earth Community';
+  return (isKo ? map[cat]?.ko : map[cat]?.en) || cat;
+}
+
+export function getBotCategoryLabel(cat?: string, isKo: boolean = true): string {
+  const map: Record<string, { ko: string, en: string }> = {
+    politics: { ko: '정치', en: 'Politics' },
+    economy: { ko: '경제', en: 'Economy' },
+    society: { ko: '사회', en: 'Society' },
+    tech: { ko: 'IT/기술', en: 'IT/Tech' },
+    world: { ko: '세계', en: 'World' },
+    entertainment: { ko: '연예', en: 'Entertainment' },
+    sports: { ko: '스포츠', en: 'Sports' },
+    culture: { ko: '생활/문화', en: 'Life/Culture' },
+    opinion: { ko: '오피니언', en: 'Opinion' },
+  };
+  if (!cat) return isKo ? '종합 뉴스' : 'General News';
+  return (isKo ? map[cat]?.ko : map[cat]?.en) || cat;
 }
 
 
