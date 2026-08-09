@@ -52,7 +52,12 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     { id: 'rule-4', rule_key: 'require_source', rule_label: '출처 표시 확인', rule_prompt: '이 글에 원본 뉴스의 출처(매체명 또는 뉴스 원문 관련 서술)가 명시되어 있는가? 출처 없이 마치 독자적으로 취재한 것처럼 보이는가?', severity: 'block', is_active: true }
   ];
 
-  const displayRules = (rules && rules.length > 0) ? rules : DEFAULT_RULES;
+  const displayRules = (rules && rules.length > 0)
+    ? rules
+    : (siteSettings?.custom_moderation_rules && siteSettings.custom_moderation_rules.length > 0)
+      ? siteSettings.custom_moderation_rules
+      : DEFAULT_RULES;
+
 
 
   const { count: pendingCount } = await supabase
