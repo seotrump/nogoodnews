@@ -141,9 +141,16 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
         {tab === 'guidelines' && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <GuidelinesClientUI initialRulesText={siteSettings?.moderation_rules_text} />
+            <GuidelinesClientUI 
+              initialRulesText={
+                siteSettings?.moderation_rules_text || 
+                (Array.isArray(siteSettings?.custom_moderation_rules) && siteSettings.custom_moderation_rules[0]?.text) || 
+                undefined
+              } 
+            />
           </div>
         )}
+
 
 
         {tab === 'feed' && (
