@@ -68,9 +68,10 @@ interface Props {
 export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props) {
   const [isPending, startTransition] = useTransition()
   
+  const [autoBotPrompt, setAutoBotPrompt] = useState(settings?.auto_bot_prompt || DEFAULT_AUTO_BOT_PROMPT)
   const [feedPromptLite, setFeedPromptLite] = useState(settings?.feed_prompt_lite || DEFAULT_FEED_PROMPT_LITE)
   const [feedPromptPro, setFeedPromptPro] = useState(settings?.feed_prompt_pro || DEFAULT_FEED_PROMPT_PRO)
-
+  const [feedTab, setFeedTab] = useState<'pro' | 'reporter'>('pro')
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -79,7 +80,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
     startTransition(async () => {
       try {
         await updateSystemPrompts(formData)
-        toast.success('로봇 프롬프트가 저장되었습니다.')
+        toast.success('설정이 성공적으로 저장되었습니다.')
       } catch (err: any) {
         toast.error(err.message || '저장 실패')
       }
@@ -91,8 +92,11 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 border-b pb-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-            {showTab === 'feed' ? '📰 피드 작성 시스템 프롬프트' : showTab === 'comment' ? '💬 댓글 작성 시스템 프롬프트' : '🤖 오토봇 생성 및 튜닝 설정'}
+            {showTab === 'feed' ? '📰 피드 작성 시스템 프롬프트 (2단계)' : showTab === 'comment' ? '💬 댓글 소통 시스템 프롬프트' : '🤖 오토봇 무작위 기획 기준 프롬프트'}
           </h1>
+          <p className="text-xs text-gray-500 mt-1">
+            {showTab === 'feed' ? 'Pro 봇과 기자단/보도 뱃지 봇의 피드 작성 수위를 2단계로 정밀 관리합니다.' : showTab === 'comment' ? '모든 봇이 1~2문장 단문으로 소통할 때 사용하는 가이드 지침입니다.' : '오토봇 자동 생성 시 새로운 봇의 페르소나 및 정체성을 무작위로 기획하는 핵심 기준입니다.'}
+          </p>
         </div>
         
         <div className="flex items-center gap-3 shrink-0">
@@ -109,22 +113,60 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       <div className="mt-2">
         {showTab === 'feed' && (
           <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-            <h3 className="font-bold text-sm text-gray-900 flex items-center gap-1.5 border-b pb-3">
-              <span>📰</span> 피드(게시글) 작성 시스템 지침
-            </h3>
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                피드 작성 가이드 지침 (Pro 및 기자단 봇 전용)
-              </label>
-              <textarea
-                name="feedPromptPro"
-                value={feedPromptPro}
-                onChange={e => setFeedPromptPro(e.target.value)}
-                rows={12}
-                className="w-full border border-gray-300 rounded-xl p-4 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50"
-                placeholder="봇이 뉴스를 바탕으로 심층 기사 및 피드를 올릴 때의 지침을 작성하세요."
-              />
+            <div className="flex border-b border-gray-200 gap-2 pb-3">
+              <button
+                type="button"
+                onClick={() => setFeedTab('pro')}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition ${
+                  feedTab === 'pro'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                1단계: Pro 피드 지침 (일반 칼럼/사설)
+              </button>
+              <button
+                type="button"
+                onClick={() => setFeedTab('reporter')}
+                className={`px-4 py-2 text-xs font-bold rounded-lg transition ${
+                  feedTab === 'reporter'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                2단계: 기자단 피드 지침 (심층 보도/기사체)
+              </button>
             </div>
+
+            {feedTab === 'pro' ? (
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  1단계: Pro 피드 작성 지침 (사설/컬럼형 2~3단락 글쓰기)
+                </label>
+                <textarea
+                  name="feedPromptPro"
+                  value={feedPromptPro}
+                  onChange={e => setFeedPromptPro(e.target.value)}
+                  rows={12}
+                  className="w-full border border-gray-300 rounded-xl p-4 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50"
+                  placeholder="Pro 봇이 뉴스를 바탕으로 개인 칼럼이나 사설 피드를 올릴 때의 지침을 작성하세요."
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  2단계: 기자단 피드 작성 지침 (헤드라인 + 소제목 + 심층 보도 기사체)
+                </label>
+                <textarea
+                  name="feedPromptLite"
+                  value={feedPromptLite}
+                  onChange={e => setFeedPromptLite(e.target.value)}
+                  rows={12}
+                  className="w-full border border-gray-300 rounded-xl p-4 text-xs font-mono focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed bg-gray-50"
+                  placeholder="기자단/보도 뱃지 봇이 헤드라인과 소제목을 갖춘 심층 보도 피드를 올릴 때의 지침을 작성하세요."
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -152,13 +194,20 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
         {showTab === 'robot' && (
           <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
             <h3 className="font-bold text-sm text-gray-900 flex items-center gap-1.5 border-b pb-3">
-              <span>🤖</span> 오토봇 자동 튜닝 엔진 제어
+              <span>🤖</span> 오토봇 무작위 캐릭터 기획 기준 프롬프트
             </h3>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              과거의 번잡하고 낡은 수동 프롬프트 텍스트 폼(가상글 3편, 수동 수식 등)을 전면 제거하고, 봇 기획 시 앞단에서 선택된 존재유형, 거주지, 말투, 전문분야, 성별, TAMP 판단축 수치를 기반으로 오토봇이 100% 자동 생성 및 튜닝됩니다.
+            <p className="text-xs text-gray-500 leading-relaxed">
+              오토봇 생성 버튼을 누를 때 무작위 봇 캐릭터와 페르소나를 기획하기 위한 최고 관리자 기준 프롬프트입니다.
             </p>
-            <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 text-xs font-mono text-purple-900 leading-relaxed">
-              ✨ 오토봇 생성 시 선택된 아이덴티티 파라미터들이 시스템 백엔드에서 동적으로 실시간 합성됩니다.
+            <div>
+              <textarea
+                name="autoBotPrompt"
+                value={autoBotPrompt}
+                onChange={e => setAutoBotPrompt(e.target.value)}
+                rows={12}
+                className="w-full border border-gray-300 rounded-xl p-4 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50"
+                placeholder="오토봇 생성 시 봇의 정체성을 기획할 기준 프롬프트를 작성하세요."
+              />
             </div>
           </div>
         )}
@@ -166,4 +215,5 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
     </form>
   )
 }
+
 

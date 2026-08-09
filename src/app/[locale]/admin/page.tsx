@@ -9,6 +9,7 @@ import ForceRunForm from './ForceRunForm'
 import { forceAiPost } from './actions'
 import { Link } from '@/i18n/routing'
 import SystemPromptsForm from '@/components/admin/SystemPromptsForm'
+import GuidelinesClientUI from '@/components/admin/GuidelinesClientUI'
 import pkg from '../../../../package.json'
 
 export const dynamic = 'force-dynamic'
@@ -39,6 +40,21 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     .eq('id', 'global')
     .single()
 
+  const { data: rules } = await supabase
+    .from('moderation_rules')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  const DEFAULT_RULES = [
+    { id: 'rule-1', rule_key: 'no_personal_attack', rule_label: '인신공격 금지', rule_prompt: '이 글이 게시자 또는 특정 이용자 개인을 향한 인신공격, 조롱, 비하를 포함하는가? 대상은 뉴스/상황/현상이어야 하며 특정 개인이 되어서는 안 된다.', severity: 'block', is_active: true },
+    { id: 'rule-2', rule_key: 'no_political_verdict', rule_label: '정치적 단정 금지', rule_prompt: '이 글이 실존 정치인, 국가, 기업에 대해 "옳다/그르다"는 단정적 결론을 내리는가? 관찰형 서술(상황이 어떻게 흘러갈지)은 허용되지만 가치 판단형 결론은 금지된다.', severity: 'block', is_active: true },
+    { id: 'rule-3', rule_key: 'no_tragedy_mockery', rule_label: '비극/참사 조롱 금지', rule_prompt: '이 글의 원본 뉴스가 인명 사망·실종, 재난 피해, 범죄 피해자, 투병 등 비극적 소재를 다루고 있는가? 만약 그렇다면, 이 글이 냉소·조롱·가벼운 유머 톤으로 그 비극을 다루고 있는가?', severity: 'block', is_active: true },
+    { id: 'rule-4', rule_key: 'require_source', rule_label: '출처 표시 확인', rule_prompt: '이 글에 원본 뉴스의 출처(매체명 또는 뉴스 원문 관련 서술)가 명시되어 있는가? 출처 없이 마치 독자적으로 취재한 것처럼 보이는가?', severity: 'block', is_active: true }
+  ];
+
+  const displayRules = (rules && rules.length > 0) ? rules : DEFAULT_RULES;
+
+
   const { count: pendingCount } = await supabase
     .from('posts')
     .select('id', { count: 'exact', head: true })
@@ -56,8 +72,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           환경 설정
         </Link>
         <Link 
-          href="/admin/guidelines" 
-          className="px-4 py-2 text-sm font-bold rounded-t-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+          href="/admin?tab=guidelines" 
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'guidelines' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
           규칙 관리
         </Link>
@@ -81,7 +97,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         </Link>
       </div>
 
-
       <div className="bg-white p-4 sm:p-6 rounded-b-xl shadow-sm border border-gray-100 border-t-0">
         {tab === 'main' && (
           <>
@@ -102,6 +117,12 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           </>
         )}
 
+        {tab === 'guidelines' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <GuidelinesClientUI initialRules={displayRules} />
+          </div>
+        )}
+
         {tab === 'feed' && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             <SystemPromptsForm settings={siteSettings || {}} showTab="feed" />
@@ -119,9 +140,8 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             <SystemPromptsForm settings={siteSettings || {}} showTab="robot" />
           </div>
         )}
-
-
       </div>
+
     </div>
   )
 }
