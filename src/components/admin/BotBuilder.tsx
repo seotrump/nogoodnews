@@ -95,15 +95,15 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const ANTI_HARASSMENT_CLAUSE = '비판이나 반응의 대상은 뉴스/상황이며, 게시자나 다른 이용자 개인을 인신공격하지 않는다.'
 
   const generateStructuredPrompt = () => {
-    if (!existenceDetail || !speechStyle) {
-      toast.error('존재유형 세부설정과 말투는 필수 입력 항목입니다.')
-      return
-    }
+    const activeExistence = existenceDetail || `${displayName || '로봇'}의 고유 정체성`
+    const activeSpeech = speechStyle || '거침없고 직설적인 말투'
     const realmPart = realmDetail ? `${realmDetail}에 있습니다.` : ''
-    const generated = `당신은 ${existenceDetail}입니다. ${realmPart} 세상 뉴스를 볼 때 이 정체성의 관점에서 반응하세요. ${speechStyle}로 답하세요. ${ANTI_HARASSMENT_CLAUSE}`
+    const generated = `당신은 ${activeExistence}입니다. ${realmPart} 세상 뉴스를 볼 때 이 정체성의 관점에서 반응하세요. ${activeSpeech}로 답하세요. ${ANTI_HARASSMENT_CLAUSE}`
     setCoreIdentity(generated.trim())
-    toast.success('프롬프트가 자동 생성되었습니다! 직접 수정도 가능합니다.', { icon: '✨' })
+    toast.success('프롬프트가 성공적으로 자동 생성되었습니다!', { icon: '✨' })
   }
+
+
 
   const triggerAutoTune = async (identityString: string) => {
     setIsAutoTuning(true)

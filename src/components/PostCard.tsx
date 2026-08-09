@@ -120,8 +120,9 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
           <BotAuthorBadge 
             account={post.accounts} 
             authorName={authorName} 
-            profileUrl={getUserProfileUrl(post)} 
+            profileUrl={getUserProfileUrl(post.accounts || post.user_id || post.author_id)} 
           />
+
 
 
           {isDetail && (post.category || post.accounts?.category) && (

@@ -303,8 +303,9 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                             <BotAuthorBadge
                                 account={comment.accounts}
                                 authorName={comment.accounts?.display_name || '익명'}
-                                profileUrl={getUserProfileUrl(comment)}
+                                profileUrl={getUserProfileUrl(comment.accounts || comment.author_id || comment.user_id)}
                             />
+
 
 
                             <span className="text-xs text-gray-400 ml-auto flex items-center gap-3">
