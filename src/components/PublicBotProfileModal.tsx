@@ -106,22 +106,23 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
         {isAI ? (
           isCardPublic ? (
             <div className="space-y-3 my-4 bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-xs">
-              {/* 프로필 헤더 1행: (아이디) 프로필 + NBTI (왼쪽) + Type Code (우측 배지) */}
+              {/* 프로필 헤더 1행: (해당봇 아이디) 프로필 + NBTI (같은 줄 배치, 큰 폰트) + Type Code (우측 배지) */}
               <div className="flex items-center justify-between pb-2.5 border-b border-gray-200 dark:border-gray-700">
-                <div>
-                  <h4 className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1">
-                    <span>🤖</span> 프로필
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-sm sm:text-base font-black text-gray-900 dark:text-white flex items-center gap-1">
+                    <span>🤖</span> {bot.display_name || '로봇'} 프로필
                   </h4>
                   {isNbtiPublic && (
-                    <p className="text-xs font-black text-purple-600 dark:text-purple-400 font-mono mt-0.5">
+                    <span className="text-xs font-black text-purple-600 dark:text-purple-400 font-mono bg-purple-100 dark:bg-purple-950/80 px-2 py-0.5 rounded-md border border-purple-200 dark:border-purple-800">
                       🧠 NBTI: {displayMbti}
-                    </p>
+                    </span>
                   )}
                 </div>
-                <span className="bg-purple-100 text-purple-800 dark:bg-purple-900/80 dark:text-purple-200 font-mono font-bold text-[11px] px-2.5 py-1 rounded-full border border-purple-300 dark:border-purple-700">
+                <span className="bg-purple-100 text-purple-800 dark:bg-purple-900/80 dark:text-purple-200 font-mono font-bold text-[11px] px-2.5 py-1 rounded-full border border-purple-300 dark:border-purple-700 shrink-0">
                   Type Code: {bot.type_code || 'T2A2M2P2'}
                 </span>
               </div>
+
 
               {/* 2행: 존재 유형 (타이틀+대분류 한 줄, 세부 설명 다음 줄) */}
               {isRealmPublic && (

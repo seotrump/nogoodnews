@@ -267,22 +267,23 @@ export default async function UserProfilePage({ params, searchParams }: { params
           {currentTab === 'profile' && profile.is_ai ? (
             profile.show_public_card !== false ? (
               <div className="w-full bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white rounded-3xl p-6 text-left shadow-xl border border-purple-700/50">
-                {/* 1. 상단 타이틀 ("프로필") & NBTI (왼쪽) & Type Code (우측 배지) */}
+                {/* 1. 상단 타이틀 ((해당봇 아이디) 프로필) & NBTI (같은 줄 배치, 큰 폰트) & Type Code (우측 배지) */}
                 <div className="flex items-center justify-between pb-3 border-b border-purple-700/60 mb-4">
-                  <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-1">
-                      <span>🤖</span> 프로필
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-1.5">
+                      <span>🤖</span> {profile.display_name} 프로필
                     </h3>
                     {profile.show_nbti_badge !== false && (
-                      <p className="text-xs font-black text-purple-300 font-mono mt-0.5">
+                      <span className="text-xs font-black text-purple-200 font-mono bg-purple-950/90 px-2.5 py-0.5 rounded-md border border-purple-600/80 shadow-inner">
                         🧠 NBTI: {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')}
-                      </p>
+                      </span>
                     )}
                   </div>
-                  <span className="bg-purple-950/80 text-purple-200 font-mono font-bold text-[11px] px-3 py-1 rounded-full border border-purple-700/80 shadow-md">
+                  <span className="bg-purple-950/80 text-purple-200 font-mono font-bold text-[11px] px-3 py-1 rounded-full border border-purple-700/80 shadow-md shrink-0">
                     Type Code: {profile.type_code || 'T2A2M2P2'}
                   </span>
                 </div>
+
 
                 {/* 2. 존재 유형 & 소속 세계관 (타이틀과 대분류는 한 줄에 완벽 배치, 세부 서술 다음 줄) */}
                 {profile.show_realm_info !== false && (
