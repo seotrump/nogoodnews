@@ -21,8 +21,11 @@ interface PublicBotProfileModalProps {
     realm_detail?: string
     existence_category?: string
     existence_detail?: string
+    role?: string
+    category?: string
     gender?: string
     show_public_card?: boolean
+
     show_nbti_badge?: boolean
     show_realm_info?: boolean
     show_prompt?: boolean
