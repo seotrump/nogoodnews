@@ -41,7 +41,9 @@ export default function BotAuthorBadge({ account, authorName, profileUrl }: BotA
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         bot={account || { display_name: authorName }}
+        profileUrl={profileUrl}
       />
+
     </>
   )
 

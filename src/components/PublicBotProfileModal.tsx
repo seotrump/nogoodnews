@@ -9,34 +9,11 @@ import { getUserProfileUrl } from '@/utils/user'
 interface PublicBotProfileModalProps {
   isOpen: boolean
   onClose: () => void
-  bot: {
-    id?: string
-    display_name?: string
-    username?: string
-    avatar_url?: string
-    tier?: string
-    type_code?: string
-    bio?: string
-    speech_style?: string
-    realm_category?: string
-    realm_detail?: string
-    existence_category?: string
-    existence_detail?: string
-    role?: string
-    category?: string
-    gender?: string
-    show_public_card?: boolean
-    show_nbti_badge?: boolean
-    show_realm_info?: boolean
-    show_prompt?: boolean
-    persona_prompt?: string
-    control_session?: any
-    nbti_type?: string
-    is_ai?: boolean
-  }
+  bot: any
+  profileUrl?: string
 }
 
-export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBotProfileModalProps) {
+export default function PublicBotProfileModal({ isOpen, onClose, bot, profileUrl: propProfileUrl }: PublicBotProfileModalProps) {
   if (!isOpen || !bot) return null
 
   const badge = getControlSessionBadge(bot.control_session)
@@ -48,16 +25,29 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
   // NBTIType 추정 도출 (없을 시 type_code 활용)
   const displayMbti = bot.nbti_type || (bot.type_code ? `${bot.type_code.includes('P3') ? 'E' : 'I'}${bot.type_code.includes('T1') ? 'N' : 'S'}${bot.type_code.includes('A3') ? 'F' : 'T'}${bot.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')
 
-  // 프롬프트에서 핵심 정체성 1단락 전체 추출 (축약 없음)
+  // 프롬프트에서 핵심 정체성 1단락(3~4줄) 깔끔 추출 (Lite & Pro 공통 파서)
   const coreIdentityBlock = (() => {
     if (!bot.persona_prompt) return null
-    const text = bot.persona_prompt
+    let text = bot.persona_prompt.trim()
+
+    // 1. "# 핵심 정체성" 마크다운 섹션이 있는 경우
     const match = text.match(/# (?:Core Identity|핵심 정체성)[\s\S]*?(?=\n#|$)/i)
-    if (match) return match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim()
-    return text.split('\n\n')[0].trim()
+    if (match) {
+      const sectionText = match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim()
+      // 예시 구문(Examples) 이전까지만 추출
+      const cleanText = sectionText.split(/\n(?=###|\*\*예시|\*\*Example|#)/i)[0].trim()
+      return cleanText.split('\n\n')[0].trim()
+    }
+
+    // 2. 일반 텍스트인 경우 첫 번째 단락(3~4줄) 추출
+    const paragraphs = text.split(/\n\s*\n/)
+    const firstPara = paragraphs[0] || text
+    // 예시나 인스턴스가 섞인 하단 텍스트 제거
+    return firstPara.split(/\n(?=###|\*\*예시|\*\*Example)/i)[0].trim()
   })()
 
-  const profileUrl = getUserProfileUrl(bot)
+  // 100% 안전 이동 경로 산출
+  const targetProfileUrl = propProfileUrl || getUserProfileUrl(bot)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
@@ -106,7 +96,7 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
         {isAI ? (
           isCardPublic ? (
             <div className="space-y-3 my-4 bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-xs">
-              {/* 프로필 헤더 1행: (해당봇 아이디) 프로필 + NBTI (같은 줄 배치, 큰 폰트) + Type Code (우측 배지) */}
+              {/* 프로필 헤더 1행: (해당봇 아이디) 프로필 + NBTI (같은 줄 배치, 큰 폰트) - Type Code 제거됨 */}
               <div className="flex items-center justify-between pb-2.5 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="text-sm sm:text-base font-black text-gray-900 dark:text-white flex items-center gap-1">
@@ -118,11 +108,7 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
                     </span>
                   )}
                 </div>
-                <span className="bg-purple-100 text-purple-800 dark:bg-purple-900/80 dark:text-purple-200 font-mono font-bold text-[11px] px-2.5 py-1 rounded-full border border-purple-300 dark:border-purple-700 shrink-0">
-                  Type Code: {bot.type_code || 'T2A2M2P2'}
-                </span>
               </div>
-
 
               {/* 2행: 존재 유형 (타이틀+대분류 한 줄, 세부 설명 다음 줄) */}
               {isRealmPublic && (
@@ -160,7 +146,7 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
                     </p>
                   )}
 
-                  {/* 5행: 전문분야 - 역할 - 성별 (한 줄 가로 배치) */}
+                  {/* 5행: 전문분야 - 역할 - 성별 (성별 명확 노출) */}
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                     {bot.category && (
                       <p>
@@ -174,15 +160,15 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
                         <span>{bot.role === 'feed_focused' ? '피드 전담' : bot.role === 'comment_focused' ? '댓글 전담' : '혼합'}</span>
                       </p>
                     )}
-                    {bot.gender && bot.gender !== 'unknown' && (
-                      <p>
-                        <strong className="text-gray-400 font-normal">성별:</strong>{' '}
-                        {bot.gender === 'male' ? '♂️ 남성' : bot.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
-                      </p>
-                    )}
+                    <p>
+                      <strong className="text-gray-400 font-normal">성별:</strong>{' '}
+                      {bot.gender === 'male' ? '♂️ 남성' : bot.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
+                    </p>
                   </div>
                 </div>
               )}
+
+
 
               {/* 6행: 프롬프트 핵심 정체성 (1단락 전체 노출, 축약 없음) */}
               {bot.show_prompt !== false && coreIdentityBlock && (
@@ -220,13 +206,14 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
         {/* 3. 하단 전체 프로필 보기 버튼 (404 원천 방지) */}
         <div className="mt-4 pt-2 text-center">
           <Link
-            href={profileUrl}
+            href={targetProfileUrl}
             onClick={onClose}
             className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md transition-all gap-1.5"
           >
             <span>전체 프로필 보기 ➔</span>
           </Link>
         </div>
+
       </div>
     </div>
   )
