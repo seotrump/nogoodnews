@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 import { toggleModerationRule, updateModerationRule, createModerationRule } from '@/app/[locale]/admin/guidelines-actions'
 
 export default function GuidelinesClientUI({ initialRules }: { initialRules: any[] }) {
+  const router = useRouter()
   const [rules, setRules] = useState(initialRules)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isAddingNew, setIsAddingNew] = useState(false)
@@ -14,6 +16,7 @@ export default function GuidelinesClientUI({ initialRules }: { initialRules: any
       await toggleModerationRule(ruleId, !currentActive)
       setRules(rules.map(r => r.id === ruleId ? { ...r, is_active: !currentActive } : r))
       toast.success('규칙 활성화 상태가 변경되었습니다.')
+      router.refresh()
     } catch (e: any) {
       toast.error(e.message || '업데이트 실패')
     }
@@ -38,15 +41,34 @@ export default function GuidelinesClientUI({ initialRules }: { initialRules: any
         <form 
           action={async (formData) => {
             try {
+              const ruleKey = formData.get('ruleKey') as string
+              const ruleLabel = formData.get('ruleLabel') as string
+              const rulePrompt = formData.get('rulePrompt') as string
+              const severity = (formData.get('severity') as string) || 'block'
+
               await createModerationRule(formData)
+              
+              const newRuleObj = {
+                id: 'rule-' + Date.now(),
+                rule_key: ruleKey.trim().toLowerCase().replace(/\s+/g, '_'),
+                rule_label: ruleLabel,
+                rule_prompt: rulePrompt,
+                severity: severity,
+                is_active: true,
+                created_at: new Date().toISOString()
+              }
+              
+              setRules(prev => [...prev, newRuleObj])
               toast.success('새 가이드라인 규칙이 성공적으로 저장되었습니다.')
               setIsAddingNew(false)
+              router.refresh()
             } catch (e: any) {
               toast.error(e.message || '규칙 추가 실패')
             }
           }}
           className="bg-blue-50/80 border border-blue-200 p-5 rounded-2xl flex flex-col gap-4 shadow-sm"
         >
+
           <div className="flex justify-between items-center border-b border-blue-200 pb-2">
             <h3 className="text-sm font-bold text-blue-950">✨ 간편 가이드라인 규칙 등록</h3>
             <button type="button" onClick={() => setIsAddingNew(false)} className="text-xs text-gray-500 hover:text-black">닫기 ✕</button>
@@ -198,15 +220,23 @@ export default function GuidelinesClientUI({ initialRules }: { initialRules: any
                 <form 
                   action={async (formData) => {
                     try {
+                      const ruleLabel = formData.get('ruleLabel') as string
+                      const rulePrompt = formData.get('rulePrompt') as string
+                      const severity = formData.get('severity') as string
+
                       await updateModerationRule(formData)
+
+                      setRules(rules.map(r => r.id === rule.id ? { ...r, rule_label: ruleLabel, rule_prompt: rulePrompt, severity: severity } : r))
                       toast.success('규칙이 성공적으로 수정되었습니다.')
                       setEditingId(null)
+                      router.refresh()
                     } catch (e: any) {
                       toast.error(e.message || '수정 실패')
                     }
                   }}
                   className="flex flex-col gap-3"
                 >
+
                   <input type="hidden" name="ruleId" value={rule.id} />
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-gray-500">규칙 수정: {rule.rule_key}</span>
