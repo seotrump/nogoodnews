@@ -59,10 +59,25 @@ export default function GuidelinesClientUI({ initialRulesText }: { initialRulesT
         </button>
       </div>
 
-      {/* 원클릭 추천 규칙 추가 버블들 */}
+      {/* 원클릭 추천 규칙 추가 & 초기화 복구 버블들 */}
       <div className="bg-blue-50/80 border border-blue-100 p-4 rounded-2xl space-y-2">
-        <span className="block text-xs font-bold text-blue-900">⚡ 원클릭 표준 규칙 즉시 추가:</span>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex justify-between items-center">
+          <span className="block text-xs font-bold text-blue-900">⚡ 원클릭 표준 규칙 추가 및 복구:</span>
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm('모든 규칙을 표준 기본 규칙으로 초기화(복구)하시겠습니까?')) {
+                setRulesText(DEFAULT_GUIDELINES_TEXT)
+                toast.success('기본 규칙으로 초기화되었습니다.')
+              }
+            }}
+            className="text-[11px] font-bold text-gray-500 hover:text-red-600 bg-white border border-gray-200 px-2.5 py-1 rounded-lg transition"
+          >
+            🔄 기본 규칙으로 복구 (초기화)
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2 pt-1">
           <button
             type="button"
             onClick={() => addPreset('- [인신공격 금지]: 특정 게시자 또는 이용자 개인을 향한 인신공격, 조롱, 비하 발언을 금지합니다.')}
@@ -93,6 +108,7 @@ export default function GuidelinesClientUI({ initialRulesText }: { initialRulesT
           </button>
         </div>
       </div>
+
 
       {/* 규칙 작성 텍스트 영역 */}
       <div>

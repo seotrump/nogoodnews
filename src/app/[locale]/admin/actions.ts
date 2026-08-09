@@ -574,36 +574,35 @@ export async function updateSystemPrompts(formData: FormData) {
   if (feedPromptPro !== null && feedPromptPro !== undefined) updateData.feed_prompt_pro = feedPromptPro
   if (moderationRulesText !== null && moderationRulesText !== undefined) {
     updateData.moderation_rules_text = moderationRulesText
-    // custom_moderation_rules JSONB 필드에도 안전 백업 저장
     updateData.custom_moderation_rules = [{ id: 'rule-text', text: moderationRulesText }]
   }
 
-  const { error } = await supabaseAdmin
+  let { error } = await supabaseAdmin
     .from('site_settings')
     .update(updateData)
     .eq('id', 'global')
 
   if (error) {
-    console.error('Failed to update system prompts:', error)
-    // moderation_rules_text 컬럼이 아직 DB에 없을 경우 컬럼 제외 후 안전 재시도
-    if (error.message.includes('moderation_rules_text') || error.code === 'PGRST204') {
-      delete updateData.moderation_rules_text
-      const { error: retryErr } = await supabaseAdmin
-        .from('site_settings')
-        .update(updateData)
-        .eq('id', 'global')
-      
-      if (retryErr) {
-        throw new Error('프롬프트 저장 실패: ' + retryErr.message)
-      }
-    } else {
-      throw new Error('프롬프트 저장 실패: ' + error.message)
+    console.error('Initial update failed, stripping unmapped columns:', error)
+    // DB 컬럼 미생성 오류 시 불필요한 미존재 컬럼 제거 후 재시도
+    delete updateData.moderation_rules_text
+    delete updateData.custom_moderation_rules
+
+    const { error: retryErr } = await supabaseAdmin
+      .from('site_settings')
+      .update(updateData)
+      .eq('id', 'global')
+    
+    if (retryErr) {
+      console.error('Retry update failed:', retryErr)
+      throw new Error('프롬프트 저장 실패: ' + retryErr.message)
     }
   }
 
   revalidatePath('/[locale]/admin')
   revalidatePath('/[locale]/admin/robot')
 }
+
 
 
 export async function suspendAccount(accountId: string, suspend: boolean) {
