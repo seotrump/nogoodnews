@@ -39,39 +39,117 @@ export default function GuidelinesClientUI({ initialRules }: { initialRules: any
           action={async (formData) => {
             try {
               await createModerationRule(formData)
-              toast.success('새 가이드라인 규칙이 추가되었습니다.')
+              toast.success('새 가이드라인 규칙이 성공적으로 저장되었습니다.')
               setIsAddingNew(false)
             } catch (e: any) {
               toast.error(e.message || '규칙 추가 실패')
             }
           }}
-          className="bg-blue-50 border border-blue-200 p-5 rounded-xl flex flex-col gap-4"
+          className="bg-blue-50/80 border border-blue-200 p-5 rounded-2xl flex flex-col gap-4 shadow-sm"
         >
-          <h3 className="text-sm font-bold text-blue-900">✨ 새로운 안전 가이드라인 규칙 등록</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex justify-between items-center border-b border-blue-200 pb-2">
+            <h3 className="text-sm font-bold text-blue-950">✨ 간편 가이드라인 규칙 등록</h3>
+            <button type="button" onClick={() => setIsAddingNew(false)} className="text-xs text-gray-500 hover:text-black">닫기 ✕</button>
+          </div>
+
+          {/* 원클릭 추천 프리셋 */}
+          <div>
+            <span className="block text-[11px] font-bold text-blue-900 mb-1.5">⚡ 자주 쓰이는 표준 규칙 원클릭 선택:</span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const elKey = document.querySelector<HTMLInputElement>('input[name="ruleKey"]')
+                  const elLabel = document.querySelector<HTMLInputElement>('input[name="ruleLabel"]')
+                  const elPrompt = document.querySelector<HTMLTextAreaElement>('textarea[name="rulePrompt"]')
+                  if (elKey) elKey.value = 'no_personal_attack'
+                  if (elLabel) elLabel.value = '인신공격 금지'
+                  if (elPrompt) elPrompt.value = '특정 이용자를 향한 인신공격, 조롱, 모욕성 비하 발언을 금지합니다.'
+                }}
+                className="bg-white border border-blue-200 text-blue-800 hover:bg-blue-100 text-xs px-2.5 py-1 rounded-lg font-bold"
+              >
+                + 인신공격 금지
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const elKey = document.querySelector<HTMLInputElement>('input[name="ruleKey"]')
+                  const elLabel = document.querySelector<HTMLInputElement>('input[name="ruleLabel"]')
+                  const elPrompt = document.querySelector<HTMLTextAreaElement>('textarea[name="rulePrompt"]')
+                  if (elKey) elKey.value = 'no_political_verdict'
+                  if (elLabel) elLabel.value = '정치적 단정 금지'
+                  if (elPrompt) elPrompt.value = '실존 정치인 및 정당에 대해 무조건적인 가치 판단이나 악의적 단정을 내리지 않습니다.'
+                }}
+                className="bg-white border border-blue-200 text-blue-800 hover:bg-blue-100 text-xs px-2.5 py-1 rounded-lg font-bold"
+              >
+                + 정치 단정 금지
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const elKey = document.querySelector<HTMLInputElement>('input[name="ruleKey"]')
+                  const elLabel = document.querySelector<HTMLInputElement>('input[name="ruleLabel"]')
+                  const elPrompt = document.querySelector<HTMLTextAreaElement>('textarea[name="rulePrompt"]')
+                  if (elKey) elKey.value = 'no_spam_ads'
+                  if (elLabel) elLabel.value = '도배 및 상업적 광고 금지'
+                  if (elPrompt) elPrompt.value = '동일 문장 반복 도배, 외부 상업 사이트 홍보 링크 노출을 금지합니다.'
+                }}
+                className="bg-white border border-blue-200 text-blue-800 hover:bg-blue-100 text-xs px-2.5 py-1 rounded-lg font-bold"
+              >
+                + 도배/광고 금지
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">고유 식별 키 (rule_key)</label>
-              <input name="ruleKey" type="text" placeholder="예: no_hate_speech" required className="w-full text-xs p-2.5 rounded border border-gray-300 bg-white" />
+              <label className="block text-xs font-bold text-gray-700 mb-1">규칙 명칭 (한국어)</label>
+              <input 
+                name="ruleLabel" 
+                type="text" 
+                placeholder="예: 혐오 표현 금지" 
+                required 
+                onChange={(e) => {
+                  const val = e.target.value
+                  const elKey = document.querySelector<HTMLInputElement>('input[name="ruleKey"]')
+                  if (elKey && !elKey.value) {
+                    elKey.value = 'rule_' + Date.now().toString().slice(-6)
+                  }
+                }}
+                className="w-full text-xs p-2.5 rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-black outline-none" 
+              />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">규칙 명칭 (rule_label)</label>
-              <input name="ruleLabel" type="text" placeholder="예: 혐오 표현 금지" required className="w-full text-xs p-2.5 rounded border border-gray-300 bg-white" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">위반 처리 (severity)</label>
-              <select name="severity" className="w-full text-xs p-2.5 rounded border border-gray-300 bg-white font-bold">
-                <option value="block">BLOCK (위반 시 자동 비공개 / rejected)</option>
-                <option value="warn">WARN (경고만 기록하고 통과)</option>
+              <label className="block text-xs font-bold text-gray-700 mb-1">위반 시 처리 방식</label>
+              <select name="severity" className="w-full text-xs p-2.5 rounded-xl border border-gray-300 bg-white font-bold">
+                <option value="block">🚫 즉시 차단 (Block)</option>
+                <option value="warn">⚠️ 주의 경고 (Warn)</option>
               </select>
             </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">내부 관리 키 (자동 생성)</label>
+              <input name="ruleKey" type="text" placeholder="자동 부여됨" required className="w-full text-xs p-2.5 rounded-xl border border-gray-200 bg-gray-100 font-mono text-gray-500" />
+            </div>
           </div>
+
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">검증 AI 판단 기준 프롬프트 (rule_prompt)</label>
-            <textarea name="rulePrompt" rows={3} placeholder="이 글이 인종, 성별, 지역, 정체성 등에 대한 혐오 표현이나 모욕을 포함하는가?" required className="w-full text-xs p-2.5 rounded border border-gray-300 bg-white resize-none" />
+            <label className="block text-xs font-bold text-gray-700 mb-1">규칙 설명 지침 (한국어로 작성하면 AI가 자동 적용)</label>
+            <textarea 
+              name="rulePrompt" 
+              rows={3} 
+              placeholder="예: 타인을 향한 모욕이나 혐오 표현이 포함된 댓글은 차단 조치합니다." 
+              required 
+              className="w-full text-xs p-3 rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-black outline-none leading-relaxed" 
+            />
           </div>
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setIsAddingNew(false)} className="px-3 py-1.5 text-xs text-gray-600 bg-gray-200 rounded font-bold">취소</button>
-            <button type="submit" className="px-4 py-1.5 text-xs text-white bg-blue-600 rounded font-bold hover:bg-blue-700">규칙 등록</button>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={() => setIsAddingNew(false)} className="px-4 py-2 text-xs font-bold bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition">
+              취소
+            </button>
+            <button type="submit" className="px-5 py-2 text-xs font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition shadow-sm">
+              등록 완료
+            </button>
           </div>
         </form>
       )}
