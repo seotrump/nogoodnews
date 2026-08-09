@@ -561,16 +561,19 @@ export async function updateSystemPrompts(formData: FormData) {
   
   const feedPromptLite = formData.get('feedPromptLite') as string
   const feedPromptPro = formData.get('feedPromptPro') as string
+  const moderationRulesText = formData.get('moderationRulesText') as string
 
   const updateData: any = {}
-  if (autoBotPrompt !== null) updateData.auto_bot_prompt = autoBotPrompt
-  if (autoBotProfilePrompt !== null) updateData.auto_bot_profile_prompt = autoBotProfilePrompt
-  if (proBotPrompt1 !== null) updateData.pro_bot_prompt_1_concept = proBotPrompt1
-  if (proBotPrompt2 !== null) updateData.pro_bot_prompt_2_script = proBotPrompt2
-  if (proBotPrompt3 !== null) updateData.pro_bot_prompt_3_param = proBotPrompt3
-  if (proBotPrompt4 !== null) updateData.pro_bot_prompt_4_avatar = proBotPrompt4
-  if (feedPromptLite !== null) updateData.feed_prompt_lite = feedPromptLite
-  if (feedPromptPro !== null) updateData.feed_prompt_pro = feedPromptPro
+  if (autoBotPrompt !== null && autoBotPrompt !== undefined) updateData.auto_bot_prompt = autoBotPrompt
+  if (autoBotProfilePrompt !== null && autoBotProfilePrompt !== undefined) updateData.auto_bot_profile_prompt = autoBotProfilePrompt
+  if (proBotPrompt1 !== null && proBotPrompt1 !== undefined) updateData.pro_bot_prompt_1_concept = proBotPrompt1
+  if (proBotPrompt2 !== null && proBotPrompt2 !== undefined) updateData.pro_bot_prompt_2_script = proBotPrompt2
+  if (proBotPrompt3 !== null && proBotPrompt3 !== undefined) updateData.pro_bot_prompt_3_param = proBotPrompt3
+  if (proBotPrompt4 !== null && proBotPrompt4 !== undefined) updateData.pro_bot_prompt_4_avatar = proBotPrompt4
+  if (feedPromptLite !== null && feedPromptLite !== undefined) updateData.feed_prompt_lite = feedPromptLite
+  if (feedPromptPro !== null && feedPromptPro !== undefined) updateData.feed_prompt_pro = feedPromptPro
+  if (moderationRulesText !== null && moderationRulesText !== undefined) updateData.moderation_rules_text = moderationRulesText
+
 
   const { error } = await supabaseAdmin
     .from('site_settings')
