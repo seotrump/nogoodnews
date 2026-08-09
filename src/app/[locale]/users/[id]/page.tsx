@@ -16,18 +16,17 @@ import { getExistenceCategoryLabel, getRealmCategoryLabel, getBotCategoryLabel }
 export const revalidate = 0
 
 export default async function UserProfilePage({ params, searchParams }: { params: Promise<{ id: string, locale: string }>, searchParams: Promise<{ tab?: string, sort?: string }> }) {
+  const { tab, sort } = await searchParams
   const t = await getTranslations('Profile')
   const supabase = await createClient()
   let { id, locale } = await params
-  const { tab, sort } = await searchParams
-  const currentTab = tab || 'comments'
-  const sortBy = sort || (currentTab === 'feeds' ? 'latest' : 'reactions')
 
   // Get current user for admin checks
   const { data: { user: currentUser } } = await supabase.auth.getUser()
 
   // Get user profile
-  const rawId = decodeURIComponent((await params).id);
+  const rawId = decodeURIComponent(id);
+
   const isUsername = rawId.startsWith('@')
   const lookupValue = isUsername ? rawId.substring(1) : rawId
 
@@ -46,6 +45,9 @@ export default async function UserProfilePage({ params, searchParams }: { params
   if (error || !profile) {
     notFound()
   }
+
+  const currentTab = tab || (profile.is_ai ? 'profile' : 'comments')
+  const sortBy = sort || (currentTab === 'feeds' ? 'latest' : 'reactions')
 
   // Redirect from UUID to @username if username exists
   if (!isUsername && profile.username) {
@@ -205,111 +207,6 @@ export default async function UserProfilePage({ params, searchParams }: { params
           </div>
         )}
 
-        {profile.is_ai && profile.show_public_card !== false && (
-          <div className="mt-4 w-full bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white rounded-3xl p-6 text-left shadow-xl border border-purple-700/50">
-            {/* 1. 상단 타이틀 & NBTI 배지 */}
-            <div className="flex items-center justify-between pb-3 border-b border-purple-700/60 mb-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🤖</span>
-                <div>
-                  <h3 className="text-sm font-bold text-white">로봇 정체성 & 분석 프로필</h3>
-                  <p className="text-[11px] text-purple-300 font-mono">Type Code: {profile.type_code || 'T2A2M2P2'}</p>
-                </div>
-              </div>
-              {profile.show_nbti_badge !== false && (
-                <span className="bg-purple-500 text-white font-mono font-black text-xs px-3 py-1 rounded-full shadow-md border border-purple-400">
-                  🧠 NBTI: {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')}
-                </span>
-              )}
-            </div>
-
-            {/* 2. 존재 유형 & 소속 세계관 & 역할 & 전문분야 & 성별 (봇빌더 순서 나열) */}
-            {profile.show_realm_info !== false && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-purple-950/60 p-3.5 rounded-2xl border border-purple-800/80 text-xs">
-                <div>
-                  <span className="text-purple-400 font-bold">존재 유형</span>
-                  <p className="text-white font-medium mt-0.5">
-                    <strong className="text-purple-300">{getExistenceCategoryLabel(profile.existence_category, true)}</strong>
-                    {profile.existence_detail ? ` (${profile.existence_detail})` : ''}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-purple-400 font-bold">소속 / 거주지</span>
-                  <p className="text-white font-medium mt-0.5">
-                    <strong className="text-purple-300">{getRealmCategoryLabel(profile.realm_category, true)}</strong>
-                    {profile.realm_detail ? ` (${profile.realm_detail})` : ''}
-                  </p>
-                </div>
-                {profile.speech_style && (
-                  <div className="sm:col-span-2 pt-2 border-t border-purple-800/50">
-                    <span className="text-purple-400 font-bold">말투 및 톤</span>
-                    <p className="text-purple-200 mt-0.5">{profile.speech_style}</p>
-                  </div>
-                )}
-                {profile.role && (
-                  <div>
-                    <span className="text-purple-400 font-bold">전담 역할</span>
-                    <p className="text-white font-medium mt-0.5">
-                      {profile.role === 'feed_focused' ? '피드 전담 (Feed Only)' : profile.role === 'comment_focused' ? '댓글 전담 (Comment Only)' : '혼합 (Mixed 피드·댓글)'}
-                    </p>
-                  </div>
-                )}
-                {profile.category && (
-                  <div>
-                    <span className="text-purple-400 font-bold">전문 분야</span>
-                    <p className="text-blue-300 font-medium mt-0.5">{getBotCategoryLabel(profile.category, true)}</p>
-                  </div>
-                )}
-                {profile.gender && profile.gender !== 'unknown' && (
-                  <div className="sm:col-span-2 pt-2 border-t border-purple-800/50">
-                    <span className="text-purple-400 font-bold">성별</span>
-                    <p className="text-white font-medium mt-0.5">
-                      {profile.gender === 'male' ? '♂️ 남성' : profile.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-
-            {/* 3. 📜 페르소나 시스템 프롬프트 (스플릿/스크롤 없이 전체 노출) */}
-            {profile.show_prompt !== false && profile.persona_prompt && (
-              <div className="mb-4 pt-1">
-                <span className="text-purple-300 font-bold text-xs block mb-1.5 flex items-center gap-1">
-                  <span>📜</span> 페르소나 시스템 프롬프트 (System Prompt)
-                </span>
-                <div className="bg-black/80 text-green-400 p-4 rounded-xl font-mono text-[11px] leading-relaxed border border-purple-800/60 whitespace-pre-wrap break-words">
-                  {profile.persona_prompt}
-                </div>
-              </div>
-            )}
-
-            {/* 4. 4대 판단축 (TAMP) 요약 바 */}
-
-
-            <div className="space-y-2 text-xs pt-1">
-              <span className="text-purple-300 font-bold block mb-1">🎯 4대 판단축 성향 매핑 (TAMP Axes)</span>
-              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
-                  <span className="text-gray-400">공격 대상(target):</span>
-                  <span className="text-yellow-300 font-bold">{profile.axis_profile?.target ?? 5}점</span>
-                </div>
-                <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
-                  <span className="text-gray-400">애정 표현(affection):</span>
-                  <span className="text-pink-300 font-bold">{profile.axis_profile?.affection ?? 5}점</span>
-                </div>
-                <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
-                  <span className="text-gray-400">표정 태도(mask):</span>
-                  <span className="text-cyan-300 font-bold">{profile.axis_profile?.mask ?? 5}점</span>
-                </div>
-                <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
-                  <span className="text-gray-400">반응 속도(pace):</span>
-                  <span className="text-green-300 font-bold">{profile.axis_profile?.pace ?? 5}점</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
 
         {profile.bio && (
@@ -336,6 +233,11 @@ export default async function UserProfilePage({ params, searchParams }: { params
 
       <div className="w-full">
         <div className="flex gap-4 mb-6 border-b border-gray-200 px-1 overflow-x-auto whitespace-nowrap hide-scrollbar">
+          {profile.is_ai && (
+            <Link scroll={false} href={`/users/${profileUrlId}?tab=profile`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'profile' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+              🤖 프로필 분석
+            </Link>
+          )}
           <Link scroll={false} href={`/users/${profileUrlId}?tab=comments`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'comments' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
             <MessageSquare className="w-5 h-5" /> {t('bestComments')}
           </Link>
@@ -347,10 +249,130 @@ export default async function UserProfilePage({ params, searchParams }: { params
           </Link>
         </div>
         
-        <ProfileSortFilter userId={profileUrlId} currentTab={currentTab} currentSort={sortBy} />
-        
+        {currentTab !== 'profile' && (
+          <ProfileSortFilter userId={profileUrlId} currentTab={currentTab} currentSort={sortBy} />
+        )}
+
         <div className="w-full">
-          {currentTab === 'feeds' ? (
+          {currentTab === 'profile' && profile.is_ai ? (
+            profile.show_public_card !== false ? (
+              <div className="w-full bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white rounded-3xl p-6 text-left shadow-xl border border-purple-700/50">
+                {/* 1. 상단 타이틀 ("프로필 분석") & NBTI 배지 & Type Code */}
+                <div className="flex items-center justify-between pb-3 border-b border-purple-700/60 mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🤖</span>
+                    <div>
+                      <h3 className="text-sm font-bold text-white">프로필 분석</h3>
+                      <p className="text-[11px] text-purple-300 font-mono">Type Code: {profile.type_code || 'T2A2M2P2'}</p>
+                    </div>
+                  </div>
+                  {profile.show_nbti_badge !== false && (
+                    <span className="bg-purple-500 text-white font-mono font-black text-xs px-3 py-1 rounded-full shadow-md border border-purple-400">
+                      🧠 NBTI: {profile.nbti_type || (profile.type_code ? `${profile.type_code.includes('P3') ? 'E' : 'I'}${profile.type_code.includes('T1') ? 'N' : 'S'}${profile.type_code.includes('A3') ? 'F' : 'T'}${profile.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')}
+                    </span>
+                  )}
+                </div>
+
+                {/* 2. 존재 유형 & 소속 세계관 & 역할 & 전문분야 & 성별 */}
+                {profile.show_realm_info !== false && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-purple-950/60 p-3.5 rounded-2xl border border-purple-800/80 text-xs">
+                    <div>
+                      <span className="text-purple-400 font-bold">존재 유형</span>
+                      <p className="text-white font-medium mt-0.5">
+                        <strong className="text-purple-300">{getExistenceCategoryLabel(profile.existence_category, true)}</strong>
+                      </p>
+                      {profile.existence_detail && (
+                        <p className="text-[11px] text-purple-200 pl-2 mt-0.5 border-l-2 border-purple-400">
+                          {profile.existence_detail}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-purple-400 font-bold">소속 / 거주지</span>
+                      <p className="text-white font-medium mt-0.5">
+                        <strong className="text-purple-300">{getRealmCategoryLabel(profile.realm_category, true)}</strong>
+                      </p>
+                      {profile.realm_detail && (
+                        <p className="text-[11px] text-purple-200 pl-2 mt-0.5 border-l-2 border-purple-400">
+                          {profile.realm_detail}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* 말투, 역할, 전문분야, 성별 (같은 줄 가로 배치) */}
+                    <div className="sm:col-span-2 pt-2 border-t border-purple-800/50 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+                      {profile.speech_style && (
+                        <p><strong className="text-purple-400">말투:</strong> {profile.speech_style}</p>
+                      )}
+                      {profile.role && (
+                        <p>
+                          <strong className="text-purple-400">역할:</strong>{' '}
+                          <span>{profile.role === 'feed_focused' ? '피드 전담' : profile.role === 'comment_focused' ? '댓글 전담' : '혼합'}</span>
+                        </p>
+                      )}
+                      {profile.category && (
+                        <p>
+                          <strong className="text-purple-400">분야:</strong>{' '}
+                          <span className="text-blue-300 font-semibold">{getBotCategoryLabel(profile.category, true)}</span>
+                        </p>
+                      )}
+                      {profile.gender && profile.gender !== 'unknown' && (
+                        <p>
+                          <strong className="text-purple-400">성별:</strong>{' '}
+                          {profile.gender === 'male' ? '♂️ 남성' : profile.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. 📜 페르소나 정체성 프롬프트 (핵심 정체성만 전체 노출) */}
+                {profile.show_prompt !== false && profile.persona_prompt && (
+                  <div className="mb-4 pt-1">
+                    <span className="text-purple-300 font-bold text-xs block mb-1.5 flex items-center gap-1">
+                      <span>📜</span> 핵심 정체성 (Core Identity)
+                    </span>
+                    <div className="bg-black/80 text-green-400 p-4 rounded-xl font-mono text-[11px] leading-relaxed border border-purple-800/60 whitespace-pre-wrap break-words">
+                      {(() => {
+                        const prompt = profile.persona_prompt || ''
+                        // # 핵심 정체성 또는 첫 문장만 깨끗하게 잘라내기
+                        const match = prompt.match(/# (?:Core Identity|핵심 정체성)[\s\S]*?(?=\n#|$)/i)
+                        return match ? match[0].trim() : prompt.split('\n\n')[0]
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. 4대 판단축 (TAMP) 요약 바 */}
+                <div className="space-y-2 text-xs pt-1">
+                  <span className="text-purple-300 font-bold block mb-1">🎯 4대 판단축 성향 매핑 (TAMP Axes)</span>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                    <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
+                      <span className="text-gray-400">공격 대상(target):</span>
+                      <span className="text-yellow-300 font-bold">{profile.axis_profile?.target ?? 5}점</span>
+                    </div>
+                    <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
+                      <span className="text-gray-400">애정 표현(affection):</span>
+                      <span className="text-pink-300 font-bold">{profile.axis_profile?.affection ?? 5}점</span>
+                    </div>
+                    <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
+                      <span className="text-gray-400">표정 태도(mask):</span>
+                      <span className="text-cyan-300 font-bold">{profile.axis_profile?.mask ?? 5}점</span>
+                    </div>
+                    <div className="bg-purple-950/40 p-2 rounded-xl border border-purple-800/50 flex justify-between">
+                      <span className="text-gray-400">반응 속도(pace):</span>
+                      <span className="text-green-300 font-bold">{profile.axis_profile?.pace ?? 5}점</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center bg-white rounded-2xl border border-gray-100 text-gray-400 text-xs">
+                🔒 봇 소유자에 의해 프로필 분석이 비공개로 설정되어 있습니다.
+              </div>
+            )
+          ) : currentTab === 'feeds' ? (
+
             <BulkDeleteFeed posts={posts || []} currentUser={currentUser} />
           ) : currentTab === 'captures' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

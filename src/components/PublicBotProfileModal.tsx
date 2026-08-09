@@ -90,58 +90,77 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
         {/* 2. 공개 프로필 정보 영역 */}
         {isCardPublic ? (
           <div className="space-y-3 my-4 bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
-            {/* NBTI 배지 */}
-            {isNbtiPublic && (
-              <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                  <span>🧠</span> NBTI 검증 배지
+            {/* 프로필 분석 헤더 & NBTI 배지 & Type Code */}
+            <div className="flex items-center justify-between pb-2.5 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h4 className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1">
+                  <span>🤖</span> 프로필 분석
+                </h4>
+                <p className="text-[10px] text-purple-600 dark:text-purple-400 font-mono mt-0.5">
+                  Type Code: {bot.type_code || 'T2A2M2P2'}
+                </p>
+              </div>
+              {isNbtiPublic && (
+                <span className="bg-purple-600 text-white font-mono font-black text-xs px-3 py-1 rounded-full shadow-sm">
+                  🧠 NBTI: {displayMbti}
                 </span>
-                <span className="bg-purple-600 text-white font-mono font-black text-xs px-2.5 py-0.5 rounded-full shadow-sm">
-                  {displayMbti}
-                </span>
+              )}
+            </div>
+
+            {/* 존재유형 & 거주지 (타이틀+대분류 한 줄, 세부설명 아래 줄) */}
+            {isRealmPublic && (
+              <div className="text-xs text-gray-600 dark:text-gray-300 space-y-2.5">
+                <div>
+                  <p className="font-bold text-gray-700 dark:text-gray-200">
+                    <span className="text-gray-400 font-normal">존재 유형:</span>{' '}
+                    <span className="text-purple-600 dark:text-purple-400">{getExistenceCategoryLabel(bot.existence_category, true)}</span>
+                  </p>
+                  {bot.existence_detail && (
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 pl-2 mt-0.5 border-l-2 border-purple-300 dark:border-purple-700">
+                      {bot.existence_detail}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="font-bold text-gray-700 dark:text-gray-200">
+                    <span className="text-gray-400 font-normal">소속 / 거주지:</span>{' '}
+                    <span className="text-purple-600 dark:text-purple-400">{getRealmCategoryLabel(bot.realm_category, true)}</span>
+                  </p>
+                  {bot.realm_detail && (
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 pl-2 mt-0.5 border-l-2 border-purple-300 dark:border-purple-700">
+                      {bot.realm_detail}
+                    </p>
+                  )}
+                </div>
+
+                {/* 말투, 역할, 전문분야, 성별 (같은 줄 한 줄 가로 배치) */}
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+                  {bot.speech_style && (
+                    <p><strong className="text-gray-400">말투:</strong> {bot.speech_style}</p>
+                  )}
+                  {bot.role && (
+                    <p>
+                      <strong className="text-gray-400">역할:</strong>{' '}
+                      <span>{bot.role === 'feed_focused' ? '피드 전담' : bot.role === 'comment_focused' ? '댓글 전담' : '혼합'}</span>
+                    </p>
+                  )}
+                  {bot.category && (
+                    <p>
+                      <strong className="text-gray-400">분야:</strong>{' '}
+                      <span className="text-blue-600 dark:text-blue-400 font-semibold">{getBotCategoryLabel(bot.category, true)}</span>
+                    </p>
+                  )}
+                  {bot.gender && bot.gender !== 'unknown' && (
+                    <p>
+                      <strong className="text-gray-400">성별:</strong>{' '}
+                      {bot.gender === 'male' ? '♂️ 남성' : bot.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* 존재유형 & 거주지 & 역할 & 전문분야 봇빌더 순서 통합 표기 */}
-            {isRealmPublic && (
-              <div className="text-xs text-gray-600 dark:text-gray-300 space-y-1.5">
-                <p>
-                  <strong className="text-gray-400">존재 유형:</strong>{' '}
-                  <span className="font-bold text-purple-600 dark:text-purple-400">{getExistenceCategoryLabel(bot.existence_category, true)}</span>
-                  {bot.existence_detail ? ` (${bot.existence_detail})` : ''}
-                </p>
-                <p>
-                  <strong className="text-gray-400">소속 / 거주지:</strong>{' '}
-                  <span className="font-bold text-purple-600 dark:text-purple-400">{getRealmCategoryLabel(bot.realm_category, true)}</span>
-                  {bot.realm_detail ? ` (${bot.realm_detail})` : ''}
-                </p>
-                {bot.speech_style && (
-                  <p>
-                    <strong className="text-gray-400">말투 특징:</strong> {bot.speech_style}
-                  </p>
-                )}
-                {bot.role && (
-                  <p>
-                    <strong className="text-gray-400">전담 역할:</strong>{' '}
-                    <span className="font-semibold text-gray-700 dark:text-gray-200">
-                      {bot.role === 'feed_focused' ? '피드 전담 (Feed Only)' : bot.role === 'comment_focused' ? '댓글 전담 (Comment Only)' : '혼합 (Mixed 피드·댓글)'}
-                    </span>
-                  </p>
-                )}
-                {bot.category && (
-                  <p>
-                    <strong className="text-gray-400">전문 분야:</strong>{' '}
-                    <span className="font-semibold text-blue-600 dark:text-blue-400">{getBotCategoryLabel(bot.category, true)}</span>
-                  </p>
-                )}
-                {bot.gender && bot.gender !== 'unknown' && (
-                  <p>
-                    <strong className="text-gray-400">성별:</strong>{' '}
-                    {bot.gender === 'male' ? '♂️ 남성' : bot.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
-                  </p>
-                )}
-              </div>
-            )}
 
 
 
