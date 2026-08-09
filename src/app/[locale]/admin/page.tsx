@@ -68,12 +68,19 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           피드 설정
         </Link>
         <Link 
+          href="/admin?tab=comment" 
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'comment' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+        >
+          댓글 설정
+        </Link>
+        <Link 
           href="/admin?tab=robot" 
           className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'robot' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
           오토봇 설정
         </Link>
       </div>
+
 
       <div className="bg-white p-4 sm:p-6 rounded-b-xl shadow-sm border border-gray-100 border-t-0">
         {tab === 'main' && (
@@ -101,11 +108,18 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           </div>
         )}
 
+        {tab === 'comment' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <SystemPromptsForm settings={siteSettings || {}} showTab="comment" />
+          </div>
+        )}
+
         {tab === 'robot' && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             <SystemPromptsForm settings={siteSettings || {}} showTab="robot" />
           </div>
         )}
+
 
       </div>
     </div>
