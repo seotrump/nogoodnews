@@ -125,7 +125,7 @@
   },
   "Settings": {
     "title": "Settings",
-    "version": "V6.09",
+    "version": "V6.11",
     "accountEmail": "Account Email",
     "language": "Default Language",
     "aiAdmin": "Robot Admin Account",
@@ -284,5 +284,12 @@
     "botResponse": "Bot Response",
     "triggerKeywords": "Trigger Keywords",
     "exampleRemoved": "Example removed."
+  },
+  "Profile": {
+    "bestComments": "Best Comments",
+    "bestCaptures": "Best Captures",
+    "bestFeeds": "Best Feeds",
+    "profileTab": "Profile"
   }
 }
+

@@ -242,11 +242,6 @@ export default async function UserProfilePage({ params, searchParams }: { params
 
       <div className="w-full">
         <div className="flex gap-4 mb-6 border-b border-gray-200 px-1 overflow-x-auto whitespace-nowrap hide-scrollbar">
-          {profile.is_ai && (
-            <Link scroll={false} href={`/users/${profileUrlId}?tab=profile`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'profile' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
-              🤖 프로필 분석
-            </Link>
-          )}
           <Link scroll={false} href={`/users/${profileUrlId}?tab=comments`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'comments' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
             <MessageSquare className="w-5 h-5" /> {t('bestComments')}
           </Link>
@@ -256,7 +251,13 @@ export default async function UserProfilePage({ params, searchParams }: { params
           <Link scroll={false} href={`/users/${profileUrlId}?tab=feeds`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'feeds' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
             <TrendingUp className="w-5 h-5" /> {t('bestFeeds')}
           </Link>
+          {profile.is_ai && (
+            <Link scroll={false} href={`/users/${profileUrlId}?tab=profile`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'profile' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+              🤖 {t('profileTab')}
+            </Link>
+          )}
         </div>
+
         
         {currentTab !== 'profile' && (
           <ProfileSortFilter userId={profileUrlId} currentTab={currentTab} currentSort={sortBy} />
@@ -266,11 +267,11 @@ export default async function UserProfilePage({ params, searchParams }: { params
           {currentTab === 'profile' && profile.is_ai ? (
             profile.show_public_card !== false ? (
               <div className="w-full bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white rounded-3xl p-6 text-left shadow-xl border border-purple-700/50">
-                {/* 1. 상단 타이틀 ("프로필 분석") & NBTI (왼쪽) & Type Code (우측 배지) */}
+                {/* 1. 상단 타이틀 ("프로필") & NBTI (왼쪽) & Type Code (우측 배지) */}
                 <div className="flex items-center justify-between pb-3 border-b border-purple-700/60 mb-4">
                   <div>
                     <h3 className="text-sm font-bold text-white flex items-center gap-1">
-                      <span>🤖</span> 프로필 분석
+                      <span>🤖</span> 프로필
                     </h3>
                     {profile.show_nbti_badge !== false && (
                       <p className="text-xs font-black text-purple-300 font-mono mt-0.5">
@@ -283,30 +284,38 @@ export default async function UserProfilePage({ params, searchParams }: { params
                   </span>
                 </div>
 
-                {/* 2. 존재 유형 & 소속 세계관 (타이틀과 대분류는 한 줄에 완벽 배치) */}
+                {/* 2. 존재 유형 & 소속 세계관 (타이틀과 대분류는 한 줄에 완벽 배치, 세부 서술 다음 줄) */}
                 {profile.show_realm_info !== false && (
                   <div className="space-y-3 mb-4 bg-purple-950/60 p-4 rounded-2xl border border-purple-800/80 text-xs">
                     <div>
                       <p className="font-bold text-white">
                         <span className="text-purple-400 font-normal">존재 유형:</span>{' '}
                         <span className="text-purple-300">{getExistenceCategoryLabel(profile.existence_category, true)}</span>
-                        {profile.existence_detail ? ` (${profile.existence_detail})` : ''}
                       </p>
+                      {profile.existence_detail && (
+                        <p className="text-[11px] text-purple-200 pl-2 mt-1 border-l-2 border-purple-400 leading-relaxed">
+                          {profile.existence_detail}
+                        </p>
+                      )}
                     </div>
 
                     <div>
                       <p className="font-bold text-white">
                         <span className="text-purple-400 font-normal">소속 / 거주지:</span>{' '}
                         <span className="text-purple-300">{getRealmCategoryLabel(profile.realm_category, true)}</span>
-                        {profile.realm_detail ? ` (${profile.realm_detail})` : ''}
                       </p>
+                      {profile.realm_detail && (
+                        <p className="text-[11px] text-purple-200 pl-2 mt-1 border-l-2 border-purple-400 leading-relaxed">
+                          {profile.realm_detail}
+                        </p>
+                      )}
                     </div>
 
                     {/* 말투는 다른 줄에 독자적 분리 구성 */}
                     {profile.speech_style && (
-                      <p className="pt-2 border-t border-purple-800/50">
-                        <strong className="text-purple-400">말투 특징:</strong>{' '}
-                        <span className="text-purple-200 font-medium">{profile.speech_style}</span>
+                      <p className="pt-2 border-t border-purple-800/50 leading-relaxed">
+                        <strong className="text-purple-400 font-normal">특징:</strong>{' '}
+                        <span className="text-purple-100 font-medium">{profile.speech_style}</span>
                       </p>
                     )}
 
@@ -314,19 +323,19 @@ export default async function UserProfilePage({ params, searchParams }: { params
                     <div className="pt-2 border-t border-purple-800/50 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
                       {profile.category && (
                         <p>
-                          <strong className="text-purple-400">전문분야:</strong>{' '}
+                          <strong className="text-purple-400 font-normal">전문분야:</strong>{' '}
                           <span className="text-blue-300 font-semibold">{getBotCategoryLabel(profile.category, true)}</span>
                         </p>
                       )}
                       {profile.role && (
                         <p>
-                          <strong className="text-purple-400">전담 역할:</strong>{' '}
+                          <strong className="text-purple-400 font-normal">역할:</strong>{' '}
                           <span>{profile.role === 'feed_focused' ? '피드 전담' : profile.role === 'comment_focused' ? '댓글 전담' : '혼합'}</span>
                         </p>
                       )}
                       {profile.gender && profile.gender !== 'unknown' && (
                         <p>
-                          <strong className="text-purple-400">성별:</strong>{' '}
+                          <strong className="text-purple-400 font-normal">성별:</strong>{' '}
                           {profile.gender === 'male' ? '♂️ 남성' : profile.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
                         </p>
                       )}
@@ -334,7 +343,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
                   </div>
                 )}
 
-                {/* 3. 📜 페르소나 정체성 프롬프트 (핵심 정체성 문장만 추출 노출) */}
+                {/* 3. 📜 페르소나 정체성 프롬프트 (1단락 전체 노출, 축약 없음) */}
                 {profile.show_prompt !== false && profile.persona_prompt && (
                   <div className="mb-4 pt-1">
                     <span className="text-purple-300 font-bold text-xs block mb-1.5 flex items-center gap-1">
@@ -344,12 +353,13 @@ export default async function UserProfilePage({ params, searchParams }: { params
                       {(() => {
                         const prompt = profile.persona_prompt || ''
                         const match = prompt.match(/# (?:Core Identity|핵심 정체성)[\s\S]*?(?=\n#|$)/i)
-                        if (match) return match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim().split('\n')[0]
-                        return prompt.split('.')[0] + '.'
+                        if (match) return match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim()
+                        return prompt.split('\n\n')[0].trim()
                       })()}
                     </div>
                   </div>
                 )}
+
 
 
                 {/* 4. 4대 판단축 (TAMP) 요약 바 */}

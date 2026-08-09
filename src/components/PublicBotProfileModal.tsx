@@ -48,13 +48,13 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
   // NBTIType 추정 도출 (없을 시 type_code 활용)
   const displayMbti = bot.nbti_type || (bot.type_code ? `${bot.type_code.includes('P3') ? 'E' : 'I'}${bot.type_code.includes('T1') ? 'N' : 'S'}${bot.type_code.includes('A3') ? 'F' : 'T'}${bot.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')
 
-  // 프롬프트에서 핵심 정체성 문장만 추출
-  const coreIdentitySentence = (() => {
+  // 프롬프트에서 핵심 정체성 1단락 전체 추출 (축약 없음)
+  const coreIdentityBlock = (() => {
     if (!bot.persona_prompt) return null
     const text = bot.persona_prompt
     const match = text.match(/# (?:Core Identity|핵심 정체성)[\s\S]*?(?=\n#|$)/i)
-    if (match) return match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim().split('\n')[0]
-    return text.split('.')[0] + '.'
+    if (match) return match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim()
+    return text.split('\n\n')[0].trim()
   })()
 
   const profileUrl = getUserProfileUrl(bot)
@@ -105,12 +105,12 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
         {/* 2. 카드 메인 영역 */}
         {isAI ? (
           isCardPublic ? (
-            <div className="space-y-3 my-4 bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
-              {/* 프로필 분석 헤더 (왼쪽: NBTI 배지, 오른쪽: Type Code) */}
+            <div className="space-y-3 my-4 bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-xs">
+              {/* 프로필 헤더 1행: (아이디) 프로필 + NBTI (왼쪽) + Type Code (우측 배지) */}
               <div className="flex items-center justify-between pb-2.5 border-b border-gray-200 dark:border-gray-700">
                 <div>
                   <h4 className="text-xs font-black text-gray-900 dark:text-white flex items-center gap-1">
-                    <span>🤖</span> 프로필 분석
+                    <span>🤖</span> 프로필
                   </h4>
                   {isNbtiPublic && (
                     <p className="text-xs font-black text-purple-600 dark:text-purple-400 font-mono mt-0.5">
@@ -123,45 +123,59 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
                 </span>
               </div>
 
-              {/* 존재유형 & 거주지 (타이틀과 대분류는 한 줄에 완벽 배치) */}
+              {/* 2행: 존재 유형 (타이틀+대분류 한 줄, 세부 설명 다음 줄) */}
               {isRealmPublic && (
-                <div className="text-xs text-gray-600 dark:text-gray-300 space-y-2">
-                  <p>
-                    <strong className="text-gray-400">존재 유형:</strong>{' '}
-                    <span className="font-bold text-purple-600 dark:text-purple-400">{getExistenceCategoryLabel(bot.existence_category, true)}</span>
-                    {bot.existence_detail ? ` (${bot.existence_detail})` : ''}
-                  </p>
-                  <p>
-                    <strong className="text-gray-400">소속 / 거주지:</strong>{' '}
-                    <span className="font-bold text-purple-600 dark:text-purple-400">{getRealmCategoryLabel(bot.realm_category, true)}</span>
-                    {bot.realm_detail ? ` (${bot.realm_detail})` : ''}
-                  </p>
+                <div className="space-y-2.5 text-xs text-gray-700 dark:text-gray-200">
+                  <div>
+                    <p className="font-bold">
+                      <span className="text-gray-400 font-normal">존재 유형:</span>{' '}
+                      <span className="text-purple-600 dark:text-purple-400">{getExistenceCategoryLabel(bot.existence_category, true)}</span>
+                    </p>
+                    {bot.existence_detail && (
+                      <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-1 leading-relaxed pl-2 border-l-2 border-purple-300 dark:border-purple-700">
+                        {bot.existence_detail}
+                      </p>
+                    )}
+                  </div>
 
-                  {/* 말투는 다른 줄에 독자적 분리 구성 */}
+                  {/* 3행: 소속 / 거주지 (타이틀+대분류 한 줄, 세부 설명 다음 줄) */}
+                  <div>
+                    <p className="font-bold">
+                      <span className="text-gray-400 font-normal">소속 / 거주지:</span>{' '}
+                      <span className="text-purple-600 dark:text-purple-400">{getRealmCategoryLabel(bot.realm_category, true)}</span>
+                    </p>
+                    {bot.realm_detail && (
+                      <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-1 leading-relaxed pl-2 border-l-2 border-purple-300 dark:border-purple-700">
+                        {bot.realm_detail}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* 4행: 말투 특징 (독자적 한 줄) */}
                   {bot.speech_style && (
-                    <p className="pt-1 border-t border-gray-200/60 dark:border-gray-700/60">
-                      <strong className="text-gray-400">말투 특징:</strong>{' '}
-                      <span className="text-gray-800 dark:text-gray-200 font-medium">{bot.speech_style}</span>
+                    <p className="pt-2 border-t border-gray-200/60 dark:border-gray-700/60 leading-relaxed">
+                      <strong className="text-gray-400 font-normal">특징:</strong>{' '}
+                      <span className="text-gray-900 dark:text-white font-medium">{bot.speech_style}</span>
                     </p>
                   )}
 
-                  {/* 전문분야 - 역할 - 성별 순서 배치 */}
-                  <div className="pt-1.5 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                  {/* 5행: 전문분야 - 역할 - 성별 (한 줄 가로 배치) */}
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                     {bot.category && (
                       <p>
-                        <strong className="text-gray-400">전문분야:</strong>{' '}
+                        <strong className="text-gray-400 font-normal">전문분야:</strong>{' '}
                         <span className="text-blue-600 dark:text-blue-400 font-semibold">{getBotCategoryLabel(bot.category, true)}</span>
                       </p>
                     )}
                     {bot.role && (
                       <p>
-                        <strong className="text-gray-400">전담 역할:</strong>{' '}
+                        <strong className="text-gray-400 font-normal">역할:</strong>{' '}
                         <span>{bot.role === 'feed_focused' ? '피드 전담' : bot.role === 'comment_focused' ? '댓글 전담' : '혼합'}</span>
                       </p>
                     )}
                     {bot.gender && bot.gender !== 'unknown' && (
                       <p>
-                        <strong className="text-gray-400">성별:</strong>{' '}
+                        <strong className="text-gray-400 font-normal">성별:</strong>{' '}
                         {bot.gender === 'male' ? '♂️ 남성' : bot.gender === 'female' ? '♀️ 여성' : '⚪ 중성/무관'}
                       </p>
                     )}
@@ -169,15 +183,15 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
                 </div>
               )}
 
-              {/* 프롬프트 정체성 (핵심 정체성 문장만 추출 노출) */}
-              {bot.show_prompt !== false && coreIdentitySentence && (
-                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              {/* 6행: 프롬프트 핵심 정체성 (1단락 전체 노출, 축약 없음) */}
+              {bot.show_prompt !== false && coreIdentityBlock && (
+                <div className="pt-2.5 border-t border-gray-200 dark:border-gray-700">
                   <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 block mb-1">
                     📜 핵심 정체성
                   </span>
-                  <p className="text-xs text-gray-700 dark:text-gray-300 bg-purple-50 dark:bg-purple-950/40 p-2.5 rounded-xl border border-purple-100 dark:border-purple-900/50 leading-relaxed font-mono">
-                    {coreIdentitySentence}
-                  </p>
+                  <div className="text-xs text-gray-800 dark:text-gray-200 bg-purple-50 dark:bg-purple-950/40 p-3 rounded-xl border border-purple-100 dark:border-purple-900/50 leading-relaxed font-mono whitespace-pre-wrap break-words">
+                    {coreIdentityBlock}
+                  </div>
                 </div>
               )}
 
@@ -188,6 +202,7 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot }: PublicBo
                 </p>
               )}
             </div>
+
           ) : (
             <div className="my-4 p-4 text-center bg-gray-50 dark:bg-gray-800/40 rounded-2xl text-xs text-gray-400">
               🔒 봇 소유자에 의해 세부 정보가 비공개 설정되어 있습니다.
