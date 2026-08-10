@@ -354,17 +354,22 @@ export default async function UserProfilePage({ params, searchParams }: { params
                     </span>
                     <div className="bg-black/80 text-green-400 p-4 rounded-xl font-mono text-[11px] leading-relaxed border border-purple-800/60 whitespace-pre-wrap break-words">
                       {(() => {
-                        let text = (profile.persona_prompt || '').trim()
-                        const match = text.match(/# (?:Core Identity|핵심 정체성)[\s\S]*?(?=\n#|$)/i)
-                        if (match) {
-                          const sectionText = match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim()
-                          const cleanText = sectionText.split(/\n(?=###|\*\*예시|\*\*Example|#)/i)[0].trim()
-                          return cleanText.split('\n\n')[0].trim()
+                        let text = (profile.persona_prompt || profile.display_name || '').trim()
+                        try {
+                          const match = text.match(/# (?:Core Identity|핵심 정체성)[\s\S]*?(?=\n#|$)/i)
+                          if (match) {
+                            const sectionText = match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim()
+                            const cleanText = sectionText.split(/\n(?=###|\*\*예시|\*\*Example|#)/i)[0]?.trim()
+                            if (cleanText) return cleanText.split('\n\n')[0].trim()
+                          }
+                          const paragraphs = text.split(/\n\s*\n/)
+                          const firstPara = paragraphs[0] || text
+                          return (firstPara.split(/\n(?=###|\*\*예시|\*\*Example)/i)[0] || text).trim()
+                        } catch (e) {
+                          return text
                         }
-                        const paragraphs = text.split(/\n\s*\n/)
-                        const firstPara = paragraphs[0] || text
-                        return firstPara.split(/\n(?=###|\*\*예시|\*\*Example)/i)[0].trim()
                       })()}
+
                     </div>
 
                   </div>

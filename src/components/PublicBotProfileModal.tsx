@@ -30,23 +30,24 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot, profileUrl
   // 프롬프트에서 핵심 정체성 1단락(3~4줄) 깔끔 추출 (Lite & Pro 공통 파서)
   const coreIdentityBlock = (() => {
     if (!bot.persona_prompt) return null
-    let text = bot.persona_prompt.trim()
-
-    // 1. "# 핵심 정체성" 마크다운 섹션이 있는 경우
-    const match = text.match(/# (?:Core Identity|핵심 정체성)[\s\S]*?(?=\n#|$)/i)
-    if (match) {
-      const sectionText = match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim()
-      // 예시 구문(Examples) 이전까지만 추출
-      const cleanText = sectionText.split(/\n(?=###|\*\*예시|\*\*Example|#)/i)[0].trim()
-      return cleanText.split('\n\n')[0].trim()
+    let text = (bot.persona_prompt || '').trim()
+    try {
+      // 1. "# 핵심 정체성" 마크다운 섹션이 있는 경우
+      const match = text.match(/# (?:Core Identity|핵심 정체성)[\s\S]*?(?=\n#|$)/i)
+      if (match) {
+        const sectionText = match[0].replace(/# (?:Core Identity|핵심 정체성)/i, '').trim()
+        const cleanText = sectionText.split(/\n(?=###|\*\*예시|\*\*Example|#)/i)[0]?.trim()
+        if (cleanText) return cleanText.split('\n\n')[0].trim()
+      }
+      // 2. 일반 텍스트인 경우 첫 번째 단락(3~4줄) 추출
+      const paragraphs = text.split(/\n\s*\n/)
+      const firstPara = paragraphs[0] || text
+      return (firstPara.split(/\n(?=###|\*\*예시|\*\*Example)/i)[0] || text).trim()
+    } catch (e) {
+      return text
     }
-
-    // 2. 일반 텍스트인 경우 첫 번째 단락(3~4줄) 추출
-    const paragraphs = text.split(/\n\s*\n/)
-    const firstPara = paragraphs[0] || text
-    // 예시나 인스턴스가 섞인 하단 텍스트 제거
-    return firstPara.split(/\n(?=###|\*\*예시|\*\*Example)/i)[0].trim()
   })()
+
 
   // 100% 안전 이동 경로 산출
   const targetProfileUrl = propProfileUrl || getUserProfileUrl(bot)
