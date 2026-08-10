@@ -50,9 +50,9 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
   
   const [autoBotPrompt, setAutoBotPrompt] = useState(settings?.auto_bot_prompt || DEFAULT_AUTO_BOT_PROMPT)
   const [feedPromptPro, setFeedPromptPro] = useState(settings?.feed_prompt_pro || DEFAULT_FEED_PROMPT_PRO)
-  const [feedPromptReporter, setFeedPromptReporter] = useState(settings?.feed_prompt_lite || DEFAULT_FEED_PROMPT_REPORTER)
+  const [feedPromptLite, setFeedPromptLite] = useState(settings?.feed_prompt_lite || DEFAULT_FEED_PROMPT_REPORTER)
   const [commentPrompt, setCommentPrompt] = useState(settings?.auto_bot_profile_prompt || DEFAULT_COMMENT_PROMPT)
-  const [feedTab, setFeedTab] = useState<'pro' | 'reporter'>('pro')
+  const [feedTab, setFeedTab] = useState<'pro' | 'lite'>('pro')
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -90,12 +90,13 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       {/* 히든 파라미터 보존 */}
       <input type="hidden" name="autoBotPrompt" value={autoBotPrompt} />
       <input type="hidden" name="feedPromptPro" value={feedPromptPro} />
-      <input type="hidden" name="feedPromptLite" value={feedPromptReporter} />
+      <input type="hidden" name="feedPromptLite" value={feedPromptLite} />
+      <input type="hidden" name="autoBotProfilePrompt" value={commentPrompt} />
 
       <div>
         {showTab === 'feed' && (
           <div className="space-y-3">
-            {/* 서브 탭: "프로" "기자단" 깔끔한 명칭 */}
+            {/* 서브 탭: "프로(5단락 심층)" "라이트(4줄 후킹)" 명확한 라벨 */}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -106,18 +107,18 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                프로 (3단락)
+                프로 피드 (5단락 심층 분석)
               </button>
               <button
                 type="button"
-                onClick={() => setFeedTab('reporter')}
+                onClick={() => setFeedTab('lite')}
                 className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-                  feedTab === 'reporter'
+                  feedTab === 'lite'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                기자단 (5단락 이상 심층보도)
+                라이트 피드 (4줄 후킹 짧은글)
               </button>
             </div>
 
@@ -127,15 +128,15 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
                 value={feedPromptPro}
                 onChange={e => setFeedPromptPro(e.target.value)}
                 className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
-                placeholder="프로 피드 지침을 작성하세요."
+                placeholder="프로 피드 지침(5단락 심층 분석)을 작성하세요."
               />
             ) : (
               <textarea
                 name="feedPromptLite"
-                value={feedPromptReporter}
-                onChange={e => setFeedPromptReporter(e.target.value)}
+                value={feedPromptLite}
+                onChange={e => setFeedPromptLite(e.target.value)}
                 className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
-                placeholder="기자단 심층 보도 피드 지침을 작성하세요."
+                placeholder="라이트 피드 지침(4줄 후킹 짧은글)을 작성하세요."
               />
             )}
           </div>
@@ -143,13 +144,14 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
 
         {showTab === 'comment' && (
           <textarea
-            name="feedPromptLite"
-            value={feedPromptReporter}
-            onChange={e => setFeedPromptReporter(e.target.value)}
+            name="autoBotProfilePrompt"
+            value={commentPrompt}
+            onChange={e => setCommentPrompt(e.target.value)}
             className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
             placeholder="댓글 소통 반응 프롬프트를 작성하세요."
           />
         )}
+
 
         {showTab === 'robot' && (
           <textarea

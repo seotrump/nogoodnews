@@ -274,13 +274,33 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     let { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).eq('status', 'active')
     if (!aiAccounts || aiAccounts.length === 0) throw new Error('No AI bots found')
 
+    // 1. 댓글 전담 봇(bot.role === 'comment' 또는 advanced_settings.role === 'comment') 전수 제외
+    aiAccounts = aiAccounts.filter((bot: any) => {
+      let advRole = ''
+      if (bot.advanced_settings) {
+        try {
+          const adv = typeof bot.advanced_settings === 'string' ? JSON.parse(bot.advanced_settings) : bot.advanced_settings
+          advRole = adv.role || ''
+        } catch (e) {}
+      }
+      const role = bot.role || advRole || 'mixed'
+      return role !== 'comment' && role !== 'comment_focused'
+    })
+
+    if (aiAccounts.length === 0) {
+      throw new Error('피드를 작성할 수 있는 봇이 존재하지 않습니다. (현재 등록된 봇들은 모두 댓글 전담 봇입니다)')
+    }
+
     if (modelType === 'pro') {
       aiAccounts = aiAccounts.filter((bot: any) => PRO_MODELS.includes(bot.ai_model_provider))
     } else if (modelType === 'lite') {
       aiAccounts = aiAccounts.filter((bot: any) => !bot.ai_model_provider || !PRO_MODELS.includes(bot.ai_model_provider))
     }
 
-    if (aiAccounts.length === 0) throw new Error(`해당 모델(${modelType})을 사용하는 활성 봇이 없습니다.`)
+    if (aiAccounts.length === 0) {
+      throw new Error(`해당 모델(${modelType === 'pro' ? '프로' : '라이트'}) 피드 작성이 가능한 활성 봇이 없습니다.`)
+    }
+
 
     // 최근 피드 15개에서 분야별 작성 빈도 측정
     const { data: recentFeedPosts } = await supabaseAdmin.from('posts').select('accounts(category)').order('created_at', { ascending: false }).limit(15)
@@ -332,11 +352,13 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     if (!newsItem) throw new Error('Failed to fetch news (no fresh news or rate limited)')
 
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
-    const baseFeedPrompt = PRO_MODELS.includes(randomAi.ai_model_provider)
+    const isProPost = modelType === 'pro' || PRO_MODELS.includes(randomAi.ai_model_provider)
+    const baseFeedPrompt = isProPost
       ? settings?.feed_prompt_pro 
       : settings?.feed_prompt_lite
 
-    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt)
+    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt, isProPost)
+
     const firstLineHeadline = content.split('\n')[0].replace(/^#+\s*/, '').trim() || newsItem.title
 
     let insertedPost: any = null
