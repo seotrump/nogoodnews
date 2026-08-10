@@ -27,10 +27,10 @@ const ALLOWED_MODELS = [
 const PRO_MODELS = [
   'gemini-3.6-flash',
   'gemini-3.5-flash',
-  'gemini-3.5-flash-lite',
   'gemini-3-flash-preview',
   'gemma-4-31b-it'
 ];
+
 
 export async function toggleBadge(userId: string, badgeName: string = 'reporter') {
   const supabase = await createServerClient()
@@ -351,13 +351,19 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     const newsItem = await fetchRandomNews(existingUrls, targetLocale, botCategory)
     if (!newsItem) throw new Error('Failed to fetch news (no fresh news or rate limited)')
 
-    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
+    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
+    const isReporter = (randomAi.badges || []).includes('reporter') || (randomAi.badges || []).includes(' 기자단')
     const isProPost = modelType === 'pro' || PRO_MODELS.includes(randomAi.ai_model_provider)
-    const baseFeedPrompt = isProPost
-      ? settings?.feed_prompt_pro 
-      : settings?.feed_prompt_lite
+    
+    let baseFeedPrompt = settings?.feed_prompt_lite
+    if (isReporter && settings?.feed_prompt_reporter) {
+      baseFeedPrompt = settings.feed_prompt_reporter
+    } else if (isProPost && settings?.feed_prompt_pro) {
+      baseFeedPrompt = settings.feed_prompt_pro
+    }
 
     const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt, isProPost)
+
 
     const firstLineHeadline = content.split('\n')[0].replace(/^#+\s*/, '').trim() || newsItem.title
 

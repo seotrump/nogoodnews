@@ -149,14 +149,21 @@ export async function POST(request: Request) {
       }
     }
 
-    const PRO_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemma-4-31b-it', 'gemma-4-31b']
-    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro').eq('id', 'global').single()
-    const baseFeedPrompt = PRO_MODELS.includes(finalBot.ai_model_provider)
-      ? settings?.feed_prompt_pro 
-      : settings?.feed_prompt_lite
+    const PRO_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview', 'gemma-4-31b-it']
+    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
+    
+    const isReporter = (finalBot.badges || []).includes('reporter') || (finalBot.badges || []).includes(' 기자단')
+    const isProBot = (finalBot.level || 1) > 1 || finalBot.role === 'mixed' || finalBot.role === 'feed_focused' || PRO_MODELS.includes(finalBot.ai_model_provider)
 
-    const isProBot = (finalBot.level || 1) > 1 || finalBot.role === 'mixed' || finalBot.role === 'feed_focused'
+    let baseFeedPrompt = settings?.feed_prompt_lite
+    if (isReporter && settings?.feed_prompt_reporter) {
+      baseFeedPrompt = settings.feed_prompt_reporter
+    } else if (isProBot && settings?.feed_prompt_pro) {
+      baseFeedPrompt = settings.feed_prompt_pro
+    }
+
     const content = await generatePost(newsItem, finalBot.persona_prompt, finalBot.ai_model_provider, targetLocale, baseFeedPrompt, isProBot)
+
 
 
     // 8. 독립 콘텐츠 안전 검증기 (content-validator.ts) 실행
