@@ -1,44 +1,91 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { generateText } from 'ai'
 
-export async function generateEnforcedAIContent(prompt: string, preferredModel?: string): Promise<string> {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing');
-  }
-  const genAI = new GoogleGenerativeAI(apiKey);
+// ── Gemma 모델 여부 판별 ──────────────────────────────────────
+function isGemmaModel(model: string): boolean {
+  return model.toLowerCase().startsWith('gemma')
+}
 
-  // 선택된 모델이 있으면 1순위로 시도하고, 없거나 지정 안 된 경우 기본 3.5-flash-lite 사용
-  const primaryModel = preferredModel || 'gemini-3.5-flash-lite';
-  const fallbackModel1 = primaryModel === 'gemini-3.5-flash-lite' ? 'gemini-3.1-flash-lite' : 'gemini-3.5-flash-lite';
-  const fallbackModel2 = 'gemini-2.5-flash';
+// ── @ai-sdk/google 경로: Gemma 계열 전용 ────────────────────
+async function generateWithAiSdkGoogle(prompt: string, modelId: string): Promise<string> {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
 
-  console.log(`🚨 [Central AI Core] 1순위: Google API (${primaryModel}) 호출 시도...`);
-  try {
-    const model1 = genAI.getGenerativeModel({ model: primaryModel })
-    const result = await model1.generateContent(prompt)
-    console.log(`🚨 [Central AI Core] 1순위 (${primaryModel}) 생성 성공!`);
-    return result.response.text().trim()
-  } catch (error1) {
-    console.warn(`🚨 [Central AI Core] 1순위 (${primaryModel}) 실패! 2순위(${fallbackModel1})로 우회합니다.`, error1)
-    
+  const googleProvider = createGoogleGenerativeAI({ apiKey })
+
+  console.log(`🚀 [AI Core / ai-sdk] Gemma 경로 (${modelId}) 호출 시도...`)
+  const { text } = await generateText({
+    model: googleProvider(modelId),
+    prompt,
+  })
+  console.log(`✅ [AI Core / ai-sdk] (${modelId}) 생성 성공!`)
+  return text.trim()
+}
+
+// ── @google/generative-ai 경로: Gemini 계열 전용 ────────────
+async function generateWithLegacySdk(prompt: string, modelId: string): Promise<string> {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
+
+  const genAI = new GoogleGenerativeAI(apiKey)
+  console.log(`🚀 [AI Core / legacy] Gemini 경로 (${modelId}) 호출 시도...`)
+  const model = genAI.getGenerativeModel({ model: modelId })
+  const result = await model.generateContent(prompt)
+  console.log(`✅ [AI Core / legacy] (${modelId}) 생성 성공!`)
+  return result.response.text().trim()
+}
+
+// ── 공개 진입점 ────────────────────────────────────────────────
+export async function generateEnforcedAIContent(
+  prompt: string,
+  preferredModel?: string
+): Promise<string> {
+  const primaryModel = preferredModel || 'gemini-3.5-flash-lite'
+
+  // Gemma 계열: @ai-sdk/google 경로 사용 (1차 시도 → fallback Gemini)
+  if (isGemmaModel(primaryModel)) {
     try {
-      console.log(`🚨 [Central AI Core] 2순위: Google API (${fallbackModel1}) 호출 시도...`);
-      const model2 = genAI.getGenerativeModel({ model: fallbackModel1 })
-      const result = await model2.generateContent(prompt)
-      console.log(`🚨 [Central AI Core] 2순위 (${fallbackModel1}) 생성 성공!`);
-      return result.response.text().trim()
-    } catch (error2) {
-      console.warn(`🚨 [Central AI Core] 2순위 실패! 최후의 3순위(${fallbackModel2})로 우회합니다.`, error2)
-      
-      console.log(`🚨 [Central AI Core] 3순위: Google API (${fallbackModel2}) 호출 시도...`);
+      return await generateWithAiSdkGoogle(prompt, primaryModel)
+    } catch (err1) {
+      console.warn(
+        `⚠️  [AI Core] Gemma (${primaryModel}) 실패. Gemini fallback 진행...`,
+        err1
+      )
+      // Gemma 실패 시 안정적인 Gemini 모델로 강등
       try {
-        const model3 = genAI.getGenerativeModel({ model: fallbackModel2 })
-        const result = await model3.generateContent(prompt)
-        console.log(`🚨 [Central AI Core] 3순위 (${fallbackModel2}) 생성 성공!`);
-        return result.response.text().trim()
-      } catch (error3) {
-        console.error('🚨 [Central AI Core] 모든 AI 모델 호출 실패!', error3)
-        throw new Error('All configured AI models failed to generate content.');
+        return await generateWithLegacySdk(prompt, 'gemini-3.5-flash-lite')
+      } catch (err2) {
+        console.warn('⚠️  [AI Core] Gemini 3.5-flash-lite fallback 실패. 최종 fallback 시도...', err2)
+        return await generateWithLegacySdk(prompt, 'gemini-2.5-flash')
+      }
+    }
+  }
+
+  // Gemini 계열: 구 SDK 경로 사용 (기존 동작 유지)
+  const fallbackModel1 =
+    primaryModel === 'gemini-3.5-flash-lite' ? 'gemini-3.1-flash-lite' : 'gemini-3.5-flash-lite'
+  const fallbackModel2 = 'gemini-2.5-flash'
+
+  try {
+    return await generateWithLegacySdk(prompt, primaryModel)
+  } catch (err1) {
+    console.warn(
+      `⚠️  [AI Core] 1순위 (${primaryModel}) 실패. 2순위 (${fallbackModel1}) 시도...`,
+      err1
+    )
+    try {
+      return await generateWithLegacySdk(prompt, fallbackModel1)
+    } catch (err2) {
+      console.warn(
+        `⚠️  [AI Core] 2순위 (${fallbackModel1}) 실패. 최종 (${fallbackModel2}) 시도...`,
+        err2
+      )
+      try {
+        return await generateWithLegacySdk(prompt, fallbackModel2)
+      } catch (err3) {
+        console.error('🚨 [AI Core] 모든 AI 모델 호출 실패!', err3)
+        throw new Error('All configured AI models failed to generate content.')
       }
     }
   }

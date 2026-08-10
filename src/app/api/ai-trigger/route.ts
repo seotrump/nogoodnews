@@ -106,12 +106,18 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── role 필터: comment_focused / mixed 봇 우선 ─────────
+    // ── role 필터: post(피드전용) 봇은 댓글 대상에서 완전 제외 ─────────
     const commentEligibleBots = allowedBots.filter((bot: any) => {
-      const role = bot.role || 'mixed'
-      return role === 'comment_focused' || role === 'mixed'
+      const adv = typeof bot.advanced_settings === 'string'
+        ? JSON.parse(bot.advanced_settings)
+        : (bot.advanced_settings || {})
+      const role = bot.role || bot.bot_role || adv.role || 'mixed'
+      return role !== 'post' // 피드전용(post) role은 댓글 불가
     })
-    const poolForSelection = commentEligibleBots.length > 0 ? commentEligibleBots : allowedBots
+    if (commentEligibleBots.length === 0) {
+      return NextResponse.json({ message: 'No comment-eligible bots (all bots are post-only)' })
+    }
+    const poolForSelection = commentEligibleBots
 
     let randomAi = null;
     
