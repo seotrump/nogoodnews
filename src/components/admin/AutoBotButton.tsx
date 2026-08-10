@@ -125,8 +125,8 @@ export default function AutoBotButton() {
     if (data.forbiddenWords?.length > 0) prompt += `- Forbidden Words: ${data.forbiddenWords.join(', ')}\n`
 
     // DB 등록
-    toast.loading(`마무리 작업 중...`, { id: toastId })
     const advancedSettings = {
+
       coreIdentity,
       role: typeName === '라이트' ? 'comment' : (data.role || 'mixed'),
       axisTone: data.axisTone || 5,

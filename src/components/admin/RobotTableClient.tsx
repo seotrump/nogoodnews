@@ -209,21 +209,6 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                         {userItem.display_name}
                       </Link>
                       
-                      {/* 역할 뱃지 */}
-                      {isCommentOnly ? (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-300 text-[10px] font-extrabold shadow-sm whitespace-nowrap">
-                          💬 댓글전용
-                        </span>
-                      ) : isPostOnly ? (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold shadow-sm whitespace-nowrap">
-                          📝 피드전용
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-300 text-[10px] font-bold shadow-sm whitespace-nowrap">
-                          🔄 혼합형
-                        </span>
-                      )}
-
                       {isPro && (
                         <span className="bg-purple-100 text-purple-800 border border-purple-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded shadow-sm">
                           프로
@@ -236,6 +221,7 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                       )}
                     </div>
                   </td>
+
                   <td className="p-3 text-center">
                     <img src={userItem.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${userItem.id}`} alt="avatar" className="w-8 h-8 rounded-full border shadow-sm mx-auto bg-white object-cover min-w-[32px]" />
                   </td>

@@ -427,14 +427,15 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
                 <div>
                   <label className="block text-xs font-bold text-indigo-700 mb-1">역할 *</label>
                   <select
-                    value={botRole}
+                    value={botRole === 'comment_only' || botRole === 'comment_focused' ? 'comment' : botRole === 'post_only' || botRole === 'feed_focused' ? 'post' : botRole}
                     onChange={e => setBotRole(e.target.value)}
-                    className="w-full border border-indigo-200 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                    className="w-full border border-indigo-200 p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white font-bold text-gray-900"
                   >
-                    <option value="mixed">혼합 (Mixed) — 피드·댓글 모두</option>
-                    <option value="feed_focused">피드 전담 (Feed Only)</option>
-                    <option value="comment_focused">댓글 전담 (Comment Only)</option>
+                    <option value="comment">💬 댓글 전담 (Comment Only)</option>
+                    <option value="post">📝 피드 전담 (Feed Only)</option>
+                    <option value="mixed">🔄 혼합 (Mixed) — 피드·댓글 모두</option>
                   </select>
+
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-indigo-700 mb-1">
