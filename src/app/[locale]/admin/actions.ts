@@ -200,9 +200,9 @@ export async function createAiBot(formData: FormData) {
     category: category,
     badges: botBadges,
     role: finalRole,
-    bot_role: finalRole,
     advanced_settings: advancedSettings
   })
+
 
   if (accountError) {
     console.error('createAiBot INSERT error:', accountError)
