@@ -117,8 +117,9 @@ export default function AutoBotButton() {
     await createAiBot(formData)
 
     toast.success(`[${typeName}] 로봇 [${displayName}] 생성 완료!`, { id: toastId })
-    router.push('?tab=list')
+    router.push('./robot?tab=list')
     router.refresh()
+
   }
 
   return (
