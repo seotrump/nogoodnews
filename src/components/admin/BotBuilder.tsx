@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { generateTypeCode, quantizeAxis, quantizeLabelKo, buildAxisDbFields, calculateDominantAxis, type AxisProfile } from '@/utils/type-code'
@@ -14,7 +14,9 @@ interface BotBuilderProps {
 
 export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuilderProps) {
   const t = useTranslations('Admin')
+  const locale = useLocale()
   const router = useRouter()
+
   const [activeTab, setActiveTab] = useState<'basic' | 'personality' | 'vocabulary' | 'training' | 'conditions'>('basic')
 
 
@@ -194,33 +196,12 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     [currentAxisProfile]
   )
 
-  // 자동 프롬프트 동적 합성 엔진 (피드 전용 + 댓글 전용 분리)
-  const compilePrompt = () => {
-    const activeExistence = existenceDetail || `${displayName || '로봇'}의 고유 정체성`
-    const activeRealm = realmDetail ? `${realmDetail}에 있습니다.` : ''
-    const activeSpeech = speechStyle || '거침없고 직설적인 말투'
-    const activeCategory = category || '일반'
-    const activeGender = botGender === 'male' ? '남성' : botGender === 'female' ? '여성' : '중성/무관'
-
-    let prompt = `# Core Identity\n당신은 ${activeExistence}입니다. ${activeRealm} 전문분야는 ${activeCategory}이며 성별은 ${activeGender}입니다. ${activeSpeech}로 반응하세요. ${ANTI_HARASSMENT_CLAUSE}\n\n`
-    
-    prompt += `# Feed Instructions\n피드 작성 시 뉴스 이슈의 관점을 고유 캐릭터 성격과 말투를 100% 유지하며 생생하게 전달하세요.\n\n`
-    
-    prompt += `# Comment Instructions\n댓글 작성 시 1~2문장으로 캐릭터 특유의 어조를 살려 짧고 강렬하게 반응하세요.\n\n`
-
-    prompt += `# Personality Type Code\n${currentTypeCode}\n`
-    
-    return prompt.trim()
-  }
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!displayName) {
       toast.error('로봇 빌더 필수 조건(닉네임)을 입력해주세요.')
       return
     }
-
 
     const advancedSettings = {
       coreIdentity, language,
@@ -229,20 +210,21 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
       formality, catchphrases, forbiddenWords, triggerKeywords, fewShots
     }
 
-    const compiledPrompt = compilePrompt()
-
     // Phase 1: axis_profile + type_code 계산
     const { axis_profile, type_code } = buildAxisDbFields(currentAxisProfile)
     
     const formData = new FormData()
     formData.append('displayName', displayName)
+    formData.append('personaPrompt', coreIdentity)
+
     formData.append('username', username)
     formData.append('aiModelProvider', model)
     formData.append('category', category)
     formData.append('botTier', botTier.toString())
     formData.append('status', status)
-    formData.append('personaPrompt', compiledPrompt)
+    formData.append('personaPrompt', coreIdentity)
     formData.append('advancedSettings', JSON.stringify(advancedSettings))
+
     formData.append('postPriority', postPriority.toString())
     formData.append('commentPriority', commentPriority.toString())
     formData.append('interval', interval.toString())
@@ -268,9 +250,10 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     try {
       await onSubmit(formData)
       toast.success(initialData ? '성공적으로 저장되었습니다.' : '성공적으로 등록되었습니다.')
-      router.push('./robot?tab=list')
+      router.push(`/${locale}/admin/robot?tab=list`)
       router.refresh()
     } catch (error: any) {
+
 
       toast.error(error.message || '오류가 발생했습니다.')
     }

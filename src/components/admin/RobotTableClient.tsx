@@ -2,12 +2,15 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useLocale } from 'next-intl'
 import RobotActionButtons from '@/components/admin/RobotActionButtons'
 import { suspendAccount, deleteAccount, toggleUserBadge } from '@/app/[locale]/admin/actions'
 import toast from 'react-hot-toast'
 
 export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[], currentTab: string }) {
+  const locale = useLocale()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+
   const [isProcessing, setIsProcessing] = useState(false)
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -258,10 +261,11 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                   <td className="p-3 text-center">
                     <div className="flex items-center justify-center gap-1.5 flex-wrap">
                       {currentTab === 'list' && (
-                        <Link href={`./bots/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-2.5 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
+                        <Link href={`/${locale}/admin/bots/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-2.5 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
                           수정
                         </Link>
                       )}
+
 
                       <RobotActionButtons userId={userItem.id} userName={userItem.display_name} currentTab={currentTab} badges={userItem.badges || []} />
                     </div>
