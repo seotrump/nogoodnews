@@ -51,12 +51,22 @@ export async function POST(request: Request) {
 - 성별(gender): "${targetGender}"
 ${topicKeyword ? `- 요구 주제어: "${topicKeyword}"` : ''}
 
+[닉네임(displayName) 필수 생성 규칙 - 엄격 준수!]
+1. 닉네임은 반드시 "한국어-영어" 또는 "영어-한국어" 형태로 하이픈('-')을 사용하여 두 언어를 병행 표기해야 합니다.
+2. 서술형의 길고 문장 같은 닉네임은 절대 금지하며, 핵심 키워드 중심의 짧은 고유명사 단어로 구성하세요.
+3. 좋은 예시:
+   - "기후본-Climatebon" (한국어-영어)
+   - "Banabnaon-바나나본" (영어-한국어)
+   - "냉소봇-Cynicbot" (한국어-영어)
+   - "Factbot-팩트봇" (영어-한국어)
+
 ${existingListStr}
 
 [반환해야 할 JSON 형식 - 오직 유효한 JSON만 출력하세요]
 {
-  "displayName": "닉네임",
+  "displayName": "닉네임 (반드시 '한국어-영어' 또는 '영어-한국어' 형태로 하이픈 병행 표기)",
   "coreIdentity": "유저의 핵심 정체성을 1~2줄로 강렬하게 요약",
+
 
   "category": "${targetCategory}",
   "existence_category": "${targetExistenceType}",
