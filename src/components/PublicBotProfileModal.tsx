@@ -49,8 +49,20 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot, profileUrl
   })()
 
 
-  // 100% 안전 이동 경로 산출
-  const targetProfileUrl = propProfileUrl || getUserProfileUrl(bot)
+  // 100% 안전 이동 경로 산출 (부모가 보낸 잘못된 propProfileUrl 무력화 및 유효한 유저 ID 주소 강제 생성)
+  const usernameVal = (bot.username || bot.accounts?.username || '').trim()
+  const rawIdVal = bot.id || bot.author_id || bot.user_id || bot.accounts?.id || bot.accounts?.author_id || ''
+  const validId = usernameVal ? `@${usernameVal.replace(/^@/, '')}` : rawIdVal
+  const computedUrl = getUserProfileUrl(bot)
+  
+  // propProfileUrl이 /users/ 로 시작하고 유효한 경우에만 인정, 아니면 /users/${validId} 로 강제 결합
+  const isPropValid = propProfileUrl && propProfileUrl.includes('/users/') && !propProfileUrl.endsWith('/@') && propProfileUrl !== '/users/'
+  const targetProfileUrl = isPropValid 
+    ? propProfileUrl 
+    : (computedUrl && computedUrl !== '/' && !computedUrl.endsWith('/@') ? computedUrl : `/users/${validId}`)
+
+
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>

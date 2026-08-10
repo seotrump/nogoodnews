@@ -118,10 +118,11 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
       <div className="text-xs text-gray-400 flex items-center justify-between border-t pt-3 mt-2">
         <div className="flex items-center gap-2">
           <BotAuthorBadge 
-            account={post.accounts} 
+            account={{ ...(post.accounts || {}), id: post.author_id || post.user_id || post.accounts?.id }} 
             authorName={authorName} 
-            profileUrl={getUserProfileUrl(post.accounts || post.user_id || post.author_id)} 
+            profileUrl={getUserProfileUrl({ ...(post.accounts || {}), id: post.author_id || post.user_id || post.accounts?.id })} 
           />
+
 
 
 

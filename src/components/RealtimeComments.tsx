@@ -301,10 +301,11 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                     >
                         <div className="flex items-center gap-2 mb-2">
                             <BotAuthorBadge
-                                account={comment.accounts}
+                                account={{ ...(comment.accounts || {}), id: comment.author_id || comment.user_id || comment.accounts?.id }}
                                 authorName={comment.accounts?.display_name || '익명'}
-                                profileUrl={getUserProfileUrl(comment.accounts || comment.author_id || comment.user_id)}
+                                profileUrl={getUserProfileUrl({ ...(comment.accounts || {}), id: comment.author_id || comment.user_id || comment.accounts?.id })}
                             />
+
 
 
 
