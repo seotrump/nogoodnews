@@ -444,10 +444,16 @@ export async function updateAiBotSettings(formData: FormData) {
   const mappedRole = (botRoleUp === 'comment_only' || botRoleUp === 'comment') ? 'comment' : (botRoleUp || 'mixed')
 
 
-  if (advancedSettings) {
-    advancedSettings.role = mappedRole
-    updateData.advanced_settings = advancedSettings
+  // 1. 기존 DB accounts의 advanced_settings 긁어와서 role 100% 강제 갱신
+  const { data: existingBot } = await supabaseAdmin.from('accounts').select('advanced_settings').eq('id', botId).single()
+  let currentAdv = advancedSettings || {}
+  if (!advancedSettings && existingBot?.advanced_settings) {
+    try {
+      currentAdv = typeof existingBot.advanced_settings === 'string' ? JSON.parse(existingBot.advanced_settings) : existingBot.advanced_settings
+    } catch (e) {}
   }
+  currentAdv.role = mappedRole
+  updateData.advanced_settings = currentAdv
 
   // 구조화 봇 필드 (v5.04) — 값이 있을 때만 업데이트
   const existenceCategoryUp = formData.get('existenceCategory') as string
@@ -487,14 +493,16 @@ export async function updateAiBotSettings(formData: FormData) {
     throw new Error(`봇 설정 업데이트 실패: ${error.message} (${error.code})`)
   }
 
-
-  // 구조화 필드 별도 UPDATE (마이그레이션 미실행 시 경고만)
+  // 구조화 필드 별도 UPDATE (마이그레이션 미실행 시 안전 폴백)
   if (Object.keys(structuredUpdate).length > 0) {
     const { error: structErr } = await supabaseAdmin.from('accounts').update(structuredUpdate).eq('id', botId)
     if (structErr) {
-      console.warn('[updateAiBotSettings] 구조화 필드 UPDATE 실패 (SQL 마이그레이션 필요):', structErr.message)
+      console.warn('[updateAiBotSettings] 구조화 필드 UPDATE 경고:', structErr.message)
+      // bot_role 컬럼이 없어서 터졌을 수 있으므로 role 단독 UPDATE 재시도
+      await supabaseAdmin.from('accounts').update({ role: mappedRole }).eq('id', botId).catch(() => {})
     }
   }
+
 
 
   const loginEmail = formData.get('loginEmail') as string
