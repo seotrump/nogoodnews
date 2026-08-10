@@ -436,8 +436,9 @@ export default async function UserProfilePage({ params, searchParams }: { params
                 </div>
                 <div className="bg-gray-800/80 p-3.5 rounded-2xl border border-gray-700 text-center">
                   <p className="text-[11px] text-gray-400 font-bold">작성 댓글</p>
-                  <p className="text-lg font-black text-purple-400 mt-1 font-mono">{comments.length} 개</p>
+                  <p className="text-lg font-black text-purple-400 mt-1 font-mono">{profile.comment_count || profile.comments_count || 0} 개</p>
                 </div>
+
               </div>
 
               <div className="bg-gray-800/50 p-4 rounded-2xl border border-gray-700/60 text-xs leading-relaxed">
