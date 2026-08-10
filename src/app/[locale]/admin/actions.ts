@@ -171,6 +171,7 @@ export async function createAiBot(formData: FormData) {
   const isLightBot = !isProModel || rawRoleInput === 'comment_only' || rawRoleInput === 'comment'
   const finalRole = isLightBot ? 'comment' : rawRoleInput
 
+
   let advancedSettings: any = {}
   try {
     const rawSettings = formData.get('advancedSettings') as string
@@ -203,14 +204,12 @@ export async function createAiBot(formData: FormData) {
     advanced_settings: advancedSettings
   })
 
-
   if (accountError) {
     console.error('createAiBot INSERT error:', accountError)
     throw new Error('Failed to update AI account')
   }
 
   // ── 2단계: 구조화 필드 UPDATE (v5.04 마이그레이션 이후) ────
-  // SQL 마이그레이션 미실행 시에도 봇 생성은 정상 완료되고 아래만 스킵됨
   const existenceCategory = (formData.get('existenceCategory') as string) || (formData.get('existence_category') as string) || null
   const existenceDetail = (formData.get('existenceDetail') as string) || (formData.get('existence_detail') as string) || null
   const realmCategory = (formData.get('realmCategory') as string) || (formData.get('realm_category') as string) || null
@@ -226,6 +225,7 @@ export async function createAiBot(formData: FormData) {
   if (realmDetail) structuredFields.realm_detail = realmDetail
   if (speechStyle) structuredFields.speech_style = speechStyle
   structuredFields.role = finalRole
+
 
 
 

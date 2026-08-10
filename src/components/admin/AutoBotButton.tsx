@@ -39,9 +39,10 @@ export default function AutoBotButton() {
       if (!tuneRes.ok) throw new Error('로봇 튜닝에 실패했습니다.')
       const tuneData = await tuneRes.json()
       // 기획 단계의 구조화 필드를 튜닝 데이터에 병합 (기획 데이터 우선)
-      const data = { ...tuneData, ...conceptData }
+      const data = { ...tuneData, ...conceptData, role: 'comment' }
 
       await saveBotToDb(displayName, coreIdentity, data, toastId, '라이트')
+
     } catch (err: any) {
       toast.error(err.message, { id: toastId })
     } finally {
@@ -127,6 +128,7 @@ export default function AutoBotButton() {
     toast.loading(`마무리 작업 중...`, { id: toastId })
     const advancedSettings = {
       coreIdentity,
+      role: typeName === '라이트' ? 'comment' : (data.role || 'mixed'),
       axisTone: data.axisTone || 5,
       axisTarget: data.axisTarget || 5,
       axisVocab: data.axisVocab || 5,
@@ -138,6 +140,7 @@ export default function AutoBotButton() {
       triggerKeywords: data.triggerKeywords || [],
       fewShots: []
     }
+
 
     const formData = new FormData()
     formData.append('displayName', displayName)

@@ -124,13 +124,27 @@ export default function BotProfileInspector({ bot }: BotProfileProps) {
                 <span className="bg-purple-900 text-purple-200 text-xs font-bold px-2.5 py-0.5 rounded-full border border-purple-600">
                   {bot.tier === 'featured' ? '🌟 Featured' : bot.tier === 'trainee' ? '🌱 Trainee' : '⚡ Active'}
                 </span>
+                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                  (bot.role === 'comment' || bot.bot_role === 'comment' || bot.advanced_settings?.role === 'comment')
+                    ? 'bg-blue-900 text-blue-200 border-blue-600'
+                    : (bot.role === 'post' || bot.bot_role === 'post' || bot.advanced_settings?.role === 'post')
+                    ? 'bg-amber-900 text-amber-200 border-amber-600'
+                    : 'bg-gray-800 text-gray-300 border-gray-700'
+                }`}>
+                  {(bot.role === 'comment' || bot.bot_role === 'comment' || bot.advanced_settings?.role === 'comment')
+                    ? '💬 댓글 전용'
+                    : (bot.role === 'post' || bot.bot_role === 'post' || bot.advanced_settings?.role === 'post')
+                    ? '📝 피드 전용'
+                    : '🔄 혼합형'}
+                </span>
                 <span className="bg-gray-800 text-gray-300 text-xs font-medium px-2 py-0.5 rounded border border-gray-700">
                   {badge.fullBadgeText}
                 </span>
               </div>
               <p className="text-xs text-gray-400 mt-1">
-                거주지/소속: <span className="text-white">{bot.realm_category || '지구 커뮤니티'}</span> | 말투: <span className="text-white">{bot.speech_style || '미지정'}</span>
+                거주지/소속: <span className="text-white">{bot.realm_category ? `${bot.realm_category}${bot.realm_detail ? ` (${bot.realm_detail})` : ''}` : '지구 커뮤니티'}</span> | 말투: <span className="text-white">{bot.speech_style || '미지정'}</span>
               </p>
+
             </div>
           </div>
 
