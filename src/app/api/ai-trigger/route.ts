@@ -1,10 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 
-export const maxDuration = 60; // Vercel 서버리스 타임아웃 60초로 연장
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+export const maxDuration = 60; // Vercel 서버리스 타임아웃 60초
 
 // 지목 기능: 이름 포함 여부 및 유사도 판별
 function isNameTargeted(comment: string, name: string): boolean {
@@ -13,8 +12,7 @@ function isNameTargeted(comment: string, name: string): boolean {
 
   if (c.includes(n)) return true;
 
-  const t = comment.toLowerCase();
-  const commonChars = [...n].filter(char => t.includes(char)).length;
+  const commonChars = [...n].filter(char => c.includes(char)).length;
   return (commonChars / n.length) >= 0.6;
 }
 
@@ -33,171 +31,188 @@ export async function POST(request: Request) {
     }
     processingPosts.add(postId);
 
-    // 브라우저 지연 제거 및 서버 즉시 실행하되 5초의 확정 대기 부여
-    console.log(`🚨 [ai-trigger] 봇 답변 생성 시작 (5초 확정 대기 중)... (Post: ${postId})`);
-    await delay(5000); // 5초 대기 (Vercel 타임아웃 60초로 늘려두었으므로 안전함)
+    // ── after(): 응답 전송 후 백그라운드에서 댓글 생성 ─────────────────────
+    // 5초 대기 제거 → Gemma 생성 자체가 자연스러운 텀을 만들어줌
+    after(async () => {
+      try {
+        console.log(`🚀 [ai-trigger/after] 백그라운드 댓글 생성 시작 (Post: ${postId})`);
 
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
 
-    const { data: post } = await supabaseAdmin.from('posts').select('*').eq('id', postId).single()
-    if (!post) return NextResponse.json({ error: 'Post not found' }, { status: 404 })
+        const { data: post } = await supabaseAdmin.from('posts').select('*').eq('id', postId).single()
+        if (!post) { console.error('[after] Post not found:', postId); return; }
 
-    const { data: comments } = await supabaseAdmin
-      .from('comments')
-      .select('*, accounts(display_name, is_ai)')
-      .eq('post_id', postId)
-      .order('created_at', { ascending: true })
+        const { data: comments } = await supabaseAdmin
+          .from('comments')
+          .select('*, accounts(display_name, is_ai)')
+          .eq('post_id', postId)
+          .order('created_at', { ascending: true })
 
-    if (comments && comments.length > 0) {
-      const lastComment = comments[comments.length - 1]
-      if (lastComment.accounts?.is_ai) {
-        return NextResponse.json({ message: 'Last comment is by AI, skipping.' })
+        if (comments && comments.length > 0) {
+          const lastComment = comments[comments.length - 1]
+          if (lastComment.accounts?.is_ai) {
+            console.log('[after] 마지막 댓글이 AI 작성 → 생성 스킵');
+            return;
+          }
+        }
+
+        const { data: aiAccounts } = await supabaseAdmin
+          .from('accounts')
+          .select('*')
+          .eq('is_ai', true)
+          .or('status.neq.banned,status.is.null')
+        if (!aiAccounts || aiAccounts.length === 0) {
+          console.error('[after] No AI bots found'); return;
+        }
+
+        let triggerUserId = post.author_id;
+        let latestComment = '';
+
+        if (comments && comments.length > 0) {
+          triggerUserId = comments[comments.length - 1].author_id;
+          latestComment = comments[comments.length - 1].content;
+        }
+
+        const { data: userData } = await supabaseAdmin
+          .from('accounts').select('level').eq('id', triggerUserId).single();
+        const userLevel = userData?.level || 1;
+
+        const { data: followsData } = await supabaseAdmin
+          .from('follows').select('following_id').eq('follower_id', triggerUserId);
+        const followedBotIds = new Set(followsData?.map(f => f.following_id) || []);
+
+        const allowedBots = aiAccounts.filter(bot => {
+          const botTier = bot.level || 1;
+          return botTier <= userLevel || followedBotIds.has(bot.id);
+        });
+
+        if (allowedBots.length === 0) {
+          console.log('[after] 이 유저 티어에서 허용된 봇 없음'); return;
+        }
+
+        // ── triggerType 판별 ──────────────────────────────────────────────
+        let triggerType: 'summon' | 'chaining' | 'cold_start' | undefined = undefined
+        let summonedBy: string | undefined
+        let summonMessage: string | undefined
+        let chainingBot: string | undefined
+        let chainingMessage: string | undefined
+
+        if (!comments || comments.length === 0) {
+          triggerType = 'cold_start'
+        } else {
+          const lastComment = comments[comments.length - 1]
+          if (lastComment.accounts?.is_ai) {
+            triggerType = 'chaining'
+            chainingBot = lastComment.accounts?.display_name || '봇'
+            chainingMessage = lastComment.content
+          }
+        }
+
+        // ── role 필터: post(피드전용) 봇은 댓글 대상에서 완전 제외 ─────────
+        const commentEligibleBots = allowedBots.filter((bot: any) => {
+          const adv = typeof bot.advanced_settings === 'string'
+            ? JSON.parse(bot.advanced_settings)
+            : (bot.advanced_settings || {})
+          const role = bot.role || bot.bot_role || adv.role || 'mixed'
+          return role !== 'post' // 피드전용(post) role은 댓글 불가
+        })
+        if (commentEligibleBots.length === 0) {
+          console.log('[after] 댓글 가능한 봇 없음 (모두 피드전용)'); return;
+        }
+        const poolForSelection = commentEligibleBots
+
+        let randomAi = null;
+
+        if (latestComment) {
+          const targetedBot = poolForSelection.find((bot: any) => {
+            const mentioned = latestComment.includes(`@${bot.username}`);
+            const named = isNameTargeted(latestComment, bot.display_name);
+            return mentioned || named;
+          });
+
+          if (targetedBot) {
+            randomAi = targetedBot;
+            triggerType = 'summon'
+            summonedBy = comments && comments.length > 0
+              ? (comments[comments.length - 1].accounts?.display_name || '익명')
+              : '익명'
+            summonMessage = latestComment
+          }
+        }
+
+        if (!randomAi) {
+          const lotteryPool: any[] = []
+          poolForSelection.forEach((bot: any) => {
+            const priority = typeof bot.comment_priority === 'number' ? bot.comment_priority : 1
+            for (let i = 0; i < priority; i++) lotteryPool.push(bot)
+          })
+          if (lotteryPool.length === 0) { console.log('[after] 추첨 풀이 비어있음'); return; }
+          randomAi = lotteryPool[Math.floor(Math.random() * lotteryPool.length)]
+        }
+
+        let recentCommentsContext = ''
+        if (comments && comments.length > 0) {
+          recentCommentsContext = comments.slice(-5)
+            .map((c: any) => `${c.accounts?.display_name || '익명'}: ${c.content}`)
+            .join('\n')
+        }
+
+        let targetLocale = locale
+        if (randomAi.advanced_settings) {
+          const adv = typeof randomAi.advanced_settings === 'string'
+            ? JSON.parse(randomAi.advanced_settings)
+            : randomAi.advanced_settings
+          if (adv.language && adv.language !== 'default') {
+            targetLocale = adv.language
+          }
+        }
+
+        const { generateComment } = await import('@/utils/ai-generator')
+        const aiText = await generateComment(
+          post.headline,
+          post.content,
+          randomAi.persona_prompt,
+          randomAi.ai_model_provider,
+          recentCommentsContext,
+          targetLocale,
+          triggerType,
+          summonedBy,
+          summonMessage,
+          chainingBot,
+          chainingMessage,
+        )
+
+        await supabaseAdmin.from('comments').insert({
+          post_id: postId,
+          author_id: randomAi.id,
+          content: aiText
+        })
+
+        const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')
+        await updateUserScore(supabaseAdmin, randomAi.id, SCORE_REWARDS.FIRST_COMMENT)
+
+        revalidatePath(`/${locale}/posts/${postId}`);
+        revalidatePath(`/posts/${postId}`);
+        revalidatePath('/', 'layout');
+
+        console.log(`✅ [after] 댓글 생성 완료: ${randomAi.display_name} (Post: ${postId})`);
+      } catch (err) {
+        console.error('[after] 백그라운드 댓글 생성 실패:', err)
+      } finally {
+        processingPosts.delete(postId);
       }
-    }
-
-    const { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).or('status.neq.banned,status.is.null')
-    if (!aiAccounts || aiAccounts.length === 0) {
-      return NextResponse.json({ error: 'No AI bots found' }, { status: 404 })
-    }
-
-    let triggerUserId = post.author_id;
-    let latestComment = '';
-    
-    if (comments && comments.length > 0) {
-      triggerUserId = comments[comments.length - 1].author_id;
-      latestComment = comments[comments.length - 1].content;
-    }
-
-    const { data: userData } = await supabaseAdmin.from('accounts').select('level').eq('id', triggerUserId).single();
-    const userLevel = userData?.level || 1;
-
-    const { data: followsData } = await supabaseAdmin.from('follows').select('following_id').eq('follower_id', triggerUserId);
-    const followedBotIds = new Set(followsData?.map(f => f.following_id) || []);
-
-    const allowedBots = aiAccounts.filter(bot => {
-      const botTier = bot.level || 1;
-      return botTier <= userLevel || followedBotIds.has(bot.id);
-    });
-
-    if (allowedBots.length === 0) {
-      return NextResponse.json({ error: 'No bots allowed for this user tier' }, { status: 403 })
-    }
-
-    // ── triggerType 판별 ──────────────────────────────────
-    let triggerType: 'summon' | 'chaining' | 'cold_start' | undefined = undefined
-    let summonedBy: string | undefined
-    let summonMessage: string | undefined
-    let chainingBot: string | undefined
-    let chainingMessage: string | undefined
-
-    if (!comments || comments.length === 0) {
-      // 댓글 없음 → cold_start
-      triggerType = 'cold_start'
-    } else {
-      const lastComment = comments[comments.length - 1]
-      if (lastComment.accounts?.is_ai) {
-        // 마지막 댓글이 봇 → chaining 가능
-        triggerType = 'chaining'
-        chainingBot = lastComment.accounts?.display_name || '봇'
-        chainingMessage = lastComment.content
-      }
-    }
-
-    // ── role 필터: post(피드전용) 봇은 댓글 대상에서 완전 제외 ─────────
-    const commentEligibleBots = allowedBots.filter((bot: any) => {
-      const adv = typeof bot.advanced_settings === 'string'
-        ? JSON.parse(bot.advanced_settings)
-        : (bot.advanced_settings || {})
-      const role = bot.role || bot.bot_role || adv.role || 'mixed'
-      return role !== 'post' // 피드전용(post) role은 댓글 불가
     })
-    if (commentEligibleBots.length === 0) {
-      return NextResponse.json({ message: 'No comment-eligible bots (all bots are post-only)' })
-    }
-    const poolForSelection = commentEligibleBots
 
-    let randomAi = null;
-    
-    if (latestComment) {
-      const targetedBot = poolForSelection.find((bot: any) => {
-        const mentioned = latestComment.includes(`@${bot.username}`);
-        const named = isNameTargeted(latestComment, bot.display_name);
-        return mentioned || named;
-      });
-      
-      if (targetedBot) {
-        randomAi = targetedBot;
-        // 멘션 감지 → summon 으로 오버라이드
-        triggerType = 'summon'
-        summonedBy = comments && comments.length > 0
-          ? (comments[comments.length - 1].accounts?.display_name || '익명')
-          : '익명'
-        summonMessage = latestComment
-      }
-    }
+    // 즉시 응답 반환 → UI 비차단
+    console.log(`🚀 [ai-trigger] 즉시 응답 반환, 백그라운드 생성 시작 (Post: ${postId})`);
+    return NextResponse.json({ success: true, message: 'Comment generation started in background' })
 
-    if (!randomAi) {
-      const lotteryPool: any[] = []
-      poolForSelection.forEach((bot: any) => {
-        const priority = typeof bot.comment_priority === 'number' ? bot.comment_priority : 1
-        for (let i = 0; i < priority; i++) lotteryPool.push(bot)
-      })
-      if (lotteryPool.length === 0) return NextResponse.json({ error: 'No bots available in allowed pool' }, { status: 404 })
-      randomAi = lotteryPool[Math.floor(Math.random() * lotteryPool.length)]
-    }
-
-    let recentCommentsContext = ''
-    if (comments && comments.length > 0) {
-      recentCommentsContext = comments.slice(-5).map((c: any) => `${c.accounts?.display_name || '익명'}: ${c.content}`).join('\n')
-    }
-
-    let targetLocale = locale
-    if (randomAi.advanced_settings) {
-      let adv = typeof randomAi.advanced_settings === 'string' ? JSON.parse(randomAi.advanced_settings) : randomAi.advanced_settings
-      if (adv.language && adv.language !== 'default') {
-        targetLocale = adv.language
-      }
-    }
-
-    const { generateComment } = await import('@/utils/ai-generator')
-    const aiText = await generateComment(
-      post.headline,
-      post.content,
-      randomAi.persona_prompt,
-      randomAi.ai_model_provider,
-      recentCommentsContext,
-      targetLocale,
-      triggerType,
-      summonedBy,
-      summonMessage,
-      chainingBot,
-      chainingMessage,
-    )
-
-    await supabaseAdmin.from('comments').insert({
-      post_id: postId,
-      author_id: randomAi.id,
-      content: aiText
-    })
-
-    const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')
-    await updateUserScore(supabaseAdmin, randomAi.id, SCORE_REWARDS.FIRST_COMMENT)
-
-    // [핵심 해결책] DB에 Insert 후 Next.js 서버 캐시를 강제로 파기합니다!
-    revalidatePath(`/${locale}/posts/${postId}`);
-    revalidatePath(`/posts/${postId}`);
-    revalidatePath('/', 'layout'); // 만약을 위해 전체 레이아웃 라우터 캐시 힌트 갱신
-
-    return NextResponse.json({ success: true, aiName: randomAi.display_name })
   } catch (error: any) {
     console.error('API /ai-trigger error:', error)
+    if (requestPostId) processingPosts.delete(requestPostId);
     return NextResponse.json({ error: error.message }, { status: 500 })
-  } finally {
-    if (requestPostId) {
-      processingPosts.delete(requestPostId);
-    }
   }
 }

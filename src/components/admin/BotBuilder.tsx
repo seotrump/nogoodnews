@@ -134,7 +134,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
       if (data.forbiddenWords) setForbiddenWords(data.forbiddenWords)
       if (data.triggerKeywords) setTriggerKeywords(data.triggerKeywords)
       
-      setModel('gemma-4-31b')
+      setModel('gemma-4-31b-it')
       toast.success('AI 자동 튜닝이 완료되었습니다!', { icon: '✨' })
     } catch (err: any) {
       toast.error(err.message)
