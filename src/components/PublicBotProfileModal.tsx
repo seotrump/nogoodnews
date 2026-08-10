@@ -199,11 +199,30 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot, profileUrl
             </div>
           )
         ) : (
-          /* 휴먼(일반 유저) 프로필 카드 */
-          <div className="my-4 bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-xs text-gray-600 dark:text-gray-300">
-            <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">👤 일반 커뮤니티 회원</p>
-            {bot.bio ? <p className="italic text-gray-500 mt-2">"{bot.bio}"</p> : <p className="text-gray-400 mt-1">등록된 자기소개가 없습니다.</p>}
+          /* 👤 휴먼(일반 유저) 고급 정체성 카드 */
+          <div className="my-4 bg-gradient-to-br from-gray-900 to-gray-800 p-4 rounded-2xl border border-gray-700 text-xs text-gray-200 text-left shadow-lg">
+            <div className="flex items-center justify-between pb-2.5 border-b border-gray-700/80 mb-3">
+              <span className="font-black text-white text-sm">👤 커뮤니티 정회원</span>
+              <span className="bg-blue-600 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-full">
+                Lv.{bot.level || 1}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-center mb-3">
+              <div className="bg-gray-800 p-2 rounded-xl border border-gray-700">
+                <span className="text-[10px] text-gray-400 font-bold block">포인트</span>
+                <span className="text-sm font-black text-green-400 font-mono">{(bot.points || 0).toLocaleString()} P</span>
+              </div>
+              <div className="bg-gray-800 p-2 rounded-xl border border-gray-700">
+                <span className="text-[10px] text-gray-400 font-bold block">회원 등급</span>
+                <span className="text-sm font-black text-yellow-400">일반 회원</span>
+              </div>
+            </div>
+            <div className="bg-black/40 p-2.5 rounded-xl border border-gray-800 text-[11px] leading-relaxed">
+              <span className="text-gray-400 font-bold block mb-0.5">💬 자기소개</span>
+              {bot.bio ? <p className="text-gray-200 italic">"{bot.bio}"</p> : <p className="text-gray-500">등록된 자기소개가 없습니다.</p>}
+            </div>
           </div>
+
         )}
 
         {/* 3. 하단 전체 프로필 보기 버튼 (100% 이동 보장) */}

@@ -54,8 +54,9 @@ export default async function UserProfilePage({ params, searchParams }: { params
   }
 
 
-  const currentTab = tab || (profile.is_ai ? 'profile' : 'comments')
+  const currentTab = tab || 'profile'
   const sortBy = sort || (currentTab === 'feeds' ? 'latest' : 'reactions')
+
 
   // Redirect from UUID to @username only if a valid username exists and is different
   const cleanUsername = profile.username ? profile.username.replace(/^@/, '').trim() : ''
@@ -244,6 +245,9 @@ export default async function UserProfilePage({ params, searchParams }: { params
 
       <div className="w-full">
         <div className="flex gap-4 mb-6 border-b border-gray-200 px-1 overflow-x-auto whitespace-nowrap hide-scrollbar">
+          <Link scroll={false} href={`/users/${profileUrlId}?tab=profile`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'profile' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+            {profile.is_ai ? '🤖' : '👤'} {t('profileTab')}
+          </Link>
           <Link scroll={false} href={`/users/${profileUrlId}?tab=comments`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'comments' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
             <MessageSquare className="w-5 h-5" /> {t('bestComments')}
           </Link>
@@ -253,12 +257,8 @@ export default async function UserProfilePage({ params, searchParams }: { params
           <Link scroll={false} href={`/users/${profileUrlId}?tab=feeds`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'feeds' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
             <TrendingUp className="w-5 h-5" /> {t('bestFeeds')}
           </Link>
-          {profile.is_ai && (
-            <Link scroll={false} href={`/users/${profileUrlId}?tab=profile`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'profile' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
-              🤖 {t('profileTab')}
-            </Link>
-          )}
         </div>
+
 
         
         {currentTab !== 'profile' && (
@@ -405,7 +405,48 @@ export default async function UserProfilePage({ params, searchParams }: { params
                 🔒 봇 소유자에 의해 프로필 분석이 비공개로 설정되어 있습니다.
               </div>
             )
+          ) : currentTab === 'profile' ? (
+            /* 👤 휴먼 이용자 (일반 회원) 전용 프로필 정체성 카드 포맷 */
+            <div className="w-full bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white rounded-3xl p-6 text-left shadow-xl border border-gray-700/60">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-700/60 mb-5">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">👤</span>
+                  <div>
+                    <h3 className="text-xl font-black text-white tracking-tight">{profile.display_name} 회원 프로필</h3>
+                    <p className="text-xs text-gray-400">가입 계정 ID: @{cleanUsername || profile.id.substring(0, 8)}</p>
+                  </div>
+                </div>
+                <span className="bg-blue-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">
+                  🌱 커뮤니티 정회원
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                <div className="bg-gray-800/80 p-3.5 rounded-2xl border border-gray-700 text-center">
+                  <p className="text-[11px] text-gray-400 font-bold">활동 등급</p>
+                  <p className="text-lg font-black text-yellow-400 mt-1 font-mono">Lv.{profile.level || 1}</p>
+                </div>
+                <div className="bg-gray-800/80 p-3.5 rounded-2xl border border-gray-700 text-center">
+                  <p className="text-[11px] text-gray-400 font-bold">보유 포인트</p>
+                  <p className="text-lg font-black text-green-400 mt-1 font-mono">{(profile.points || 0).toLocaleString()} P</p>
+                </div>
+                <div className="bg-gray-800/80 p-3.5 rounded-2xl border border-gray-700 text-center">
+                  <p className="text-[11px] text-gray-400 font-bold">작성 피드</p>
+                  <p className="text-lg font-black text-blue-400 mt-1 font-mono">{posts.length} 개</p>
+                </div>
+                <div className="bg-gray-800/80 p-3.5 rounded-2xl border border-gray-700 text-center">
+                  <p className="text-[11px] text-gray-400 font-bold">작성 댓글</p>
+                  <p className="text-lg font-black text-purple-400 mt-1 font-mono">{comments.length} 개</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-800/50 p-4 rounded-2xl border border-gray-700/60 text-xs leading-relaxed">
+                <span className="text-gray-300 font-bold block mb-1">💬 자기소개 (Bio)</span>
+                <p className="text-gray-200 whitespace-pre-wrap">{profile.bio || '등록된 자기소개가 없습니다.'}</p>
+              </div>
+            </div>
           ) : currentTab === 'feeds' ? (
+
 
             <BulkDeleteFeed posts={posts || []} currentUser={currentUser} />
           ) : currentTab === 'captures' ? (
