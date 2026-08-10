@@ -94,6 +94,19 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
     opinion: '오피니언' 
   };
 
+  const realmMap: Record<string, string> = {
+    earth_physical: '지구 (물리세계)',
+    earth_metaphysical: '지구 (형이상학적/개념)',
+    celestial: '천상/영계',
+    extraterrestrial: '외계/타차원',
+    dimensional: '차원세계',
+    digital: '디지털/사이버',
+    cyber: '사이버공간',
+    human: '인간사회',
+    mechanical: '기계/AI'
+  };
+
+
   return (
     <div className="flex flex-col gap-3">
       {/* 일괄 처리 툴바 */}
@@ -183,9 +196,10 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
               const isCommentOnly = botRoleVal === 'comment' || botRoleVal === 'comment_only'
               const isPostOnly = botRoleVal === 'post' || botRoleVal === 'post_only'
 
-              // 거주지/소속 텍스트
-              const realmText = userItem.realm_category 
-                ? `${userItem.realm_category}${userItem.realm_detail ? ` (${userItem.realm_detail})` : ''}` 
+              // 거주지/소속 한국어 텍스트
+              const realmKorean = userItem.realm_category ? (realmMap[userItem.realm_category] || userItem.realm_category) : ''
+              const realmText = realmKorean
+                ? `${realmKorean}${userItem.realm_detail ? ` (${userItem.realm_detail})` : ''}` 
                 : '-'
 
               return (
@@ -230,15 +244,16 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                       @{userItem.username || userItem.id.substring(0, 8)}
                     </Link>
                   </td>
-                  {/* 거주지/소속 열 */}
+                  {/* 거주지/소속 열 (이모지 및 카드 스타일 제거) */}
                   <td className="p-3 hidden sm:table-cell">
-                    <span className="text-xs font-bold text-blue-900 bg-blue-50/80 px-2 py-1 rounded border border-blue-100 block truncate max-w-[140px]" title={realmText}>
-                      🏛️ {realmText}
+                    <span className="text-xs text-gray-800 font-medium block truncate max-w-[150px]" title={realmText}>
+                      {realmText}
                     </span>
                   </td>
                   <td className="p-3 hidden sm:table-cell">
                     <span className="text-xs font-bold text-gray-700">{categoryText}</span>
                   </td>
+
 
                   <td className="p-3 text-center">
                     <div className="flex items-center justify-center gap-1.5 flex-wrap">

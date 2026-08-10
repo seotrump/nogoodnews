@@ -105,11 +105,12 @@ export default function AutoBotButton() {
       axisAttitude: data.axisAttitude || 5,
       axisAffection: data.axisAffection || 5,
       formality: data.formality || 'informal',
-      catchphrases: data.catchphrases || [],
-      forbiddenWords: data.forbiddenWords || [],
-      triggerKeywords: data.triggerKeywords || [],
+      catchphrases: [],
+      forbiddenWords: [],
+      triggerKeywords: [],
       fewShots: []
     }
+
 
     const formData = new FormData()
     formData.append('displayName', displayName)

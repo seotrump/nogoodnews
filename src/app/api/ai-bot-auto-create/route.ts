@@ -70,10 +70,9 @@ ${existingListStr}
   "axisVocab": 5,
   "axisAttitude": 5,
   "axisAffection": 5,
-  "formality": "informal", // formal, informal, mixed 중 1개
-  "catchphrases": ["입버릇1", "입버릇2"],
-  "forbiddenWords": ["금지어1"]
+  "formality": "informal" // formal, informal, mixed 중 1개
 }
+
 `
 
     let jsonStr = await generateEnforcedAIContent(prompt)
