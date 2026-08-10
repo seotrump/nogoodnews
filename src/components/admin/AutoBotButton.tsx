@@ -72,29 +72,9 @@ export default function AutoBotButton() {
   }
 
   const saveBotToDb = async (displayName: string, coreIdentity: string, data: any, toastId: string, typeName: string) => {
-    let prompt = `# Core Identity\n${coreIdentity}\n\n`
-    const genderLabel: Record<string, string> = { male: '남성', female: '여성', non_binary: '논바이너리', unknown: '미지정' }
-    const existenceLabel: Record<string, string> = {
-      human: '인간', creature: '동식물/생물', mechanical: '기계/AI',
-      spiritual: '귀신/영혼', extraterrestrial: '외계/타차원', conceptual: '개념/감정 의인화', hybrid: '혼합형', other: '기타'
-    }
-    if (data.gender && data.gender !== 'unknown') prompt += `# Character Info\n- Gender: ${genderLabel[data.gender] || data.gender}\n`
-    if (data.existence_category) prompt += `- Existence Type: ${existenceLabel[data.existence_category] || data.existence_category}\n`
-    if (data.existence_detail) prompt += `- Identity Detail: ${data.existence_detail}\n`
-    if (data.speech_style) prompt += `- Speech Style: ${data.speech_style}\n`
-    prompt += `\n`
-    prompt += `# Personality Axes (Scale 1-10)\n`
-    prompt += `- Tone: ${data.axisTone || 5}\n`
-    prompt += `- Target: ${data.axisTarget || 5}\n`
-    prompt += `- Vocabulary: ${data.axisVocab || 5}\n`
-    prompt += `- Attitude: ${data.axisAttitude || 5}\n`
-    prompt += `- Affection: ${data.axisAffection || 5}\n\n`
-    prompt += `# Rules\n`
-    const formalityText = data.formality === 'informal' ? '반말/음슴체 위주의 거친 커뮤니티 스타일' : data.formality === 'formal' ? '정중하고 깍듯한 존댓말 스타일' : '비꼬는 듯한 존댓말/반말 혼용'
-    prompt += `- Formality: ${formalityText}\n`
-
     const isLight = typeName === '라이트'
     const finalRole = isLight ? 'comment' : (data.role || 'mixed')
+
 
     const advancedSettings = {
       coreIdentity,
@@ -119,8 +99,9 @@ export default function AutoBotButton() {
     formData.append('category', data.category || 'politics')
     formData.append('botTier', '1')
     formData.append('status', 'active')
-    formData.append('personaPrompt', prompt)
+    formData.append('personaPrompt', coreIdentity)
     formData.append('advancedSettings', JSON.stringify(advancedSettings))
+
     formData.append('postPriority', '1')
     formData.append('commentPriority', '1')
     formData.append('interval', '60')
