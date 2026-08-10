@@ -159,14 +159,15 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
       </div>
 
       <div className="overflow-x-auto scrollbar-none">
-        <table className="w-full text-left border-collapse min-w-[700px]">
+        <table className="w-full text-left border-collapse min-w-[750px]">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-100 text-xs text-gray-600 font-bold uppercase tracking-wider">
               <th className="p-3 w-10 text-center">선택</th>
               <th className="p-3 w-16 text-center">등급</th>
-              <th className="p-3 w-36">닉네임</th>
+              <th className="p-3 w-40">닉네임 / 역할</th>
               <th className="p-3 w-16 text-center">얼굴</th>
-              <th className="p-3 w-32">아이디</th>
+              <th className="p-3 w-28">아이디</th>
+              <th className="p-3 w-36 hidden sm:table-cell">거주지/소속</th>
               <th className="p-3 w-28 hidden sm:table-cell">전문성</th>
               <th className="p-3 w-48 text-center">관리 (수정/뱃지/정지)</th>
             </tr>
@@ -176,6 +177,16 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
               const isSelected = selectedIds.includes(userItem.id);
               const categoryText = userItem.is_ai ? (userItem.category ? (catMap[userItem.category] || userItem.category) : '-') : '일반 유저';
               const isPro = userItem.badges?.includes('pro') || ['gemini-3.6-flash', 'gemini-3.5-flash'].includes(userItem.ai_model_provider);
+              
+              // 역할 판별 (role / bot_role / advanced_settings.role)
+              const botRoleVal = userItem.role || userItem.bot_role || userItem.advanced_settings?.role || 'mixed'
+              const isCommentOnly = botRoleVal === 'comment' || botRoleVal === 'comment_only'
+              const isPostOnly = botRoleVal === 'post' || botRoleVal === 'post_only'
+
+              // 거주지/소속 텍스트
+              const realmText = userItem.realm_category 
+                ? `${userItem.realm_category}${userItem.realm_detail ? ` (${userItem.realm_detail})` : ''}` 
+                : '-'
 
               return (
                 <tr key={userItem.id} className={`hover:bg-gray-50 transition ${isSelected ? 'bg-blue-50/50' : ''}`}>
@@ -197,6 +208,22 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                       <Link href={`/users/${userItem.id}`} className="font-bold text-gray-900 text-sm hover:underline">
                         {userItem.display_name}
                       </Link>
+                      
+                      {/* 역할 뱃지 */}
+                      {isCommentOnly ? (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-300 text-[10px] font-extrabold shadow-sm whitespace-nowrap">
+                          💬 댓글전용
+                        </span>
+                      ) : isPostOnly ? (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold shadow-sm whitespace-nowrap">
+                          📝 피드전용
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-300 text-[10px] font-bold shadow-sm whitespace-nowrap">
+                          🔄 혼합형
+                        </span>
+                      )}
+
                       {isPro && (
                         <span className="bg-purple-100 text-purple-800 border border-purple-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded shadow-sm">
                           프로
@@ -217,9 +244,16 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                       @{userItem.username || userItem.id.substring(0, 8)}
                     </Link>
                   </td>
+                  {/* 거주지/소속 열 */}
+                  <td className="p-3 hidden sm:table-cell">
+                    <span className="text-xs font-bold text-blue-900 bg-blue-50/80 px-2 py-1 rounded border border-blue-100 block truncate max-w-[140px]" title={realmText}>
+                      🏛️ {realmText}
+                    </span>
+                  </td>
                   <td className="p-3 hidden sm:table-cell">
                     <span className="text-xs font-bold text-gray-700">{categoryText}</span>
                   </td>
+
                   <td className="p-3 text-center">
                     <div className="flex items-center justify-center gap-1.5 flex-wrap">
                       {currentTab === 'list' && (
