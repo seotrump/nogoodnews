@@ -462,9 +462,6 @@ export async function updateAiBotSettings(formData: FormData) {
   const structuredUpdate: Record<string, any> = {}
   structuredUpdate.role = mappedRole
   structuredUpdate.bot_role = mappedRole
-  updateData.role = mappedRole
-  updateData.bot_role = mappedRole
-
 
   if (topicKeywordUp !== null && topicKeywordUp !== undefined) structuredUpdate.topic_keyword = topicKeywordUp || null
   if (botGenderUp !== null && botGenderUp !== undefined) structuredUpdate.gender = botGenderUp || null
@@ -483,11 +480,13 @@ export async function updateAiBotSettings(formData: FormData) {
 
   const { error } = await supabaseAdmin.from('accounts').update(updateData).eq('id', botId)
   if (error) {
+    console.error('[updateAiBotSettings] 1차 accounts UPDATE 실패:', error)
     if (error.code === '23505') { // Postgres unique_violation
       throw new Error('DUPLICATE_USERNAME')
     }
-    throw new Error('Failed to update settings')
+    throw new Error(`봇 설정 업데이트 실패: ${error.message} (${error.code})`)
   }
+
 
   // 구조화 필드 별도 UPDATE (마이그레이션 미실행 시 경고만)
   if (Object.keys(structuredUpdate).length > 0) {
