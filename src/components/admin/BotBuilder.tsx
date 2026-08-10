@@ -204,11 +204,12 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
     }
 
     const advancedSettings = {
-      coreIdentity, language,
+      coreIdentity, language, role: botRole,
       axisTone, axisTarget, axisVocab, axisAttitude, axisAffection,
       axisPace,  // Phase 1: 6번째 판단축
       formality, catchphrases, forbiddenWords, triggerKeywords, fewShots
     }
+
 
     // Phase 1: axis_profile + type_code 계산
     const { axis_profile, type_code } = buildAxisDbFields(currentAxisProfile)

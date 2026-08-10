@@ -434,8 +434,13 @@ export async function updateAiBotSettings(formData: FormData) {
     updateData.level = parseInt(botTier);
   }
 
-  if (category) updateData.category = category
-  if (advancedSettings) updateData.advanced_settings = advancedSettings
+  const botRoleUp = formData.get('botRole') as string
+  const mappedRole = (botRoleUp === 'comment_only' || botRoleUp === 'comment') ? 'comment' : (botRoleUp || 'mixed')
+
+  if (advancedSettings) {
+    advancedSettings.role = mappedRole
+    updateData.advanced_settings = advancedSettings
+  }
 
   // 구조화 봇 필드 (v5.04) — 값이 있을 때만 업데이트
   const existenceCategoryUp = formData.get('existenceCategory') as string
@@ -443,17 +448,16 @@ export async function updateAiBotSettings(formData: FormData) {
   const realmCategoryUp = formData.get('realmCategory') as string
   const realmDetailUp = formData.get('realmDetail') as string
   const speechStyleUp = formData.get('speechStyle') as string
-  const botRoleUp = formData.get('botRole') as string
   const topicKeywordUp = formData.get('topicKeyword') as string
   const botGenderUp = formData.get('botGender') as string
 
   // 구조화 필드는 분리된 UPDATE로 처리 (마이그레이션 전후 안전)
   const structuredUpdate: Record<string, any> = {}
-  const mappedRole = (botRoleUp === 'comment_only' || botRoleUp === 'comment') ? 'comment' : (botRoleUp || 'mixed')
   structuredUpdate.role = mappedRole
   structuredUpdate.bot_role = mappedRole
   updateData.role = mappedRole
   updateData.bot_role = mappedRole
+
 
   if (topicKeywordUp !== null && topicKeywordUp !== undefined) structuredUpdate.topic_keyword = topicKeywordUp || null
   if (botGenderUp !== null && botGenderUp !== undefined) structuredUpdate.gender = botGenderUp || null
