@@ -142,17 +142,30 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         {tab === 'guidelines' && (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
             <GuidelinesClientUI 
-              initialRulesText={
-                siteSettings?.moderation_rules_text || 
-                (Array.isArray(siteSettings?.custom_moderation_rules) && siteSettings.custom_moderation_rules.length > 0
-                  ? (typeof siteSettings.custom_moderation_rules[0] === 'object' && 'text' in siteSettings.custom_moderation_rules[0]
-                      ? siteSettings.custom_moderation_rules[0].text
-                      : JSON.stringify(siteSettings.custom_moderation_rules))
-                  : undefined)
-              } 
+              initialRulesText={(() => {
+                try {
+                  const fs = require('fs')
+                  const path = require('path')
+                  const filePath = path.join(process.cwd(), 'public', 'moderation_rules.json')
+                  if (fs.existsSync(filePath)) {
+                    const content = fs.readFileSync(filePath, 'utf8')
+                    if (content && content.trim().length > 0) return content
+                  }
+                } catch (e) {}
+
+                return (
+                  siteSettings?.moderation_rules_text || 
+                  (Array.isArray(siteSettings?.custom_moderation_rules) && siteSettings.custom_moderation_rules.length > 0
+                    ? (typeof siteSettings.custom_moderation_rules[0] === 'object' && 'text' in siteSettings.custom_moderation_rules[0]
+                        ? siteSettings.custom_moderation_rules[0].text
+                        : JSON.stringify(siteSettings.custom_moderation_rules))
+                    : undefined)
+                )
+              })()} 
             />
           </div>
         )}
+
 
 
 
