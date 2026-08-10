@@ -167,9 +167,9 @@ export async function createAiBot(formData: FormData) {
   const isProModel = PRO_MODELS.includes(aiModelProvider);
   const botBadges = isProModel ? ['pro'] : [];
 
-  const rawRoleInput = (formData.get('botRole') as string) || 'mixed'
-  const isLightBot = !isProModel || rawRoleInput === 'comment_only' || rawRoleInput === 'comment'
-  const finalRole = isLightBot ? 'comment' : rawRoleInput
+  const rawRoleInput = (formData.get('botRole') as string) || (formData.get('role') as string) || 'mixed'
+  const finalRole = (rawRoleInput === 'comment_only' || rawRoleInput === 'comment') ? 'comment' : rawRoleInput
+
 
 
   let advancedSettings: any = {}
@@ -440,8 +440,9 @@ export async function updateAiBotSettings(formData: FormData) {
     updateData.level = parseInt(botTier);
   }
 
-  const botRoleUp = formData.get('botRole') as string
+  const botRoleUp = (formData.get('botRole') as string) || (formData.get('role') as string)
   const mappedRole = (botRoleUp === 'comment_only' || botRoleUp === 'comment') ? 'comment' : (botRoleUp || 'mixed')
+
 
   if (advancedSettings) {
     advancedSettings.role = mappedRole
