@@ -499,9 +499,12 @@ export async function updateAiBotSettings(formData: FormData) {
     if (structErr) {
       console.warn('[updateAiBotSettings] 구조화 필드 UPDATE 경고:', structErr.message)
       // bot_role 컬럼이 없어서 터졌을 수 있으므로 role 단독 UPDATE 재시도
-      await supabaseAdmin.from('accounts').update({ role: mappedRole }).eq('id', botId).catch(() => {})
+      try {
+        await supabaseAdmin.from('accounts').update({ role: mappedRole }).eq('id', botId)
+      } catch (e) {}
     }
   }
+
 
 
 
