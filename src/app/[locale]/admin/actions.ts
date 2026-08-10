@@ -178,6 +178,10 @@ export async function createAiBot(formData: FormData) {
   const isProModel = PRO_MODELS.includes(aiModelProvider);
   const botBadges = isProModel ? ['pro'] : [];
 
+  const rawRoleInput = (formData.get('botRole') as string) || 'mixed'
+  const isLightBot = !isProModel || rawRoleInput === 'comment_only' || rawRoleInput === 'comment'
+  const finalRole = isLightBot ? 'comment' : rawRoleInput
+
   // ── 1단계: 핵심 필드 INSERT (기존 스키마, 항상 동작) ────
   const { error: accountError } = await supabaseAdmin.from('accounts').insert({
     id: botId,
@@ -194,6 +198,7 @@ export async function createAiBot(formData: FormData) {
     avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${botId}`,
     category: category,
     badges: botBadges,
+    role: finalRole,
     advanced_settings: advancedSettings
   })
 
@@ -209,8 +214,6 @@ export async function createAiBot(formData: FormData) {
   const realmCategory = (formData.get('realmCategory') as string) || null
   const realmDetail = (formData.get('realmDetail') as string) || null
   const speechStyle = (formData.get('speechStyle') as string) || null
-  const rawRole = (formData.get('botRole') as string) || 'mixed'
-  const botRole = (rawRole === 'comment_only' || rawRole === 'comment') ? 'comment_only' : rawRole
   const topicKeyword = (formData.get('topicKeyword') as string) || null
   const botGender = (formData.get('botGender') as string) || null
 
@@ -220,7 +223,8 @@ export async function createAiBot(formData: FormData) {
   if (realmCategory) structuredFields.realm_category = realmCategory
   if (realmDetail) structuredFields.realm_detail = realmDetail
   if (speechStyle) structuredFields.speech_style = speechStyle
-  structuredFields.role = botRole
+  structuredFields.role = finalRole
+
 
   if (topicKeyword) structuredFields.topic_keyword = topicKeyword
   if (botGender) structuredFields.gender = botGender

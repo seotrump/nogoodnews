@@ -157,7 +157,8 @@ export default function AutoBotButton() {
     if (data.realm_category) formData.append('realm_category', data.realm_category)
     if (data.realm_detail) formData.append('realm_detail', data.realm_detail)
     if (data.speech_style) formData.append('speechStyle', data.speech_style)
-    formData.append('botRole', typeName === '라이트' ? 'comment_only' : (data.role || 'mixed'))
+    formData.append('botRole', typeName === '라이트' ? 'comment' : (data.role || 'mixed'))
+
     if (data.topic_keyword) formData.append('topicKeyword', data.topic_keyword)
     formData.append('botGender', data.gender || 'unknown')
 
