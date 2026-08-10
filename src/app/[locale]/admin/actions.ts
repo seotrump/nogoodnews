@@ -595,6 +595,7 @@ export async function updateSystemPrompts(formData: FormData) {
   
   const feedPromptLite = formData.get('feedPromptLite') as string
   const feedPromptPro = formData.get('feedPromptPro') as string
+  const feedPromptReporter = formData.get('feedPromptReporter') as string
   const moderationRulesText = formData.get('moderationRulesText') as string
 
   const updateData: any = {}
@@ -606,6 +607,8 @@ export async function updateSystemPrompts(formData: FormData) {
   if (proBotPrompt4 !== null && proBotPrompt4 !== undefined) updateData.pro_bot_prompt_4_avatar = proBotPrompt4
   if (feedPromptLite !== null && feedPromptLite !== undefined) updateData.feed_prompt_lite = feedPromptLite
   if (feedPromptPro !== null && feedPromptPro !== undefined) updateData.feed_prompt_pro = feedPromptPro
+  if (feedPromptReporter !== null && feedPromptReporter !== undefined) updateData.feed_prompt_reporter = feedPromptReporter
+
   if (moderationRulesText !== null && moderationRulesText !== undefined) {
     updateData.moderation_rules_text = moderationRulesText
     try {
@@ -636,6 +639,7 @@ export async function updateSystemPrompts(formData: FormData) {
     // DB 컬럼 미존재 에러 시 미존재 필드들 100% 제거 후 안전 재시도
     delete updateData.moderation_rules_text
     delete updateData.custom_moderation_rules
+    delete updateData.feed_prompt_reporter
 
     const { error: retryErr } = await supabaseAdmin
       .from('site_settings')
@@ -644,9 +648,9 @@ export async function updateSystemPrompts(formData: FormData) {
     
     if (retryErr) {
       console.error('Retry update failed:', retryErr)
-      // 로컬 파일 저장은 성공했으므로 에러를 던지지 않고 정상 처리
     }
   }
+
 
   revalidatePath('/admin')
   revalidatePath('/[locale]/admin')

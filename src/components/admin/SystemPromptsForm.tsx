@@ -41,18 +41,29 @@ interface Props {
     pro_bot_prompt_4_avatar?: string | null
     feed_prompt_lite?: string | null
     feed_prompt_pro?: string | null
+    feed_prompt_reporter?: string | null
   }
   showTab?: 'robot' | 'feed' | 'comment'
 }
+
+const DEFAULT_FEED_PROMPT_LITE = `당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.
+다음 페르소나 설정에 맞춰서, 구글에서 긁어온 실제 뉴스를 사람들에게 공유하며 '후킹(Hooking)'하는 4줄 글을 작성해주세요.
+
+[작성 규칙 - 라이트 4줄 구조]
+1. 1줄 (제목): 기사의 핵심 키워드를 중심으로 짧고 자극적인 어그로성 제목 (제목에 '#' 및 완결 어미 금지)
+2. 2줄: 기사의 내용을 커뮤니티 말투로 뼈때리게 요약
+3. 3줄: 사람들의 댓글을 유도하는 신랄한 한 줄 평이나 도발적인 질문
+4. 4줄: 본문 핵심 키워드를 활용해 총 3~4개의 해시태그 나열 (#제목키워드 #본문키워드)`
 
 export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props) {
   const [isPending, startTransition] = useTransition()
   
   const [autoBotPrompt, setAutoBotPrompt] = useState(settings?.auto_bot_prompt || DEFAULT_AUTO_BOT_PROMPT)
   const [feedPromptPro, setFeedPromptPro] = useState(settings?.feed_prompt_pro || DEFAULT_FEED_PROMPT_PRO)
-  const [feedPromptLite, setFeedPromptLite] = useState(settings?.feed_prompt_lite || DEFAULT_FEED_PROMPT_REPORTER)
+  const [feedPromptLite, setFeedPromptLite] = useState(settings?.feed_prompt_lite || DEFAULT_FEED_PROMPT_LITE)
+  const [feedPromptReporter, setFeedPromptReporter] = useState(settings?.feed_prompt_reporter || DEFAULT_FEED_PROMPT_REPORTER)
   const [commentPrompt, setCommentPrompt] = useState(settings?.auto_bot_profile_prompt || DEFAULT_COMMENT_PROMPT)
-  const [feedTab, setFeedTab] = useState<'pro' | 'lite'>('pro')
+  const [feedTab, setFeedTab] = useState<'lite' | 'pro' | 'reporter'>('lite')
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -73,9 +84,9 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       {/* 상단 폼 컨트롤 버튼 */}
       <div className="flex justify-between items-center border-b border-gray-200 pb-3">
         <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-          {showTab === 'feed' && <span>📰 피드 설정</span>}
-          {showTab === 'comment' && <span>💬 댓글 설정</span>}
-          {showTab === 'robot' && <span>🤖 오토봇 설정</span>}
+          {showTab === 'feed' && <span>📰 피드 프롬프트 설정</span>}
+          {showTab === 'comment' && <span>💬 댓글 프롬프트 설정</span>}
+          {showTab === 'robot' && <span>🤖 오토봇 기획 설정</span>}
         </h2>
         
         <button
@@ -87,6 +98,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
         </button>
       </div>
 
+
       {/* 히든 파라미터 보존 */}
       <input type="hidden" name="autoBotPrompt" value={autoBotPrompt} />
       <input type="hidden" name="feedPromptPro" value={feedPromptPro} />
@@ -96,19 +108,8 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       <div>
         {showTab === 'feed' && (
           <div className="space-y-3">
-            {/* 서브 탭: "프로(5단락 심층)" "라이트(4줄 후킹)" 명확한 라벨 */}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setFeedTab('pro')}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-                  feedTab === 'pro'
-                    ? 'bg-purple-600 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                프로 피드 (5단락 심층 분석)
-              </button>
+            {/* 서브 탭: 3대 독자 피드 (라이트 / 프로 / 기자단) */}
+            <div className="flex gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => setFeedTab('lite')}
@@ -118,19 +119,33 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                라이트 피드 (4줄 후킹 짧은글)
+                ⚡ 라이트 피드 (4줄 후킹 짧은글)
+              </button>
+              <button
+                type="button"
+                onClick={() => setFeedTab('pro')}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
+                  feedTab === 'pro'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                🧠 프로 피드 (3단락 논리 분석)
+              </button>
+              <button
+                type="button"
+                onClick={() => setFeedTab('reporter')}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
+                  feedTab === 'reporter'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                📰 기자단 피드 (5단락 심층 보도)
               </button>
             </div>
 
-            {feedTab === 'pro' ? (
-              <textarea
-                name="feedPromptPro"
-                value={feedPromptPro}
-                onChange={e => setFeedPromptPro(e.target.value)}
-                className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
-                placeholder="프로 피드 지침(5단락 심층 분석)을 작성하세요."
-              />
-            ) : (
+            {feedTab === 'lite' && (
               <textarea
                 name="feedPromptLite"
                 value={feedPromptLite}
@@ -139,6 +154,29 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
                 placeholder="라이트 피드 지침(4줄 후킹 짧은글)을 작성하세요."
               />
             )}
+            {feedTab === 'pro' && (
+              <textarea
+                name="feedPromptPro"
+                value={feedPromptPro}
+                onChange={e => setFeedPromptPro(e.target.value)}
+                className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
+                placeholder="프로 피드 지침(3단락 전문 분석)을 작성하세요."
+              />
+            )}
+            {feedTab === 'reporter' && (
+              <textarea
+                name="feedPromptReporter"
+                value={feedPromptReporter}
+                onChange={e => setFeedPromptReporter(e.target.value)}
+                className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
+                placeholder="기자단 심층 보도 피드 지침(5단락 기사체)을 작성하세요."
+              />
+            )}
+
+            {/* 비활성 탭 값은 hidden으로 보존하여 폼 제출 시 유실 방지 */}
+            {feedTab !== 'lite' && <input type="hidden" name="feedPromptLite" value={feedPromptLite} />}
+            {feedTab !== 'pro' && <input type="hidden" name="feedPromptPro" value={feedPromptPro} />}
+            {feedTab !== 'reporter' && <input type="hidden" name="feedPromptReporter" value={feedPromptReporter} />}
           </div>
         )}
 
@@ -152,7 +190,6 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
           />
         )}
 
-
         {showTab === 'robot' && (
           <textarea
             name="autoBotPrompt"
@@ -163,6 +200,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
           />
         )}
       </div>
+
     </form>
   )
 }
