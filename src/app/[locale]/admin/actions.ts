@@ -163,17 +163,6 @@ export async function createAiBot(formData: FormData) {
   } else {
     botId = authData.user!.id
   }
-  const category = formData.get('category') as string || null
-  
-  let advancedSettings = {}
-  try {
-    const rawSettings = formData.get('advancedSettings') as string
-    if (rawSettings) advancedSettings = JSON.parse(rawSettings)
-  } catch (e) {
-    console.error('Failed to parse advanced settings', e)
-  }
-
-  const botTier = parseInt((formData.get('botTier') as string) || '1')
 
   const isProModel = PRO_MODELS.includes(aiModelProvider);
   const botBadges = isProModel ? ['pro'] : [];
@@ -181,6 +170,18 @@ export async function createAiBot(formData: FormData) {
   const rawRoleInput = (formData.get('botRole') as string) || 'mixed'
   const isLightBot = !isProModel || rawRoleInput === 'comment_only' || rawRoleInput === 'comment'
   const finalRole = isLightBot ? 'comment' : rawRoleInput
+
+  let advancedSettings: any = {}
+  try {
+    const rawSettings = formData.get('advancedSettings') as string
+    if (rawSettings) advancedSettings = JSON.parse(rawSettings)
+  } catch (e) {
+    console.error('Failed to parse advanced settings', e)
+  }
+  advancedSettings.role = finalRole
+
+  const category = formData.get('category') as string || null
+  const botTier = parseInt((formData.get('botTier') as string) || '1')
 
   // ── 1단계: 핵심 필드 INSERT (기존 스키마, 항상 동작) ────
   const { error: accountError } = await supabaseAdmin.from('accounts').insert({
@@ -199,6 +200,7 @@ export async function createAiBot(formData: FormData) {
     category: category,
     badges: botBadges,
     role: finalRole,
+    bot_role: finalRole,
     advanced_settings: advancedSettings
   })
 
@@ -425,13 +427,12 @@ export async function updateAiBotSettings(formData: FormData) {
 
   // 구조화 필드는 분리된 UPDATE로 처리 (마이그레이션 전후 안전)
   const structuredUpdate: Record<string, any> = {}
-  if (existenceCategoryUp !== null && existenceCategoryUp !== undefined) structuredUpdate.existence_category = existenceCategoryUp || null
-  if (existenceDetailUp !== null && existenceDetailUp !== undefined) structuredUpdate.existence_detail = existenceDetailUp || null
-  if (realmCategoryUp !== null && realmCategoryUp !== undefined) structuredUpdate.realm_category = realmCategoryUp || null
-  if (realmDetailUp !== null && realmDetailUp !== undefined) structuredUpdate.realm_detail = realmDetailUp || null
-  if (speechStyleUp !== null && speechStyleUp !== undefined) structuredUpdate.speech_style = speechStyleUp || null
-  // role: BotBuilder에서 항상 전송 (기본값 'mixed'). null-safe 처리
-  structuredUpdate.role = botRoleUp || 'mixed'
+  const mappedRole = (botRoleUp === 'comment_only' || botRoleUp === 'comment') ? 'comment' : (botRoleUp || 'mixed')
+  structuredUpdate.role = mappedRole
+  structuredUpdate.bot_role = mappedRole
+  updateData.role = mappedRole
+  updateData.bot_role = mappedRole
+
   if (topicKeywordUp !== null && topicKeywordUp !== undefined) structuredUpdate.topic_keyword = topicKeywordUp || null
   if (botGenderUp !== null && botGenderUp !== undefined) structuredUpdate.gender = botGenderUp || null
 

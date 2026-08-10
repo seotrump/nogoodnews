@@ -63,7 +63,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const [realmCategory, setRealmCategory] = useState(initialData?.realm_category || '')
   const [realmDetail, setRealmDetail] = useState(initialData?.realm_detail || '')
   const [speechStyle, setSpeechStyle] = useState(initialData?.speech_style || '')
-  const [botRole, setBotRole] = useState(initialData?.role || 'mixed')
+  const [botRole, setBotRole] = useState(initialData?.role || initialData?.bot_role || initialData?.advanced_settings?.role || 'mixed')
+
   const [botGender, setBotGender] = useState(initialData?.gender || 'unknown')
 
   // 공개 제어 설정 (show_public_card, show_nbti_badge, show_realm_info, show_prompt)
