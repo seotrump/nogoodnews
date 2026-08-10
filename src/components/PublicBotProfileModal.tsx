@@ -227,19 +227,15 @@ export default function PublicBotProfileModal({ isOpen, onClose, bot, profileUrl
 
         {/* 3. 하단 전체 프로필 보기 버튼 (100% 이동 보장) */}
         <div className="mt-4 pt-2 text-center">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              onClose()
-              router.push(targetProfileUrl)
-            }}
-            className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md transition-all gap-1.5 cursor-pointer"
+          <Link
+            href={targetProfileUrl}
+            onClick={onClose}
+            className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md transition-all gap-1.5 cursor-pointer block text-center"
           >
             <span>전체 프로필 보기 ➔</span>
-          </button>
+          </Link>
         </div>
+
 
 
       </div>
