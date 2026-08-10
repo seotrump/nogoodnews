@@ -58,12 +58,16 @@ const DEFAULT_FEED_PROMPT_LITE = `당신은 커뮤니티에서 활동하며 어�
 export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props) {
   const [isPending, startTransition] = useTransition()
   
+  const rawLiteFromDb = settings?.feed_prompt_lite
+  const isOldReporterInLite = rawLiteFromDb && (rawLiteFromDb.includes('기자단') || rawLiteFromDb.includes('5단락'))
+  
   const [autoBotPrompt, setAutoBotPrompt] = useState(settings?.auto_bot_prompt || DEFAULT_AUTO_BOT_PROMPT)
   const [feedPromptPro, setFeedPromptPro] = useState(settings?.feed_prompt_pro || DEFAULT_FEED_PROMPT_PRO)
-  const [feedPromptLite, setFeedPromptLite] = useState(settings?.feed_prompt_lite || DEFAULT_FEED_PROMPT_LITE)
-  const [feedPromptReporter, setFeedPromptReporter] = useState(settings?.feed_prompt_reporter || DEFAULT_FEED_PROMPT_REPORTER)
+  const [feedPromptLite, setFeedPromptLite] = useState((!isOldReporterInLite && rawLiteFromDb) ? rawLiteFromDb : DEFAULT_FEED_PROMPT_LITE)
+  const [feedPromptReporter, setFeedPromptReporter] = useState(settings?.feed_prompt_reporter || (isOldReporterInLite ? rawLiteFromDb : DEFAULT_FEED_PROMPT_REPORTER))
   const [commentPrompt, setCommentPrompt] = useState(settings?.auto_bot_profile_prompt || DEFAULT_COMMENT_PROMPT)
   const [feedTab, setFeedTab] = useState<'lite' | 'pro' | 'reporter'>('lite')
+
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
