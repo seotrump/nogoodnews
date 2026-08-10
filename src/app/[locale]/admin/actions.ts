@@ -27,9 +27,11 @@ const ALLOWED_MODELS = [
 const PRO_MODELS = [
   'gemini-3.6-flash',
   'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
   'gemini-3-flash-preview',
   'gemma-4-31b-it'
 ];
+
 
 
 export async function toggleBadge(userId: string, badgeName: string = 'reporter') {

@@ -149,7 +149,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const PRO_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview', 'gemma-4-31b-it']
+    const PRO_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemma-4-31b-it']
+
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
     
     const isReporter = (finalBot.badges || []).includes('reporter') || (finalBot.badges || []).includes(' 기자단')

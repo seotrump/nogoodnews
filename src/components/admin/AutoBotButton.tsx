@@ -95,7 +95,8 @@ export default function AutoBotButton() {
     const formData = new FormData()
     formData.append('displayName', displayName)
     formData.append('username', '')
-    formData.append('aiModelProvider', isLight ? 'gemini-3.1-flash-lite' : 'gemini-3.5-flash')
+    formData.append('aiModelProvider', isLight ? 'gemini-3.1-flash-lite' : 'gemini-3.5-flash-lite')
+
 
     formData.append('category', data.category || 'politics')
     formData.append('botTier', '1')
