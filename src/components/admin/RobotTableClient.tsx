@@ -226,16 +226,20 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                         {userItem.display_name}
                       </Link>
                       
-                      {isPro && (
+                      {userItem.badges?.includes('reporter') ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold shadow-sm whitespace-nowrap">
+                          📰 기자단
+                        </span>
+                      ) : isPro ? (
                         <span className="bg-purple-100 text-purple-800 border border-purple-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded shadow-sm">
-                          프로
+                          🧠 프로
+                        </span>
+                      ) : (
+                        <span className="bg-gray-100 text-gray-700 border border-gray-300 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                          ⚡ 라이트
                         </span>
                       )}
-                      {userItem.badges?.includes('reporter') && (
-                        <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold shadow-sm whitespace-nowrap">
-                          기자단
-                        </span>
-                      )}
+
                     </div>
                   </td>
 
