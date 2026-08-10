@@ -33,8 +33,12 @@ export async function POST(request: Request) {
     const dueBots: { bot: any; priority: number; category: string; lastPostTime: number }[] = []
 
     for (const bot of aiAccounts) {
+      // 댓글 전담 봇(comment / comment_focused)은 피드 작성 대상에서 100% 필터링 제외
+      if (bot.role === 'comment' || bot.role === 'comment_focused') continue;
+
       const postPriority = typeof bot.post_priority === 'number' ? bot.post_priority : 1
       if (postPriority <= 0) continue
+
 
       const intervalMinutes = typeof bot.auto_post_interval_minutes === 'number' ? bot.auto_post_interval_minutes : 60
       
@@ -151,7 +155,9 @@ export async function POST(request: Request) {
       ? settings?.feed_prompt_pro 
       : settings?.feed_prompt_lite
 
-    const content = await generatePost(newsItem, finalBot.persona_prompt, finalBot.ai_model_provider, targetLocale, baseFeedPrompt)
+    const isProBot = (finalBot.level || 1) > 1 || finalBot.role === 'mixed' || finalBot.role === 'feed_focused'
+    const content = await generatePost(newsItem, finalBot.persona_prompt, finalBot.ai_model_provider, targetLocale, baseFeedPrompt, isProBot)
+
 
     // 8. 독립 콘텐츠 안전 검증기 (content-validator.ts) 실행
     const { validateContent } = await import('@/utils/content-validator');

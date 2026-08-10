@@ -176,13 +176,14 @@ ${prompt}
 // 2. 피드 생성 함수
 // ==========================================
 export async function generatePost(
-  newsItem: { title: string, link: string, contentSnippet: string },
+  newsItem: { title: string; contentSnippet: string },
   personaPrompt: string,
   provider: string = 'local',
   locale: string = 'ko',
-  baseFeedPrompt?: string
+  baseFeedPrompt?: string,
+  isPro: boolean = false
 ) {
-  console.log("🚨 [디버그-피드] generatePost 함수가 호출되었습니다!", { provider });
+  console.log("🚨 [디버그-피드] generatePost 함수가 호출되었습니다!", { provider, isPro });
 
   const languageInstruction = locale === 'ko' 
     ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL POST ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
@@ -215,8 +216,8 @@ export async function generatePost(
 2. 잡담이나 단순 앵무새식 인사말은 절대 쓰지 마세요.
 3. 5번째 줄의 해시태그(#) 생략 시 생성이 실패합니다. 반드시 마지막 5번째 줄에 해시태그 3개 이상을 기재하세요.`;
 
-  const proModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemma-4-31b-it', 'gemma-4-31b'];
-  let finalBasePrompt = baseFeedPrompt || (proModels.includes(provider) ? proFallbackPrompt : fallbackPrompt);
+  let finalBasePrompt = baseFeedPrompt || (isPro ? proFallbackPrompt : fallbackPrompt);
+
 
   if (locale === 'en') {
     finalBasePrompt = `
