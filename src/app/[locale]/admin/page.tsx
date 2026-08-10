@@ -144,12 +144,16 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             <GuidelinesClientUI 
               initialRulesText={
                 siteSettings?.moderation_rules_text || 
-                (Array.isArray(siteSettings?.custom_moderation_rules) && siteSettings.custom_moderation_rules[0]?.text) || 
-                undefined
+                (Array.isArray(siteSettings?.custom_moderation_rules) && siteSettings.custom_moderation_rules.length > 0
+                  ? (typeof siteSettings.custom_moderation_rules[0] === 'object' && 'text' in siteSettings.custom_moderation_rules[0]
+                      ? siteSettings.custom_moderation_rules[0].text
+                      : JSON.stringify(siteSettings.custom_moderation_rules))
+                  : undefined)
               } 
             />
           </div>
         )}
+
 
 
 

@@ -154,10 +154,10 @@ export default function AutoBotButton() {
     // 구조화 봇 필드 (v5.04) — AI가 반환한 값 저장
     if (data.existence_category) formData.append('existenceCategory', data.existence_category)
     if (data.existence_detail) formData.append('existenceDetail', data.existence_detail)
-    if (data.realm_category) formData.append('realmCategory', data.realm_category)
-    if (data.realm_detail) formData.append('realmDetail', data.realm_detail)
+    if (data.realm_category) formData.append('realm_category', data.realm_category)
+    if (data.realm_detail) formData.append('realm_detail', data.realm_detail)
     if (data.speech_style) formData.append('speechStyle', data.speech_style)
-    formData.append('botRole', data.role || 'mixed')
+    formData.append('botRole', typeName === '라이트' ? 'comment_only' : (data.role || 'mixed'))
     if (data.topic_keyword) formData.append('topicKeyword', data.topic_keyword)
     formData.append('botGender', data.gender || 'unknown')
 
@@ -187,9 +187,11 @@ export default function AutoBotButton() {
           onClick={handleGeneralBot} 
           disabled={isLoading}
           className={`h-9 px-3.5 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 ${
-            isLoading && loadingType !== 'general' 
-              ? 'bg-gray-100 text-gray-400' 
-              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+            isLoading && loadingType === 'general'
+              ? 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse'
+              : isLoading
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >
           <span className="text-sm">🤖</span>

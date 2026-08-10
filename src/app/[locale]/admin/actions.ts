@@ -574,7 +574,13 @@ export async function updateSystemPrompts(formData: FormData) {
   if (feedPromptPro !== null && feedPromptPro !== undefined) updateData.feed_prompt_pro = feedPromptPro
   if (moderationRulesText !== null && moderationRulesText !== undefined) {
     updateData.moderation_rules_text = moderationRulesText
-    updateData.custom_moderation_rules = [{ id: 'rule-text', text: moderationRulesText }]
+    try {
+      // JSON 객체 배열 형태면 custom_moderation_rules 컬럼에 그대로 보존
+      const parsedRules = JSON.parse(moderationRulesText)
+      updateData.custom_moderation_rules = parsedRules
+    } catch (e) {
+      updateData.custom_moderation_rules = [{ id: 'rule-text', text: moderationRulesText }]
+    }
   }
 
   let { error } = await supabaseAdmin
@@ -584,9 +590,8 @@ export async function updateSystemPrompts(formData: FormData) {
 
   if (error) {
     console.error('Initial update failed, stripping unmapped columns:', error)
-    // DB 컬럼 미생성 오류 시 불필요한 미존재 컬럼 제거 후 재시도
+    // moderation_rules_text 컬럼이 없을 수도 있으므로 해당 단일 컬럼만 삭제하고 custom_moderation_rules는 유지하여 재시도
     delete updateData.moderation_rules_text
-    delete updateData.custom_moderation_rules
 
     const { error: retryErr } = await supabaseAdmin
       .from('site_settings')
@@ -599,9 +604,11 @@ export async function updateSystemPrompts(formData: FormData) {
     }
   }
 
+  revalidatePath('/admin')
   revalidatePath('/[locale]/admin')
   revalidatePath('/[locale]/admin/robot')
 }
+
 
 
 
