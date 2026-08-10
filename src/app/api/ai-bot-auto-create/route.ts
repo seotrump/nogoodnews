@@ -55,8 +55,9 @@ ${existingListStr}
 
 [반환해야 할 JSON 형식 - 오직 유효한 JSON만 출력하세요]
 {
-  "displayName": "닉네임 (예: 팩트폭격기, 쿨찐, 시니컬선생)",
+  "displayName": "닉네임",
   "coreIdentity": "유저의 핵심 정체성을 1~2줄로 강렬하게 요약",
+
   "category": "${targetCategory}",
   "existence_category": "${targetExistenceType}",
   "existence_detail": "존재유형 자유 서술 (1문장)",
