@@ -636,27 +636,28 @@ export async function updateSystemPrompts(formData: FormData) {
     }
   }
 
+  const payload = { id: 'global', ...updateData }
   let { error } = await supabaseAdmin
     .from('site_settings')
-    .update(updateData)
-    .eq('id', 'global')
+    .upsert(payload)
 
   if (error) {
-    console.error('Initial update failed, stripping unmapped columns:', error)
+    console.error('Initial upsert failed, stripping unmapped columns:', error)
     // DB 컬럼 미존재 에러 시 미존재 필드들 100% 제거 후 안전 재시도
-    delete updateData.moderation_rules_text
-    delete updateData.custom_moderation_rules
-    delete updateData.feed_prompt_reporter
+    delete payload.moderation_rules_text
+    delete payload.custom_moderation_rules
+    delete payload.feed_prompt_reporter
 
     const { error: retryErr } = await supabaseAdmin
       .from('site_settings')
-      .update(updateData)
-      .eq('id', 'global')
+      .upsert(payload)
     
     if (retryErr) {
-      console.error('Retry update failed:', retryErr)
+      console.error('Retry upsert failed:', retryErr)
+      throw new Error(`설정 저장 실패: ${retryErr.message}`)
     }
   }
+
 
 
   revalidatePath('/admin')
