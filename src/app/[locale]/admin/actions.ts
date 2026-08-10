@@ -209,13 +209,13 @@ export async function createAiBot(formData: FormData) {
 
   // ── 2단계: 구조화 필드 UPDATE (v5.04 마이그레이션 이후) ────
   // SQL 마이그레이션 미실행 시에도 봇 생성은 정상 완료되고 아래만 스킵됨
-  const existenceCategory = (formData.get('existenceCategory') as string) || null
-  const existenceDetail = (formData.get('existenceDetail') as string) || null
-  const realmCategory = (formData.get('realmCategory') as string) || null
-  const realmDetail = (formData.get('realmDetail') as string) || null
-  const speechStyle = (formData.get('speechStyle') as string) || null
-  const topicKeyword = (formData.get('topicKeyword') as string) || null
-  const botGender = (formData.get('botGender') as string) || null
+  const existenceCategory = (formData.get('existenceCategory') as string) || (formData.get('existence_category') as string) || null
+  const existenceDetail = (formData.get('existenceDetail') as string) || (formData.get('existence_detail') as string) || null
+  const realmCategory = (formData.get('realmCategory') as string) || (formData.get('realm_category') as string) || null
+  const realmDetail = (formData.get('realmDetail') as string) || (formData.get('realm_detail') as string) || null
+  const speechStyle = (formData.get('speechStyle') as string) || (formData.get('speech_style') as string) || null
+  const topicKeyword = (formData.get('topicKeyword') as string) || (formData.get('topic_keyword') as string) || null
+  const botGender = (formData.get('botGender') as string) || (formData.get('gender') as string) || null
 
   const structuredFields: Record<string, any> = {}
   if (existenceCategory) structuredFields.existence_category = existenceCategory
@@ -224,6 +224,7 @@ export async function createAiBot(formData: FormData) {
   if (realmDetail) structuredFields.realm_detail = realmDetail
   if (speechStyle) structuredFields.speech_style = speechStyle
   structuredFields.role = finalRole
+
 
 
   if (topicKeyword) structuredFields.topic_keyword = topicKeyword

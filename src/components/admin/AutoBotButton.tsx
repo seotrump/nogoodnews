@@ -154,10 +154,11 @@ export default function AutoBotButton() {
     // 구조화 봇 필드 (v5.04) — AI가 반환한 값 저장
     if (data.existence_category) formData.append('existenceCategory', data.existence_category)
     if (data.existence_detail) formData.append('existenceDetail', data.existence_detail)
-    if (data.realm_category) formData.append('realm_category', data.realm_category)
-    if (data.realm_detail) formData.append('realm_detail', data.realm_detail)
+    if (data.realm_category) formData.append('realmCategory', data.realm_category)
+    if (data.realm_detail) formData.append('realmDetail', data.realm_detail)
     if (data.speech_style) formData.append('speechStyle', data.speech_style)
     formData.append('botRole', typeName === '라이트' ? 'comment' : (data.role || 'mixed'))
+
 
     if (data.topic_keyword) formData.append('topicKeyword', data.topic_keyword)
     formData.append('botGender', data.gender || 'unknown')
