@@ -180,17 +180,15 @@ export async function POST(request: Request) {
       throw new Error('AI Provider failed to generate content')
     }
 
-    // JSON 문자열 다듬기
-    if (jsonStr.startsWith('```json')) {
-      jsonStr = jsonStr.replace(/^```json\n/, '').replace(/\n```$/, '')
-    } else if (jsonStr.startsWith('```')) {
-      jsonStr = jsonStr.replace(/^```\n/, '').replace(/\n```$/, '')
-    }
+    // 마크다운 백틱 및 앞뒤 잉여 텍스트 제거
+    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/)
+    const cleaned = jsonMatch ? jsonMatch[0] : jsonStr.trim()
 
-    const parsed = JSON.parse(jsonStr)
+    const parsed = JSON.parse(cleaned)
     parsed.category = targetCategory
     if (topicKeyword) parsed.topic_keyword = topicKeyword
     return NextResponse.json(parsed)
+
   } catch (error: any) {
     console.error('AI Bot Auto Create Error:', error)
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })

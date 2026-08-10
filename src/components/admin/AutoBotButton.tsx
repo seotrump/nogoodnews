@@ -27,7 +27,8 @@ export default function AutoBotButton() {
         throw new Error(errorData.error || '로봇 기획에 실패했습니다.')
       }
       const conceptData = await res.json()
-      const { displayName, coreIdentity, category } = conceptData
+      const displayName = conceptData.displayName || `로봇_${Date.now().toString().slice(-4)}`
+      const coreIdentity = conceptData.coreIdentity || conceptData.displayName || '자유로운 페르소나 유저'
       
       // 2. 튜닝
       toast.loading('[라이트] 2/2: 성격 튜닝 중...', { id: toastId })
@@ -36,12 +37,15 @@ export default function AutoBotButton() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ coreIdentity })
       })
-      if (!tuneRes.ok) throw new Error('로봇 튜닝에 실패했습니다.')
+      if (!tuneRes.ok) {
+        const tuneErr = await tuneRes.json().catch(() => ({}))
+        throw new Error(tuneErr.error || '로봇 튜닝에 실패했습니다.')
+      }
       const tuneData = await tuneRes.json()
-      // 기획 단계의 구조화 필드를 튜닝 데이터에 병합 (기획 데이터 우선)
       const data = { ...tuneData, ...conceptData, role: 'comment' }
 
       await saveBotToDb(displayName, coreIdentity, data, toastId, '라이트')
+
 
     } catch (err: any) {
       toast.error(err.message, { id: toastId })
