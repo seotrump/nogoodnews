@@ -144,14 +144,39 @@ export async function POST(request: Request) {
         }
 
         if (!randomAi) {
-          const lotteryPool: any[] = []
-          poolForSelection.forEach((bot: any) => {
-            const priority = typeof bot.comment_priority === 'number' ? bot.comment_priority : 1
-            for (let i = 0; i < priority; i++) lotteryPool.push(bot)
-          })
-          if (lotteryPool.length === 0) { console.log('[after] 추첨 풀이 비어있음'); return; }
-          randomAi = lotteryPool[Math.floor(Math.random() * lotteryPool.length)]
+          // ── 시맨틱 매칭: 최신 댓글/뉴스 헤드라인과 가장 잘 어울리는 봇 선택 ──
+          // 임베딩이 있는 봇이 1개 이상 있으면 코사인 유사도로 선택
+          const botsWithEmbedding = poolForSelection.filter((bot: any) => bot.persona_embedding)
+
+          if (botsWithEmbedding.length > 0 && latestComment) {
+            try {
+              const { generateEmbedding, findMostSimilarBot } = await import('@/utils/embedding')
+              // 최신 댓글 + 뉴스 헤드라인을 합쳐서 맥락 임베딩 생성
+              const contextText = `${post.headline}\n${latestComment}`
+              const contextEmbedding = await generateEmbedding(contextText)
+              const match = findMostSimilarBot(botsWithEmbedding, contextEmbedding)
+              if (match) {
+                console.log(`[after] 시맨틱 매칭 봇 선택: ${match.bot.display_name} (유사도: ${match.similarity.toFixed(3)})`)
+                randomAi = match.bot
+              }
+            } catch (embErr) {
+              console.warn('[after] 시맨틱 매칭 실패, priority 추첨으로 fallback:', embErr)
+            }
+          }
+
+          // fallback: 임베딩 없거나 매칭 실패 시 기존 priority 추첨
+          if (!randomAi) {
+            const lotteryPool: any[] = []
+            poolForSelection.forEach((bot: any) => {
+              const priority = typeof bot.comment_priority === 'number' ? bot.comment_priority : 1
+              for (let i = 0; i < priority; i++) lotteryPool.push(bot)
+            })
+            if (lotteryPool.length === 0) { console.log('[after] 추첨 풀이 비어있음'); return; }
+            randomAi = lotteryPool[Math.floor(Math.random() * lotteryPool.length)]
+            console.log(`[after] priority 추첨 봇 선택: ${randomAi.display_name}`)
+          }
         }
+
 
         let recentCommentsContext = ''
         if (comments && comments.length > 0) {
