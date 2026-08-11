@@ -42,6 +42,8 @@ interface Props {
     feed_prompt_lite?: string | null
     feed_prompt_pro?: string | null
     feed_prompt_reporter?: string | null
+    is_auto_bot_active?: boolean | null
+    auto_bot_target_count?: number | null
   }
   showTab?: 'robot' | 'feed' | 'comment'
 }
@@ -67,6 +69,9 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
   const [feedPromptReporter, setFeedPromptReporter] = useState(settings?.feed_prompt_reporter || (isOldReporterInLite ? rawLiteFromDb : DEFAULT_FEED_PROMPT_REPORTER))
   const [commentPrompt, setCommentPrompt] = useState(settings?.auto_bot_profile_prompt || DEFAULT_COMMENT_PROMPT)
   const [feedTab, setFeedTab] = useState<'lite' | 'pro' | 'reporter'>('lite')
+
+  const [isAutoBotActive, setIsAutoBotActive] = useState(settings?.is_auto_bot_active || false)
+  const [autoBotTargetCount, setAutoBotTargetCount] = useState(settings?.auto_bot_target_count || 50)
 
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -195,13 +200,54 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
         )}
 
         {showTab === 'robot' && (
-          <textarea
-            name="autoBotPrompt"
-            value={autoBotPrompt}
-            onChange={e => setAutoBotPrompt(e.target.value)}
-            className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
-            placeholder="오토봇 무작위 기획 프롬프트를 작성하세요."
-          />
+          <div className="space-y-6">
+            <div className="flex flex-col gap-4 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm">
+              <h3 className="text-sm font-bold text-gray-900">백그라운드 자동 봇 생성 (Cron)</h3>
+              <p className="text-xs text-gray-500">
+                활성화 시, 설정된 주기에 따라 백그라운드에서 오토봇이 자동으로 생성되어 목표 개수까지 증식합니다.
+              </p>
+              
+              <div className="flex items-center gap-6 mt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div className="relative">
+                    <input 
+                      type="checkbox" 
+                      name="isAutoBotActive" 
+                      className="sr-only" 
+                      checked={isAutoBotActive}
+                      onChange={(e) => setIsAutoBotActive(e.target.checked)}
+                    />
+                    <div className={`block w-10 h-6 rounded-full transition-colors ${isAutoBotActive ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
+                    <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isAutoBotActive ? 'transform translate-x-4' : ''}`}></div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">자동 생성 켜기</span>
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <label htmlFor="autoBotTargetCount" className="text-sm font-medium text-gray-700">목표 봇 개수:</label>
+                  <input
+                    type="number"
+                    id="autoBotTargetCount"
+                    name="autoBotTargetCount"
+                    value={autoBotTargetCount}
+                    onChange={(e) => setAutoBotTargetCount(Number(e.target.value))}
+                    min="1"
+                    max="1000"
+                    className="w-20 px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  />
+                  <span className="text-xs text-gray-500">개</span>
+                </div>
+              </div>
+            </div>
+
+            <textarea
+              name="autoBotPrompt"
+              value={autoBotPrompt}
+              onChange={e => setAutoBotPrompt(e.target.value)}
+              className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
+              placeholder="오토봇 무작위 기획 프롬프트를 작성하세요."
+            />
+          </div>
         )}
       </div>
 

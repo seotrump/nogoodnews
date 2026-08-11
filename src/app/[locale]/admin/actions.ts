@@ -688,6 +688,9 @@ export async function updateSystemPrompts(formData: FormData) {
   const feedPromptPro = formData.get('feedPromptPro') as string
   const feedPromptReporter = formData.get('feedPromptReporter') as string
   const moderationRulesText = formData.get('moderationRulesText') as string
+  
+  const isAutoBotActive = formData.get('isAutoBotActive') === 'on'
+  const autoBotTargetCount = formData.get('autoBotTargetCount') ? parseInt(formData.get('autoBotTargetCount') as string, 10) : 50
 
   const updateData: any = {}
   if (autoBotPrompt !== null && autoBotPrompt !== undefined) updateData.auto_bot_prompt = autoBotPrompt
@@ -699,6 +702,9 @@ export async function updateSystemPrompts(formData: FormData) {
   if (feedPromptLite !== null && feedPromptLite !== undefined) updateData.feed_prompt_lite = feedPromptLite
   if (feedPromptPro !== null && feedPromptPro !== undefined) updateData.feed_prompt_pro = feedPromptPro
   if (feedPromptReporter !== null && feedPromptReporter !== undefined) updateData.feed_prompt_reporter = feedPromptReporter
+  
+  updateData.is_auto_bot_active = isAutoBotActive
+  updateData.auto_bot_target_count = autoBotTargetCount
 
   if (moderationRulesText !== null && moderationRulesText !== undefined) {
     updateData.moderation_rules_text = moderationRulesText
