@@ -4,6 +4,7 @@ import { generateEnforcedAIContent } from '@/utils/ai-core'
 import { createAiBot } from '@/app/[locale]/admin/actions'
 
 export const maxDuration = 60; // 60초 타임아웃 제한
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
