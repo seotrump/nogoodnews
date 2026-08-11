@@ -23,11 +23,12 @@ export async function GET(request: Request) {
 
     const targetCount = siteSettings.auto_bot_target_count || 50
 
-    // 2. 현재 봇 개수 확인
+    // 2. 현재 대기 중인 오토봇 개수 확인 (status가 'paused'인 것만 카운트)
     const { count, error: countError } = await supabase
       .from('accounts')
       .select('*', { count: 'exact', head: true })
       .eq('is_ai', true)
+      .eq('status', 'paused')
 
     if (countError) throw countError
 
