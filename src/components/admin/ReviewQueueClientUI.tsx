@@ -18,7 +18,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
       if (res.count && res.count > 0) {
         setPosts(posts.map(p => {
           const createdMs = new Date(p.created_at).getTime()
-          const isDue = (Date.now() - createdMs) >= (14 * 60 * 1000)
+          const isDue = (Date.now() - createdMs) >= (5 * 60 * 1000) // 백엔드와 동일하게 5분으로 통일
           if (p.status === 'pending_review' && isDue) {
             return { ...p, status: 'published' }
           }
@@ -68,9 +68,9 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
     const createdMs = new Date(createdAtStr).getTime()
     const diffMs = Date.now() - createdMs
     const remainingMs = (5 * 60 * 1000) - diffMs
-    if (remainingMs <= 0) return '곧 자동 발행 예정 (크론 실행 대기중)'
+    if (remainingMs <= 0) return '발행 대기 (스케줄러 호출 대기)'
     const remainingMinutes = Math.ceil(remainingMs / (60 * 1000))
-    return `약 ${remainingMinutes}분 후 자동 발행 예정`
+    return `발행 대기 (-${remainingMinutes}분)`
   }
 
   return (
@@ -81,7 +81,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
           onClick={() => setActiveTab('pending')}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
             activeTab === 'pending'
-              ? 'bg-yellow-500 text-white shadow-xs'
+              ? 'bg-gray-700 text-white shadow-xs'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
@@ -165,7 +165,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                     ? 'border-red-300 ring-1 ring-red-200' 
                     : isPublished 
                     ? 'border-emerald-300 ring-1 ring-emerald-100' 
-                    : 'border-yellow-300 ring-1 ring-yellow-100'
+                    : 'border-gray-300 ring-1 ring-gray-100'
                 }`}
               >
                 {/* 메인 피드 Card 컴포넌트 */}
@@ -177,18 +177,18 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                   {/* 자가검열 상태 및 위반 사유 안내 */}
                   <div className="flex flex-col gap-1.5 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-black text-gray-700">🛡️ 2중 자가검열 체계:</span>
+                      <span className="text-xs font-black text-gray-700">시스템 모더레이션:</span>
 
                       {isPublished ? (
                         <span className="inline-flex items-center gap-1 bg-emerald-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
-                          ✅ 발행 승인 완료 (Published)
+                          ✅ 발행 승인 (Published)
                         </span>
                       ) : isRejected ? (
                         <span className="inline-flex items-center gap-1 bg-red-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
-                          ⚠️ 자가검열 위반 탐지 (자동발행 중단됨)
+                          ⚠️ 위반 탐지 (발행 차단)
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 bg-yellow-500 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
+                        <span className="inline-flex items-center gap-1 bg-gray-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
                           ⏳ {getMinutesRemaining(post.created_at)}
                         </span>
                       )}
@@ -216,9 +216,11 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                     )}
 
                     {isPending && failedRules.length === 0 && (
-                      <p className="text-xs text-emerald-700 font-bold mt-1">
-                        ✨ 콘텐츠 가이드라인 100% 통과 — 15분 경과 후 크론 스케줄러에 의해 자동으로 발행됩니다.
-                      </p>
+                      <div className="mt-1 flex items-center gap-2 text-xs font-bold text-gray-600">
+                        <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded">가이드라인 검증 통과</span>
+                        <span className="text-gray-400">|</span>
+                        <span>자동 발행 스케줄러 대기 중</span>
+                      </div>
                     )}
                   </div>
 
