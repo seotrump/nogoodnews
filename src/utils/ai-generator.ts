@@ -272,7 +272,7 @@ ${personaPrompt}
 [추가 제약사항]
 ${languageInstruction}
 `
-  return await generateEnforcedAIContent(prompt, provider);
+  return await generateEnforcedAIContent(prompt, provider, 1024);
 }
 
 // ==========================================

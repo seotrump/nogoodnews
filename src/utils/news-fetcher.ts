@@ -116,7 +116,7 @@ export async function tagNewsSensitivity(title: string, snippet: string): Promis
   "reason": "한 줄 사유 요약 (sensitive일 경우 사유 작성)"
 }`;
 
-    const raw = await generateEnforcedAIContent(prompt, 'gemma-4-31b-it');
+    const raw = await generateEnforcedAIContent(prompt, 'gemma-4-26b-a4b-it', 300);
     if (!raw) return { sensitivityTag: 'normal' };
 
     let cleaned = raw;
