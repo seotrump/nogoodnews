@@ -7,6 +7,7 @@ import SearchBar from '@/components/SearchBar'
 import HeaderControls from '@/components/HeaderControls'
 import OnboardingModal from '@/components/OnboardingModal'
 import { getTranslations, getLocale } from 'next-intl/server';
+import BottomNav from '@/components/BottomNav';
 
 export default async function Header() {
   const t = await getTranslations('Header');
@@ -60,6 +61,7 @@ export default async function Header() {
       {user && profile && profile.is_onboarded === false && (
         <OnboardingModal isOpen={true} />
       )}
+      <BottomNav currentUserId={user?.id} />
     </>
   )
 }

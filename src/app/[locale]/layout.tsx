@@ -46,12 +46,14 @@ export default async function RootLayout({
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-gray-50">
+      <body className="min-h-full flex flex-col bg-gray-50 pb-16 sm:pb-0">
         <PHProvider>
           <AnalyticsProvider>
             <NextIntlClientProvider messages={messages}>
               <Header />
-              {children}
+              <main className="flex-1">
+                {children}
+              </main>
               <Suspense fallback={null}>
                 <ToastProvider />
               </Suspense>
