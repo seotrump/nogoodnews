@@ -46,6 +46,13 @@ const LITE_PROMPT_MODELS = [
   'gemini-2.5-flash-lite',
 ];
 
+// 프로 뱃지('pro') 자동 부여 대상: Gemma 31B 및 Flash(big) 계열
+const PRO_BOT_MODELS = [
+  'gemma-4-31b-it',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+];
+
 // Flash(big) 계열은 구조적 자동화에서 제외 - 관리자 개별 사용만
 
 
@@ -182,9 +189,9 @@ export async function createAiBot(formData: FormData) {
     botId = authData.user!.id
   }
 
-  // Gemma 봇 = pro 뱃지, Flash Lite = lite (뱃지 없음), Flash(big) = 개별 관리
-  const isGemmaModel = GEMMA_MODELS.includes(aiModelProvider);
-  const botBadges = isGemmaModel ? ['pro'] : [];
+  // 프로 봇 모델 (gemma-4-31b-it 등) = pro 뱃지 부여 / 라이트 봇 모델 (gemma-4-26b-a4b-it 등) = 뱃지 없음
+  const isProBotModel = PRO_BOT_MODELS.includes(aiModelProvider);
+  const botBadges = isProBotModel ? ['pro'] : [];
 
   const rawRoleInput = (formData.get('botRole') as string) || (formData.get('role') as string) || 'mixed'
   const finalRole = (rawRoleInput === 'comment_only' || rawRoleInput === 'comment') ? 'comment' : rawRoleInput

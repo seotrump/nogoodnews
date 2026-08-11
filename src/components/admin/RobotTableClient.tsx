@@ -210,7 +210,7 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
             {aiBots.map(userItem => {
               const isSelected = selectedIds.includes(userItem.id);
               const categoryText = userItem.is_ai ? (userItem.category ? (catMap[userItem.category] || userItem.category) : '-') : '일반 유저';
-              const isPro = userItem.badges?.includes('pro') || ['gemini-3.6-flash', 'gemini-3.5-flash'].includes(userItem.ai_model_provider);
+              const isPro = userItem.badges?.includes('pro') || ['gemma-4-31b-it', 'gemini-3.6-flash', 'gemini-3.5-flash'].includes(userItem.ai_model_provider);
 
               return (
                 <tr key={userItem.id} className={`hover:bg-gray-50 transition ${isSelected ? 'bg-blue-50/50' : ''}`}>
