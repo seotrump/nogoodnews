@@ -8,6 +8,7 @@ export default function BottomNav({ currentUserId }: { currentUserId?: string })
   const pathname = usePathname()
 
   // 하단 네비게이션을 숨길 페이지 경로 (어드민, 로그인 페이지, 특정 DM 대화방 내부 등)
+  if (!pathname) return null
   const isHidden = pathname.includes('/admin') || pathname.includes('/login')
 
   if (isHidden) return null

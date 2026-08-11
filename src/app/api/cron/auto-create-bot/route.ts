@@ -98,7 +98,7 @@ ${existingListStr}
   "formality": "informal"
 }
 `
-    let jsonStr = await generateEnforcedAIContent(prompt, 'gemma-4-26b-a4b-it', 500)
+    let jsonStr = await generateEnforcedAIContent(prompt, 'gemini-3.5-flash-lite', 1000)
     if (!jsonStr) throw new Error('AI Provider failed to generate content')
 
     const jsonMatch = jsonStr.match(/\{[\s\S]*\}/)
