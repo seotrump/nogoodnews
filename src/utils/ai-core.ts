@@ -41,7 +41,7 @@ export async function generateEnforcedAIContent(
   prompt: string,
   preferredModel?: string
 ): Promise<string> {
-  const primaryModel = preferredModel || 'gemini-3.5-flash-lite'
+  const primaryModel = preferredModel || 'gemma-4-26b-a4b-it'
 
   // Gemma 계열: @ai-sdk/google 경로 사용 (1차 시도 → fallback Gemini)
   if (isGemmaModel(primaryModel)) {
@@ -52,12 +52,12 @@ export async function generateEnforcedAIContent(
         `⚠️  [AI Core] Gemma (${primaryModel}) 실패. Gemini fallback 진행...`,
         err1
       )
-      // Gemma 실패 시 안정적인 Gemini 모델로 강등
+      // Gemma 실패 시 안정적인 Gemma 26B 또는 Gemini Lite 모델로 강등
       try {
-        return await generateWithLegacySdk(prompt, 'gemini-3.5-flash-lite')
+        return await generateWithAiSdkGoogle(prompt, 'gemma-4-26b-a4b-it')
       } catch (err2) {
-        console.warn('⚠️  [AI Core] Gemini 3.5-flash-lite fallback 실패. 최종 fallback 시도...', err2)
-        return await generateWithLegacySdk(prompt, 'gemini-2.5-flash')
+        console.warn('⚠️  [AI Core] Gemma 26b fallback 실패. Gemini Lite 시도...', err2)
+        return await generateWithLegacySdk(prompt, 'gemini-3.1-flash-lite')
       }
     }
   }
