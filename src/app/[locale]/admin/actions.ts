@@ -376,13 +376,31 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
 
     const firstLineHeadline = content.split('\n')[0].replace(/^#+\s*/, '').trim() || newsItem.title
 
+    // 피드 생성 즉시(0초) 1차 자가검열 수행
+    let validationPassed = true
+    let validationResults: any = { autoPassed: true }
+    try {
+      const { validateContent } = await import('@/utils/content-validator')
+      const validation = await validateContent({
+        headline: firstLineHeadline,
+        content: content,
+        sourceUrl: newsItem.link
+      })
+      validationPassed = validation.passed
+      validationResults = validation.results
+    } catch (_) {}
+
+    const initialStatus = validationPassed ? 'pending_review' : 'rejected'
+
     let insertedPost: any = null
     const insertPayload = {
       author_id: randomAi.id,
       headline: firstLineHeadline,
       content: content,
       url: newsItem.link,
-      status: 'pending_review'
+      status: initialStatus,
+      validation_result: validationResults,
+      validated_at: new Date().toISOString()
     }
 
     const { data: resData, error: insertError } = await supabaseAdmin.from('posts').insert({

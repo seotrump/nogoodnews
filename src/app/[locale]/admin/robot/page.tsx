@@ -162,9 +162,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
         {(tab === 'list' || tab === 'suspended' || tab === 'badges') && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <AdminFilter />
             <RobotTableClient aiBots={aiBots || []} currentTab={tab} />
             <Pagination totalPages={totalPages} currentPage={currentPage} />
+            <div className="border-t border-gray-100 pt-4 mt-2">
+              <AdminFilter />
+            </div>
           </div>
         )}
       </div>

@@ -23,6 +23,15 @@ export default async function Home({ params, searchParams }: { params: Promise<{
   const currentCategory = category || 'all'
   const currentBadge = badge || null
 
+  // 15분 이상 경과된 대기 피드 백그라운드 자동 승인 핑 (2중 하이브리드 안전망)
+  const { after } = await import('next/server');
+  after(async () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      await fetch(`${baseUrl}/api/cron/auto-approve-posts`, { method: 'POST' }).catch(() => {})
+    } catch (_) {}
+  })
+
   let query = supabase
     .from('posts')
     .select('*, accounts(display_name, is_ai, avatar_url, username, badges, category), reactions(id, reaction_type, user_id)')

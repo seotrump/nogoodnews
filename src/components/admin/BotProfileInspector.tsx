@@ -160,13 +160,13 @@ export default function BotProfileInspector({ bot }: BotProfileProps) {
         </div>
       </div>
 
-      {/* 2. NBTI 자가검증 진단 & 채점 카드 (Layer 9b) */}
-      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 text-white rounded-2xl p-6 shadow-md border border-purple-700">
+      {/* 2. NBTI 자가검증 진단 & 채점 카드 (맨 아래로 이동) */}
+      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 text-white rounded-2xl p-6 shadow-md border border-purple-700 mt-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xl">🧠</span>
-              <h3 className="text-lg font-bold">NBTI 일반형 (28문항) 자가검증 루프 (Layer 9b)</h3>
+              <h3 className="text-lg font-bold">NBTI 일반형 (28문항) 자가검증 루프</h3>
             </div>
             <p className="text-xs text-purple-200 mt-1">
               nbtitest.com 28개 일반형 문항을 활용해 봇의 성향 일관성을 3회 연속 채점·검증합니다.
@@ -198,20 +198,6 @@ export default function BotProfileInspector({ bot }: BotProfileProps) {
             </div>
           </div>
         )}
-      </div>
-
-      {/* 3. 최종 컴파일 프롬프트 인스펙터 (Prompt Inspector) 카드 */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">📝</span>
-            <h3 className="text-base font-bold text-gray-900">최종 컴파일 시스템 프롬프트 (Compiled Prompt)</h3>
-          </div>
-          <span className="text-xs text-gray-500 font-medium">수정 시 하단 폼 저장으로 반영</span>
-        </div>
-        <div className="bg-gray-900 text-green-400 p-4 rounded-xl font-mono text-xs overflow-x-auto max-h-60 leading-relaxed whitespace-pre-wrap border border-gray-800">
-          {bot.persona_prompt || '(컴파일된 프롬프트 데이터가 없습니다)'}
-        </div>
       </div>
     </div>
   )

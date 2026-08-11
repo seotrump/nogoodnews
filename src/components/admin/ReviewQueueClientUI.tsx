@@ -44,57 +44,82 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
         {posts.map((post) => {
           const validationResults = (post.validation_result as any[]) || []
           const failedRules = validationResults.filter(r => !r.passed)
+          const isPassed = post.status === 'pending_review' && validationResults.length > 0 && failedRules.length === 0
+          const isRejected = post.status === 'rejected' || failedRules.length > 0
 
           return (
             <div 
               key={post.id} 
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm flex flex-col"
+              className={`bg-white rounded-xl border overflow-hidden shadow-sm flex flex-col transition ${
+                isRejected ? 'border-red-300 ring-1 ring-red-200' : isPassed ? 'border-emerald-300 ring-1 ring-emerald-200' : 'border-gray-200'
+              }`}
             >
               {/* 메인 피드와 완전히 동일한 Card 컴포넌트 재사용 */}
               <PostCard post={post} currentUser={{ id: 'admin' }} hideDeleteButton={true} />
 
-              {/* 피드 아래쪽에 문제가 된 검토 항목 체크 버튼 및 관리 버튼 배치 */}
-              <div className="bg-gray-50 border-t border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* 2중 자가검열 프로세스 진단 결과 카드 영역 */}
+              <div className="bg-gray-50 border-t border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 
-                {/* 걸린 검토 항목 체크 버튼 표기 (클릭 시 사유 툴팁/안내) */}
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-xs font-bold text-red-600 shrink-0">🚨 위반 검토 항목:</span>
-                  {failedRules.length > 0 ? (
-                    failedRules.map((f, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => toast((t) => (
-                          <div className="text-xs font-semibold">
-                            <span className="font-bold text-red-600">[{f.rule_label || f.rule_key}]</span>: {f.reason}
+                {/* 2중 검열 상태 및 위반 사유 안내 */}
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-black text-gray-700">🛡️ 2중 자가검열 체계:</span>
+
+                    {isRejected ? (
+                      <span className="inline-flex items-center gap-1 bg-red-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
+                        ⚠️ 자가검열 위반 탐지 (자동발행 중단됨)
+                      </span>
+                    ) : isPassed ? (
+                      <span className="inline-flex items-center gap-1 bg-emerald-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
+                        ✅ 자가검열 통과 (15분 후 자동발행 예정)
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 bg-yellow-500 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs animate-pulse">
+                        ⏳ 1차 검토대기 (자동 검열 진행 예정)
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 자가검열 위반 항목 상세 사유 목록 */}
+                  {failedRules.length > 0 && (
+                    <div className="mt-2 bg-red-50 border border-red-200 p-3 rounded-lg flex flex-col gap-1.5">
+                      <p className="text-xs font-bold text-red-800 flex items-center gap-1">
+                        <span>🚨 위반 항목 {failedRules.length}건이 발견되어 15분 자동발행이 중단되었습니다:</span>
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {failedRules.map((f, idx) => (
+                          <div
+                            key={idx}
+                            className="bg-white border border-red-300 text-red-700 text-xs font-bold px-2.5 py-1 rounded-md shadow-xs flex items-center gap-1.5"
+                          >
+                            <span className="text-red-600 font-black">✕</span>
+                            <span>[{f.rule_label || f.rule_key}]</span>
+                            <span className="text-[11px] text-gray-600 font-normal">({f.reason})</span>
                           </div>
-                        ), { icon: '⚠️', duration: 4000 })}
-                        className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-extrabold px-3 py-1.5 rounded-lg shadow-sm transition cursor-pointer"
-                        title={f.reason}
-                      >
-                        <span className="w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-black">✓</span>
-                        <span>{f.rule_label || f.rule_key}</span>
-                      </button>
-                    ))
-                  ) : (
-                    <span className="text-xs text-gray-500 font-semibold bg-gray-200 px-2.5 py-1 rounded-md">
-                      ⚠️ 대기 상태 (수동 검토 필요)
-                    </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {isPassed && (
+                    <p className="text-xs text-emerald-700 font-bold mt-1">
+                      ✨ 콘텐츠 가이드라인 100% 통과 — 15분 스케줄러에 의해 자동으로 게재 승인됩니다.
+                    </p>
                   )}
                 </div>
 
                 {/* 수동 발행 승인 및 영구 삭제 버튼 */}
-                <div className="flex items-center gap-2 justify-end shrink-0">
+                <div className="flex items-center gap-2 justify-end shrink-0 self-end sm:self-center">
                   <button
                     onClick={() => handleApprove(post.id)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-1"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1"
                   >
                     <span>✓</span>
-                    <span>수동 발행 승인</span>
+                    <span>수동 즉시 발행</span>
                   </button>
                   <button
                     onClick={() => handleDelete(post.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-1"
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1"
                   >
                     <span>🗑️</span>
                     <span>영구 삭제</span>

@@ -37,16 +37,16 @@ export default async function BotSettingsPage({ params }: { params: Promise<{ id
         </Link>
       </div>
 
-      {/* Layer 11: 봇 종합 정체성, NBTI 자가검증, 프롬프트 인스펙터 */}
-      <BotProfileInspector bot={bot} />
-
       {/* 봇 세부 인라인 수정 폼 */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm mb-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <span>⚙️</span> 정체성 / 축 / 규칙 인라인 상세 수정
         </h3>
         <BotBuilder initialData={bot} onSubmit={updateAiBotSettings} />
       </div>
+
+      {/* 봇 종합 정체성 헤더 및 NBTI 자가검증 루프 (맨 하단 위치) */}
+      <BotProfileInspector bot={bot} />
     </div>
   )
 }

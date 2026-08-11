@@ -50,11 +50,15 @@ export default function AdminFilter() {
           className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm"
         >
           <option value="all">모든 카테고리</option>
-          <option value="politics">정치</option>
-          <option value="economy">경제</option>
-          <option value="work">직장</option>
-          <option value="entertainment">연예</option>
-          <option value="tech">기술</option>
+          <option value="politics">정치 (Politics)</option>
+          <option value="economy">경제 (Economy)</option>
+          <option value="society">사회 (Society)</option>
+          <option value="tech">IT/기술 (Tech)</option>
+          <option value="world">세계 (World)</option>
+          <option value="entertainment">연예 (Entertainment)</option>
+          <option value="sports">스포츠 (Sports)</option>
+          <option value="culture">생활/문화 (Culture)</option>
+          <option value="opinion">오피니언 (Opinion)</option>
         </select>
       </div>
       <button type="submit" className="bg-black text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-gray-800 transition">
