@@ -354,7 +354,8 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     if (!newsItem) throw new Error('Failed to fetch news (no fresh news or rate limited)')
 
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
-    const isReporter = (randomAi.badges || []).includes('reporter') || (randomAi.badges || []).includes(' 기자단')
+    const badgesArr = Array.isArray(randomAi.badges) ? randomAi.badges : (typeof randomAi.badges === 'string' ? JSON.parse(randomAi.badges || '[]') : [])
+    const isReporter = badgesArr.includes('reporter') || badgesArr.includes('기자단')
     const isProPost = modelType === 'pro' || PRO_MODELS.includes(randomAi.ai_model_provider)
     
     let baseFeedPrompt = settings?.feed_prompt_lite

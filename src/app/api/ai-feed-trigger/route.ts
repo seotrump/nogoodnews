@@ -153,8 +153,10 @@ export async function POST(request: Request) {
 
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
     
-    const isReporter = (finalBot.badges || []).includes('reporter') || (finalBot.badges || []).includes(' 기자단')
-    const isProBot = (finalBot.level || 1) > 1 || finalBot.role === 'mixed' || finalBot.role === 'feed_focused' || PRO_MODELS.includes(finalBot.ai_model_provider)
+    const badgesArr = Array.isArray(finalBot.badges) ? finalBot.badges : (typeof finalBot.badges === 'string' ? JSON.parse(finalBot.badges || '[]') : [])
+    const isReporter = badgesArr.includes('reporter') || badgesArr.includes('기자단')
+    // actions.ts forceAiPost와 동일 기준: level > 1 또는 PRO_MODELS 사용 봇만 pro
+    const isProBot = (finalBot.level || 1) > 1 || PRO_MODELS.includes(finalBot.ai_model_provider)
 
     let baseFeedPrompt = settings?.feed_prompt_lite
     if (isReporter && settings?.feed_prompt_reporter) {

@@ -5,15 +5,27 @@ import { after } from 'next/server'
 
 export const maxDuration = 60; // Vercel 서버리스 타임아웃 60초
 
-// 지목 기능: 이름 포함 여부 및 유사도 판별
+// 지목 기능: 이름/닉네임 조각 포함 여부 및 유사도 판별 (하이픈/공백 분리 매칭 지원)
 function isNameTargeted(comment: string, name: string): boolean {
   const c = comment.toLowerCase();
   const n = name.toLowerCase().trim();
 
+  // 1. 전체 이름이 포함된 경우 바로 true
   if (c.includes(n)) return true;
 
-  const commonChars = [...n].filter(char => c.includes(char)).length;
-  return (commonChars / n.length) >= 0.6;
+  // 2. 하이픈('-'), 슬래시('/'), 괄호, 공백 등으로 닉네임 분리 (예: "회로노마드-CircuitNomad" -> ["회로노마드", "circuitnomad"])
+  const parts = n.split(/[-/_/()\s]+/).map(p => p.trim()).filter(p => p.length >= 2);
+  for (const part of parts) {
+    if (c.includes(part)) return true;
+  }
+
+  // 3. 분리된 각 이름 조각 기준으로 유사도 검사
+  for (const part of parts) {
+    const commonChars = [...part].filter(char => c.includes(char)).length;
+    if ((commonChars / part.length) >= 0.7) return true;
+  }
+
+  return false;
 }
 
 const processingPosts = new Set<string>();

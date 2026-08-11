@@ -13,10 +13,25 @@ export const maxDuration = 60
  */
 export async function POST(request: Request) {
   try {
-    // 간단한 보안: CRON_SECRET 또는 SUPABASE_SERVICE_ROLE_KEY 헤더 확인
+    // 인증 확인: CRON_SECRET/SERVICE_ROLE_KEY 헤더 또는 로그인된 관리자 세션
     const authHeader = request.headers.get('authorization')
     const expectedSecret = process.env.CRON_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (expectedSecret && authHeader !== `Bearer ${expectedSecret}`) {
+    const isHeaderAuthed = Boolean(expectedSecret && authHeader === `Bearer ${expectedSecret}`)
+
+    let isAdminAuthed = false
+    if (!isHeaderAuthed) {
+      try {
+        const { createClient: createServerClient } = await import('@/utils/supabase/server')
+        const { isAdmin } = await import('@/utils/auth')
+        const supabase = await createServerClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user && isAdmin(user)) {
+          isAdminAuthed = true
+        }
+      } catch (_) {}
+    }
+
+    if (!isHeaderAuthed && !isAdminAuthed) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
