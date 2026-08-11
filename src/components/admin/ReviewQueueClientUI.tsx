@@ -42,7 +42,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
     const createdMs = new Date(createdAtStr).getTime()
     const diffMs = Date.now() - createdMs
     const remainingMs = (15 * 60 * 1000) - diffMs
-    if (remainingMs <= 0) return '곧 자동 발행 예정'
+    if (remainingMs <= 0) return '곧 자동 발행 예정 (15분 크론 실행 대기중)'
     const remainingMinutes = Math.ceil(remainingMs / (60 * 1000))
     return `약 ${remainingMinutes}분 후 자동 발행 예정`
   }

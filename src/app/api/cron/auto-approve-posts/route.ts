@@ -41,13 +41,13 @@ async function handleAutoApprove(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // 2. 현재 시간 기준 15분 이상 경과한 피드 정밀 추출
+    // 2. 14분 이상 경과한 대기 피드 추출 (크론 15분 주기 오차 1분 완화 적용)
     const now = Date.now()
-    const fifteenMinutesMs = 15 * 60 * 1000
+    const fourteenMinutesMs = 14 * 60 * 1000
 
     const pendingPosts = (allPendingPosts || []).filter(post => {
       const createdAtMs = new Date(post.created_at).getTime()
-      return (now - createdAtMs) >= fifteenMinutesMs
+      return (now - createdAtMs) >= fourteenMinutesMs
     })
 
     if (!pendingPosts || pendingPosts.length === 0) {
