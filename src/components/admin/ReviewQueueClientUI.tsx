@@ -63,12 +63,12 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
     return true
   })
 
-  // 생성 시간 기준 15분 경과 여부 및 남은 시간 계산 함수
+  // 생성 시간 기준 5분 경과 여부 및 남은 시간 계산 함수
   const getMinutesRemaining = (createdAtStr: string) => {
     const createdMs = new Date(createdAtStr).getTime()
     const diffMs = Date.now() - createdMs
-    const remainingMs = (15 * 60 * 1000) - diffMs
-    if (remainingMs <= 0) return '곧 자동 발행 예정 (15분 크론 실행 대기중)'
+    const remainingMs = (5 * 60 * 1000) - diffMs
+    if (remainingMs <= 0) return '곧 자동 발행 예정 (크론 실행 대기중)'
     const remainingMinutes = Math.ceil(remainingMs / (60 * 1000))
     return `약 ${remainingMinutes}분 후 자동 발행 예정`
   }

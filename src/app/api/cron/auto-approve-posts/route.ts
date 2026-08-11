@@ -41,18 +41,18 @@ async function handleAutoApprove(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // 2. 14분 이상 경과한 대기 피드 추출 (크론 15분 주기 오차 1분 완화 적용)
+    // 2. 5분 이상 경과한 대기 피드 자동 추출 및 승인
     const now = Date.now()
-    const fourteenMinutesMs = 14 * 60 * 1000
+    const fiveMinutesMs = 5 * 60 * 1000
 
     const pendingPosts = (allPendingPosts || []).filter(post => {
       const createdAtMs = new Date(post.created_at).getTime()
-      return (now - createdAtMs) >= fourteenMinutesMs
+      return (now - createdAtMs) >= fiveMinutesMs
     })
 
     if (!pendingPosts || pendingPosts.length === 0) {
       return NextResponse.json({ 
-        message: '15분 이상 경과된 대기 피드가 없습니다.', 
+        message: '5분 이상 경과된 대기 피드가 없습니다.', 
         processed: 0 
       })
     }

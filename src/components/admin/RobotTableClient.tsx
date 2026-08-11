@@ -264,28 +264,28 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                   {/* 관리 액션 버튼 열: 피드 / 수정 / 정지 한 줄(Horizontal Row)로 나열 */}
                   <td className="p-3 text-center">
                     <div className="flex flex-row items-center justify-center gap-1.5 whitespace-nowrap">
-                      {/* 1. 피드 버튼 */}
-                      <button
-                        onClick={() => handleForceFeed(userItem.id, userItem.display_name)}
-                        disabled={feedingBotId !== null}
-                        className={`inline-flex items-center gap-1 font-bold py-1 px-2.5 rounded text-xs transition shadow-xs ${
-                          feedingBotId === userItem.id
-                            ? 'bg-orange-400 text-white cursor-not-allowed'
-                            : 'bg-orange-500 hover:bg-orange-600 text-white'
-                        }`}
-                      >
-                        ⚡ {feedingBotId === userItem.id ? '생성중...' : '피드'}
-                      </button>
-
-                      {/* 2. 수정 버튼 */}
+                      {/* 1. 피드 버튼 (활성 봇 탭에서만 표시) */}
                       {currentTab === 'list' && (
-                        <Link
-                          href={`/${locale}/admin/bots/${userItem.id}`}
-                          className="inline-flex items-center gap-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-black font-bold py-1 px-2.5 rounded transition text-xs shadow-xs"
+                        <button
+                          onClick={() => handleForceFeed(userItem.id, userItem.display_name)}
+                          disabled={feedingBotId !== null}
+                          className={`inline-flex items-center gap-1 font-bold py-1 px-2.5 rounded text-xs transition shadow-xs ${
+                            feedingBotId === userItem.id
+                              ? 'bg-orange-400 text-white cursor-not-allowed'
+                              : 'bg-orange-500 hover:bg-orange-600 text-white'
+                          }`}
                         >
-                          ✏️ 수정
-                        </Link>
+                          ⚡ {feedingBotId === userItem.id ? '생성중...' : '피드'}
+                        </button>
                       )}
+
+                      {/* 2. 수정 버튼 (활성/정지 탭 모두 표시) */}
+                      <Link
+                        href={`/${locale}/admin/bots/${userItem.id}`}
+                        className="inline-flex items-center gap-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-black font-bold py-1 px-2.5 rounded transition text-xs shadow-xs"
+                      >
+                        ✏️ 수정
+                      </Link>
 
                       {/* 3. 정지 / 복구 / 삭제 / 뱃지 관리 버튼 */}
                       <RobotActionButtons userId={userItem.id} userName={userItem.display_name} currentTab={currentTab} badges={userItem.badges || []} />

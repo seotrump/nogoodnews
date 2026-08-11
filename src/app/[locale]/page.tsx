@@ -27,8 +27,8 @@ export default async function Home({ params, searchParams }: { params: Promise<{
   const { after } = await import('next/server');
   after(async () => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-      await fetch(`${baseUrl}/api/cron/auto-approve-posts`, { method: 'POST' }).catch(() => {})
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://nogoodnews.com')
+      await fetch(`${siteUrl}/api/cron/auto-approve-posts`, { method: 'POST' }).catch(() => {})
     } catch (_) {}
   })
 

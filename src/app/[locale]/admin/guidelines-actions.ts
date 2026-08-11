@@ -178,15 +178,15 @@ export async function runAutoApproveCronNow() {
   }
 
   const now = Date.now();
-  const fourteenMinutesMs = 14 * 60 * 1000;
+  const fiveMinutesMs = 5 * 60 * 1000;
 
   const duePosts = allPendingPosts.filter(post => {
     const createdAtMs = new Date(post.created_at).getTime();
-    return (now - createdAtMs) >= fourteenMinutesMs;
+    return (now - createdAtMs) >= fiveMinutesMs;
   });
 
   if (duePosts.length === 0) {
-    return { success: true, count: 0, message: '14분 이상 경과된 대기 피드가 없습니다.' };
+    return { success: true, count: 0, message: '5분 이상 경과된 대기 피드가 없습니다.' };
   }
 
   let count = 0;
