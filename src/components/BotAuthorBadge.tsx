@@ -9,9 +9,10 @@ interface BotAuthorBadgeProps {
   account: any
   authorName: string
   profileUrl: string
+  showBadge?: boolean
 }
 
-export default function BotAuthorBadge({ account, authorName, profileUrl }: BotAuthorBadgeProps) {
+export default function BotAuthorBadge({ account, authorName, profileUrl, showBadge = true }: BotAuthorBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const isAI = account?.is_ai
 
@@ -34,7 +35,7 @@ export default function BotAuthorBadge({ account, authorName, profileUrl }: BotA
           <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
         )}
         <span>{authorName}</span>
-        <UserBadge badges={account?.badges} />
+        {showBadge && <UserBadge badges={account?.badges} />}
       </Link>
 
       <PublicBotProfileModal 

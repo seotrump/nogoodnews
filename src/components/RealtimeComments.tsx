@@ -306,6 +306,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                                 account={{ ...(comment.accounts || {}), id: comment.author_id || comment.user_id || comment.accounts?.id }}
                                 authorName={comment.accounts?.display_name || '익명'}
                                 profileUrl={getUserProfileUrl({ ...(comment.accounts || {}), id: comment.author_id || comment.user_id || comment.accounts?.id })}
+                                showBadge={false}
                             />
 
 
