@@ -271,36 +271,42 @@ export async function createAiBot(formData: FormData) {
 }
 
 
-export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'lite') {
+export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'lite', botId?: string) {
   try {
     let { data: aiAccounts } = await supabaseAdmin.from('accounts').select('*').eq('is_ai', true).eq('status', 'active')
     if (!aiAccounts || aiAccounts.length === 0) throw new Error('No AI bots found')
 
-    // 1. 댓글 전담 봇(bot.role === 'comment' 또는 advanced_settings.role === 'comment') 전수 제외
-    aiAccounts = aiAccounts.filter((bot: any) => {
-      let advRole = ''
-      if (bot.advanced_settings) {
-        try {
-          const adv = typeof bot.advanced_settings === 'string' ? JSON.parse(bot.advanced_settings) : bot.advanced_settings
-          advRole = adv.role || ''
-        } catch (e) {}
+    // 특정 botId가 지정된 경우 해당 봇만 사용
+    if (botId) {
+      aiAccounts = aiAccounts.filter((bot: any) => bot.id === botId)
+      if (aiAccounts.length === 0) throw new Error('지정된 봇을 찾을 수 없거나 비활성 상태입니다.')
+    } else {
+      // 1. 댓글 전담 봇(bot.role === 'comment' 또는 advanced_settings.role === 'comment') 전수 제외
+      aiAccounts = aiAccounts.filter((bot: any) => {
+        let advRole = ''
+        if (bot.advanced_settings) {
+          try {
+            const adv = typeof bot.advanced_settings === 'string' ? JSON.parse(bot.advanced_settings) : bot.advanced_settings
+            advRole = adv.role || ''
+          } catch (e) {}
+        }
+        const role = bot.role || advRole || 'mixed'
+        return role !== 'comment' && role !== 'comment_focused'
+      })
+
+      if (aiAccounts.length === 0) {
+        throw new Error('피드를 작성할 수 있는 봇이 존재하지 않습니다. (현재 등록된 봇들은 모두 댓글 전담 봇입니다)')
       }
-      const role = bot.role || advRole || 'mixed'
-      return role !== 'comment' && role !== 'comment_focused'
-    })
 
-    if (aiAccounts.length === 0) {
-      throw new Error('피드를 작성할 수 있는 봇이 존재하지 않습니다. (현재 등록된 봇들은 모두 댓글 전담 봇입니다)')
-    }
+      if (modelType === 'pro') {
+        aiAccounts = aiAccounts.filter((bot: any) => PRO_MODELS.includes(bot.ai_model_provider))
+      } else if (modelType === 'lite') {
+        aiAccounts = aiAccounts.filter((bot: any) => !bot.ai_model_provider || !PRO_MODELS.includes(bot.ai_model_provider))
+      }
 
-    if (modelType === 'pro') {
-      aiAccounts = aiAccounts.filter((bot: any) => PRO_MODELS.includes(bot.ai_model_provider))
-    } else if (modelType === 'lite') {
-      aiAccounts = aiAccounts.filter((bot: any) => !bot.ai_model_provider || !PRO_MODELS.includes(bot.ai_model_provider))
-    }
-
-    if (aiAccounts.length === 0) {
-      throw new Error(`해당 모델(${modelType === 'pro' ? '프로' : '라이트'}) 피드 작성이 가능한 활성 봇이 없습니다.`)
+      if (aiAccounts.length === 0) {
+        throw new Error(`해당 모델(${modelType === 'pro' ? '프로' : '라이트'}) 피드 작성이 가능한 활성 봇이 없습니다.`)
+      }
     }
 
 

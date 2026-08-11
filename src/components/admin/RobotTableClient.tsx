@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import RobotActionButtons from '@/components/admin/RobotActionButtons'
-import { suspendAccount, deleteAccount, toggleUserBadge } from '@/app/[locale]/admin/actions'
+import { suspendAccount, deleteAccount, toggleUserBadge, forceAiPost } from '@/app/[locale]/admin/actions'
 import toast from 'react-hot-toast'
 
 export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[], currentTab: string }) {
@@ -45,6 +45,25 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
       toast.error('일괄 처리 중 오류가 발생했습니다.')
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  const [feedingBotId, setFeedingBotId] = useState<string | null>(null)
+
+  const handleForceFeed = async (botId: string, botName: string) => {
+    if (feedingBotId) return
+    setFeedingBotId(botId)
+    try {
+      const res = await forceAiPost('ko', undefined, botId)
+      if (res && (res as any).error) {
+        toast.error((res as any).error)
+      } else {
+        toast.success(`✅ ${botName} 피드 생성 완료!`)
+      }
+    } catch (e: any) {
+      toast.error(e.message || '피드 생성 실패')
+    } finally {
+      setFeedingBotId(null)
     }
   }
 
@@ -183,9 +202,8 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
               <th className="p-3 w-40">닉네임 / 역할</th>
               <th className="p-3 w-16 text-center">얼굴</th>
               <th className="p-3 w-28">아이디</th>
-              <th className="p-3 w-36 hidden sm:table-cell">거주지/소속</th>
-              <th className="p-3 w-28 hidden sm:table-cell">전문성</th>
-              <th className="p-3 w-48 text-center">관리 (수정/뱃지/정지)</th>
+              <th className="p-3 w-40 text-center">피드</th>
+              <th className="p-3 w-48 text-center">관리</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -251,27 +269,41 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                       @{userItem.username || userItem.id.substring(0, 8)}
                     </Link>
                   </td>
-                  {/* 거주지/소속 열 (이모지 및 카드 스타일 제거) */}
-                  <td className="p-3 hidden sm:table-cell">
-                    <span className="text-xs text-gray-800 font-medium block truncate max-w-[150px]" title={realmText}>
-                      {realmText}
-                    </span>
-                  </td>
                   <td className="p-3 hidden sm:table-cell">
                     <span className="text-xs font-bold text-gray-700">{categoryText}</span>
                   </td>
 
-
+                  {/* 피드 버튼 열 */}
                   <td className="p-3 text-center">
-                    <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => handleForceFeed(userItem.id, userItem.display_name)}
+                      disabled={feedingBotId !== null}
+                      className={`font-bold py-1 px-3 rounded text-xs whitespace-nowrap transition ${
+                        feedingBotId === userItem.id
+                          ? 'bg-orange-400 text-white cursor-not-allowed'
+                          : 'bg-orange-500 hover:bg-orange-600 text-white'
+                      }`}
+                    >
+                      {feedingBotId === userItem.id ? '생성중...' : '피드'}
+                    </button>
+                  </td>
+
+                  {/* 관리 버튼 열 (수정 / 뱃지·정지 분리) */}
+                  <td className="p-3">
+                    <div className="flex flex-col gap-1.5 items-center">
+                      {/* 수정 버튼 */}
                       {currentTab === 'list' && (
-                        <Link href={`/${locale}/admin/bots/${userItem.id}`} className="inline-block bg-white border border-gray-200 text-gray-700 hover:text-black font-bold py-1 px-2.5 rounded hover:border-gray-400 transition text-xs whitespace-nowrap">
+                        <Link
+                          href={`/${locale}/admin/bots/${userItem.id}`}
+                          className="w-full text-center bg-white border border-gray-300 text-gray-700 hover:text-black font-bold py-1 px-2 rounded hover:border-gray-500 transition text-xs whitespace-nowrap"
+                        >
                           수정
                         </Link>
                       )}
-
-
-                      <RobotActionButtons userId={userItem.id} userName={userItem.display_name} currentTab={currentTab} badges={userItem.badges || []} />
+                      {/* 뱃지·정지 버튼 (RobotActionButtons) */}
+                      <div className="flex gap-1 justify-center flex-wrap">
+                        <RobotActionButtons userId={userItem.id} userName={userItem.display_name} currentTab={currentTab} badges={userItem.badges || []} />
+                      </div>
                     </div>
                   </td>
                 </tr>
