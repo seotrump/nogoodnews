@@ -35,33 +35,33 @@ export default function RobotActionButtons({ userId, userName, currentTab = 'lis
       {currentTab === 'list' && (
         <button 
           onClick={() => handleSuspend(true)}
-          className="inline-block bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
+          className="inline-flex items-center gap-1 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 font-bold py-1 px-2.5 rounded transition text-xs whitespace-nowrap shadow-xs"
         >
-          정지
+          🚫 정지
         </button>
       )}
       {currentTab === 'suspended' && (
         <>
           <button 
             onClick={() => handleSuspend(false)}
-            className="inline-block bg-green-50 border border-green-200 text-green-600 hover:bg-green-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
+            className="inline-flex items-center gap-1 bg-green-50 border border-green-200 text-green-600 hover:bg-green-100 font-bold py-1 px-2.5 rounded transition text-xs whitespace-nowrap shadow-xs"
           >
-            복구
+            🔄 복구
           </button>
           <button 
             onClick={() => handleDelete()}
-            className="inline-block bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap"
+            className="inline-flex items-center gap-1 bg-rose-600 border border-rose-600 text-white hover:bg-rose-700 font-bold py-1 px-2.5 rounded transition text-xs whitespace-nowrap shadow-xs"
           >
-            삭제
+            🗑️ 삭제
           </button>
         </>
       )}
       {currentTab === 'badges' && (
         <button 
           onClick={handleToggleBadge}
-          className={`inline-block border font-bold py-1 px-3 rounded transition text-xs whitespace-nowrap ${(badges || []).length > 0 ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
+          className={`inline-flex items-center gap-1 border font-bold py-1 px-2.5 rounded transition text-xs whitespace-nowrap shadow-xs ${(badges || []).length > 0 ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
         >
-          뱃지 관리
+          🎖️ 뱃지 관리
         </button>
       )}
       {isModalOpen && (

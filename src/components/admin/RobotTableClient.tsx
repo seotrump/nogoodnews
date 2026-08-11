@@ -198,12 +198,12 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
           <thead>
             <tr className="border-b border-gray-200 bg-gray-100 text-xs text-gray-600 font-bold uppercase tracking-wider">
               <th className="p-3 w-10 text-center">선택</th>
-              <th className="p-3 w-16 text-center">등급</th>
-              <th className="p-3 w-40">닉네임 / 역할</th>
-              <th className="p-3 w-16 text-center">얼굴</th>
+              <th className="p-3 w-14 text-center">등급</th>
+              <th className="p-3 w-36">닉네임 / 등급</th>
+              <th className="p-3 w-14 text-center">얼굴</th>
               <th className="p-3 w-28">아이디</th>
-              <th className="p-3 w-40 text-center">피드</th>
-              <th className="p-3 w-48 text-center">관리</th>
+              <th className="p-3 w-24 text-center hidden sm:table-cell">카테고리</th>
+              <th className="p-3 text-center min-w-[200px]">관리 액션</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -211,17 +211,6 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
               const isSelected = selectedIds.includes(userItem.id);
               const categoryText = userItem.is_ai ? (userItem.category ? (catMap[userItem.category] || userItem.category) : '-') : '일반 유저';
               const isPro = userItem.badges?.includes('pro') || ['gemini-3.6-flash', 'gemini-3.5-flash'].includes(userItem.ai_model_provider);
-              
-              // 역할 판별 (role / bot_role / advanced_settings.role)
-              const botRoleVal = userItem.role || userItem.bot_role || userItem.advanced_settings?.role || 'mixed'
-              const isCommentOnly = botRoleVal === 'comment' || botRoleVal === 'comment_only'
-              const isPostOnly = botRoleVal === 'post' || botRoleVal === 'post_only'
-
-              // 거주지/소속 한국어 텍스트
-              const realmKorean = userItem.realm_category ? (realmMap[userItem.realm_category] || userItem.realm_category) : ''
-              const realmText = realmKorean
-                ? `${realmKorean}${userItem.realm_detail ? ` (${userItem.realm_detail})` : ''}` 
-                : '-'
 
               return (
                 <tr key={userItem.id} className={`hover:bg-gray-50 transition ${isSelected ? 'bg-blue-50/50' : ''}`}>
@@ -234,7 +223,7 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                     />
                   </td>
                   <td className="p-3 text-center">
-                    <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold inline-block min-w-[32px]">
+                    <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold inline-block min-w-[28px]">
                       {userItem.level || 1}
                     </span>
                   </td>
@@ -245,65 +234,61 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                       </Link>
                       
                       {userItem.badges?.includes('reporter') ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold shadow-sm whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold shadow-xs whitespace-nowrap">
                           📰 기자단
                         </span>
                       ) : isPro ? (
-                        <span className="bg-purple-100 text-purple-800 border border-purple-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded shadow-sm">
+                        <span className="bg-purple-100 text-purple-800 border border-purple-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded shadow-xs">
                           🧠 프로
                         </span>
                       ) : (
-                        <span className="bg-gray-100 text-gray-700 border border-gray-300 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                        <span className="bg-gray-100 text-gray-700 border border-gray-300 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-xs">
                           ⚡ 라이트
                         </span>
                       )}
-
                     </div>
                   </td>
 
                   <td className="p-3 text-center">
-                    <img src={userItem.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${userItem.id}`} alt="avatar" className="w-8 h-8 rounded-full border shadow-sm mx-auto bg-white object-cover min-w-[32px]" />
+                    <img src={userItem.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${userItem.id}`} alt="avatar" className="w-8 h-8 rounded-full border shadow-xs mx-auto bg-white object-cover min-w-[32px]" />
                   </td>
                   <td className="p-3">
                     <Link href={`/users/${userItem.id}`} className="text-gray-500 text-xs truncate max-w-[110px] block hover:underline">
                       @{userItem.username || userItem.id.substring(0, 8)}
                     </Link>
                   </td>
-                  <td className="p-3 hidden sm:table-cell">
-                    <span className="text-xs font-bold text-gray-700">{categoryText}</span>
+                  <td className="p-3 text-center hidden sm:table-cell">
+                    <span className="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded">{categoryText}</span>
                   </td>
 
-                  {/* 피드 버튼 열 */}
+                  {/* 관리 액션 버튼 열: 피드 / 수정 / 정지 한 줄(Horizontal Row)로 나열 */}
                   <td className="p-3 text-center">
-                    <button
-                      onClick={() => handleForceFeed(userItem.id, userItem.display_name)}
-                      disabled={feedingBotId !== null}
-                      className={`font-bold py-1 px-3 rounded text-xs whitespace-nowrap transition ${
-                        feedingBotId === userItem.id
-                          ? 'bg-orange-400 text-white cursor-not-allowed'
-                          : 'bg-orange-500 hover:bg-orange-600 text-white'
-                      }`}
-                    >
-                      {feedingBotId === userItem.id ? '생성중...' : '피드'}
-                    </button>
-                  </td>
+                    <div className="flex flex-row items-center justify-center gap-1.5 whitespace-nowrap">
+                      {/* 1. 피드 버튼 */}
+                      <button
+                        onClick={() => handleForceFeed(userItem.id, userItem.display_name)}
+                        disabled={feedingBotId !== null}
+                        className={`inline-flex items-center gap-1 font-bold py-1 px-2.5 rounded text-xs transition shadow-xs ${
+                          feedingBotId === userItem.id
+                            ? 'bg-orange-400 text-white cursor-not-allowed'
+                            : 'bg-orange-500 hover:bg-orange-600 text-white'
+                        }`}
+                      >
+                        ⚡ {feedingBotId === userItem.id ? '생성중...' : '피드'}
+                      </button>
 
-                  {/* 관리 버튼 열 (수정 / 뱃지·정지 분리) */}
-                  <td className="p-3">
-                    <div className="flex flex-col gap-1.5 items-center">
-                      {/* 수정 버튼 */}
+                      {/* 2. 수정 버튼 */}
                       {currentTab === 'list' && (
                         <Link
                           href={`/${locale}/admin/bots/${userItem.id}`}
-                          className="w-full text-center bg-white border border-gray-300 text-gray-700 hover:text-black font-bold py-1 px-2 rounded hover:border-gray-500 transition text-xs whitespace-nowrap"
+                          className="inline-flex items-center gap-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-black font-bold py-1 px-2.5 rounded transition text-xs shadow-xs"
                         >
-                          수정
+                          ✏️ 수정
                         </Link>
                       )}
-                      {/* 뱃지·정지 버튼 (RobotActionButtons) */}
-                      <div className="flex gap-1 justify-center flex-wrap">
-                        <RobotActionButtons userId={userItem.id} userName={userItem.display_name} currentTab={currentTab} badges={userItem.badges || []} />
-                      </div>
+
+                      {/* 3. 정지 / 복구 / 삭제 / 뱃지 관리 버튼 */}
+                      <RobotActionButtons userId={userItem.id} userName={userItem.display_name} currentTab={currentTab} badges={userItem.badges || []} />
                     </div>
                   </td>
                 </tr>
