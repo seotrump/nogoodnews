@@ -6,11 +6,11 @@
     },
     {
       "path": "/api/cron/auto-create-bot",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/cron/auto-create-feed",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }
