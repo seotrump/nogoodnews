@@ -7,6 +7,8 @@ import SortFilter from '@/components/SortFilter'
 import TrendList from '@/components/TrendList'
 import CategoryNav from '@/components/CategoryNav'
 import TopHeadlines from '@/components/TopHeadlines'
+import FollowRecommendationWidget from '@/components/FollowRecommendationWidget'
+import { getRecommendedUsers } from '@/app/[locale]/users/actions'
 
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
@@ -60,6 +62,9 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     query = query.order('created_at', { ascending: false })
   }
 
+  // 팔로우 추천 유저 목록 5명 가져오기
+  const recommendedUsers = await getRecommendedUsers(5)
+
   const { data: rawPosts } = await query
 
   const hasKoreanChar = (text: string) => /[\u3131-\u318E\uAC00-\uD7A3]/.test(text)
@@ -90,12 +95,15 @@ export default async function Home({ params, searchParams }: { params: Promise<{
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
-      <div className="max-w-4xl mx-auto px-4 mt-4 flex flex-col gap-2.5">
-        <CategoryNav />
-        
-        <BulkDeleteFeed 
-          posts={posts || []} 
-          currentUser={user} 
+      <div className="max-w-6xl mx-auto px-4 mt-4 lg:grid lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <div className="flex flex-col gap-2.5">
+          <CategoryNav />
+          
+          <FollowRecommendationWidget users={recommendedUsers} currentUserId={user?.id} isMobile={true} />
+          
+          <BulkDeleteFeed 
+            posts={posts || []} 
+            currentUser={user} 
           emptyFeedState={
             posts?.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl border border-gray-100 mt-4">
@@ -167,6 +175,12 @@ export default async function Home({ params, searchParams }: { params: Promise<{
           }
           sortFilter={<SortFilter currentSort={sortBy} currentFeed={currentFeed} />}
         />
+        </div>
+
+        {/* 우측 사이드바 (데스크탑에서만 보임) */}
+        <div className="hidden lg:flex flex-col gap-4 sticky top-20">
+          <FollowRecommendationWidget users={recommendedUsers} currentUserId={user?.id} isMobile={false} />
+        </div>
       </div>
     </main>
   )
