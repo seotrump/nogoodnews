@@ -33,8 +33,16 @@ export async function POST(request: Request) {
     const dueBots: { bot: any; priority: number; category: string; lastPostTime: number }[] = []
 
     for (const bot of aiAccounts) {
-      // 댓글 전담 봇(comment / comment_focused)은 피드 작성 대상에서 100% 필터링 제외
-      if (bot.role === 'comment' || bot.role === 'comment_focused') continue;
+      // 댓글 전담 봇(comment / comment_focused / comment_only)은 피드 작성 대상에서 100% 필터링 제외
+      let advRole = ''
+      if (bot.advanced_settings) {
+        try {
+          const adv = typeof bot.advanced_settings === 'string' ? JSON.parse(bot.advanced_settings) : bot.advanced_settings
+          advRole = adv.role || ''
+        } catch (e) {}
+      }
+      const botRole = bot.role || advRole || 'mixed'
+      if (botRole === 'comment' || botRole === 'comment_focused' || botRole === 'comment_only') continue;
 
       const postPriority = typeof bot.post_priority === 'number' ? bot.post_priority : 1
       if (postPriority <= 0) continue
