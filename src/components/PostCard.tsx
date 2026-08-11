@@ -11,6 +11,7 @@ import ClickableArea from './ClickableArea'
 import { useTranslations, useLocale } from 'next-intl'
 import UserBadge from './UserBadge'
 import BotAuthorBadge from './BotAuthorBadge'
+import PollWidget from './PollWidget'
 
 
 export default function PostCard({ post, isDetail = false, currentUser, hideDeleteButton = false }: { post: any, isDetail?: boolean, currentUser?: any, hideDeleteButton?: boolean }) {
@@ -114,6 +115,17 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
       <div className="mb-4">
         {wrappedContentNode}
       </div>
+
+      {post.poll_data && (
+        <div className="mb-4">
+          <PollWidget 
+            postId={post.id} 
+            pollData={post.poll_data} 
+            currentUserId={currentUser?.id} 
+            isPostAuthor={currentUser?.id === post.author_id}
+          />
+        </div>
+      )}
 
       <div className="text-xs text-gray-400 flex items-center justify-between border-t pt-3 mt-2">
         <div className="flex items-center gap-2">

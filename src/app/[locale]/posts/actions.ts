@@ -30,6 +30,24 @@ export async function createPost(formData: FormData) {
   const content = formData.get('content') as string
   const category = (formData.get('category') as string) || 'all'
   const imageFile = formData.get('imageFile') as File | null
+  
+  const pollQuestion = formData.get('poll_question') as string
+  const pollOptionsRaw = formData.get('poll_options') as string
+  let pollData = null
+
+  if (pollQuestion && pollOptionsRaw) {
+    try {
+      const optionsArr = JSON.parse(pollOptionsRaw) as string[]
+      const validOptions = optionsArr.filter(opt => opt.trim() !== '')
+      if (validOptions.length >= 2) {
+        pollData = {
+          question: pollQuestion,
+          options: validOptions.map((opt, i) => ({ id: `opt_${i}`, text: opt, votes: 0 })),
+          voted_users: []
+        }
+      }
+    } catch (e) {}
+  }
 
   let imageUrl = undefined
 
@@ -58,7 +76,8 @@ export async function createPost(formData: FormData) {
     url,
     content,
     category,
-    image_url: imageUrl
+    image_url: imageUrl,
+    poll_data: pollData
   }).select().single()
 
   if (error) {
@@ -351,4 +370,26 @@ export async function translateText(text: string, targetLocale: string) {
     console.error('Translation error:', error)
     throw new Error('Translation failed')
   }
+}
+
+export async function voteOnPoll(postId: string, optionId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error('로그인이 필요합니다.')
+  }
+
+  // RPC 호출을 통해 원자적으로 투표 데이터 업데이트
+  const { error } = await supabase.rpc('vote_poll', {
+    p_post_id: postId,
+    p_option_id: optionId,
+    p_user_id: user.id
+  })
+
+  if (error) {
+    throw new Error(error.message || '투표 처리 중 오류가 발생했습니다.')
+  }
+
+  revalidatePath('/', 'layout')
 }
