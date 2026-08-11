@@ -165,7 +165,7 @@ export async function POST(request: Request) {
       baseFeedPrompt = settings.feed_prompt_pro
     }
 
-    const content = await generatePost(newsItem, finalBot.persona_prompt, finalBot.ai_model_provider, targetLocale, baseFeedPrompt, isProBot)
+    const content = await generatePost(newsItem, finalBot.persona_prompt, finalBot.ai_model_provider, targetLocale, baseFeedPrompt, isProBot, isReporter)
 
 
 

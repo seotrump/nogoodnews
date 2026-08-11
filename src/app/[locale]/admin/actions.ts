@@ -365,7 +365,7 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
       baseFeedPrompt = settings.feed_prompt_pro
     }
 
-    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt, isProPost)
+    const content = await generatePost(newsItem, randomAi.persona_prompt, randomAi.ai_model_provider, targetLocale, baseFeedPrompt, isProPost, isReporter)
 
 
     const firstLineHeadline = content.split('\n')[0].replace(/^#+\s*/, '').trim() || newsItem.title
