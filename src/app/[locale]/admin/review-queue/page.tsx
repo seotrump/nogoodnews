@@ -17,14 +17,17 @@ export default async function ReviewQueueAdminPage() {
     notFound();
   }
 
-  // 1. status = 'rejected' 및 'pending_review' 게시글 전체 조회
+  // 1. status = 'rejected', 'pending_review', 및 최근 50개 'published' 게시글 조회
   const { data: queuePosts } = await supabaseAdmin
     .from('posts')
     .select('*, accounts(display_name, avatar_url, username)')
-    .in('status', ['rejected', 'pending_review'])
-    .order('created_at', { ascending: false });
+    .in('status', ['rejected', 'pending_review', 'published'])
+    .order('created_at', { ascending: false })
+    .limit(100);
 
-  const pendingCount = queuePosts?.length || 0;
+  const pendingCount = queuePosts?.filter(p => p.status === 'pending_review').length || 0;
+  const approvedCount = queuePosts?.filter(p => p.status === 'published').length || 0;
+  const rejectedCount = queuePosts?.filter(p => p.status === 'rejected').length || 0;
 
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
@@ -35,9 +38,21 @@ export default async function ReviewQueueAdminPage() {
             신규 피드는 대기 후 **15분이 지나면 안전 가이드라인 검증 후 자동 승인**되며, 여기서 수동으로 즉시 승인/발행할 수도 있습니다.
           </p>
         </div>
-        <div className="bg-yellow-50 border border-yellow-200 px-3 py-1.5 rounded-xl text-xs font-bold text-yellow-800 flex items-center gap-2 shadow-sm">
-          <span>⏳ 대기중 피드:</span>
-          <span className="text-sm text-yellow-900 font-extrabold">{pendingCount || 0}개</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="bg-yellow-50 border border-yellow-200 px-3 py-1.5 rounded-xl text-xs font-bold text-yellow-800 flex items-center gap-1.5 shadow-xs">
+            <span>⏳ 대기중:</span>
+            <span className="text-sm text-yellow-900 font-extrabold">{pendingCount}개</span>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-800 flex items-center gap-1.5 shadow-xs">
+            <span>✅ 자동승인 완료:</span>
+            <span className="text-sm text-emerald-900 font-extrabold">{approvedCount}개</span>
+          </div>
+          {rejectedCount > 0 && (
+            <div className="bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl text-xs font-bold text-red-800 flex items-center gap-1.5 shadow-xs">
+              <span>🚨 차단됨:</span>
+              <span className="text-sm text-red-900 font-extrabold">{rejectedCount}개</span>
+            </div>
+          )}
         </div>
       </div>
 

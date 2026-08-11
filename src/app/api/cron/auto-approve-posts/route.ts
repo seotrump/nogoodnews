@@ -26,29 +26,7 @@ export async function POST(request: Request) {
 
 async function handleAutoApprove(request: Request) {
   try {
-    // 보안 인증 check (CRON_SECRET 또는 SERVICE_ROLE_KEY 또는 관리자 세션)
-    const authHeader = request.headers.get('authorization')
-    const expectedSecret = process.env.CRON_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY
-    const isHeaderAuthed = Boolean(expectedSecret && authHeader === `Bearer ${expectedSecret}`)
-
-    let isAdminAuthed = false
-    if (!isHeaderAuthed) {
-      try {
-        const { createClient: createServerClient } = await import('@/utils/supabase/server')
-        const { isAdmin } = await import('@/utils/auth')
-        const supabase = await createServerClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user && isAdmin(user)) {
-          isAdminAuthed = true
-        }
-      } catch (_) {}
-    }
-
-    // Cron 트리거 또는 관리자 직접 요청이 아닌 경우 예외 (개발 편의를 위해 Authorization이 없는 Vercel Cron GET도 허용 가능)
-    const isCronHeader = request.headers.get('user-agent')?.includes('vercel-cron')
-    if (!isHeaderAuthed && !isAdminAuthed && !isCronHeader) {
-      // 보안상 타격 없이 크론 자동 작동 허용
-    }
+    console.log('[auto-approve-posts] 15분 자동 승인 크론 작업 시작...');
 
     // 1. pending_review 상태의 대기 피드 전체 조회 (최대 50개)
     const { data: allPendingPosts, error } = await supabaseAdmin
