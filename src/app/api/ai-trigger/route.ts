@@ -49,6 +49,10 @@ export async function POST(request: Request) {
       try {
         console.log(`🚀 [ai-trigger/after] 백그라운드 댓글 생성 시작 (Post: ${postId})`);
 
+        // DB 쓰기 전파 대기 (사용자 닉네임 댓글이 DB에 반영될 시간 확보)
+        // UI는 이미 즉시 응답했으므로 사용자 경험에 영향 없음
+        await new Promise(r => setTimeout(r, 1000))
+
         const supabaseAdmin = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!
