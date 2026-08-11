@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { approvePost, deletePostPermanently, runAutoApproveCronNow } from '@/app/[locale]/admin/guidelines-actions'
+import { approvePost, bulkApprovePosts, deletePostPermanently, runAutoApproveCronNow } from '@/app/[locale]/admin/guidelines-actions'
 import PostCard from '@/components/PostCard'
 
 export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: any[] }) {
   const [posts, setPosts] = useState(initialPosts)
   const [activeTab, setActiveTab] = useState<'pending' | 'published' | 'rejected' | 'all'>('pending')
   const [isRunningCron, setIsRunningCron] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const handleRunCronNow = async () => {
     setIsRunningCron(true)
@@ -42,6 +44,42 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
       toast.success('게시물이 성공적으로 수동 발행 승인되었습니다.')
     } catch (e: any) {
       toast.error(e.message || '승인 실패')
+    }
+  }
+
+  const handleBulkApprove = async () => {
+    if (selectedIds.length === 0) return
+    if (!confirm(`선택한 ${selectedIds.length}개 피드를 자연스러운 시간 텀을 두고 예약 발행하시겠습니까?`)) return
+    
+    setIsProcessing(true)
+    const toastId = toast.loading(`피드 ${selectedIds.length}개 예약 발행 중...`)
+    
+    try {
+      await bulkApprovePosts(selectedIds)
+      
+      // 상태 낙관적 업데이트 (ui에서는 published로 간주)
+      setPosts(posts.map(p => selectedIds.includes(p.id) ? { ...p, status: 'published' } : p))
+      setSelectedIds([])
+      toast.success('선택된 피드들이 성공적으로 예약 발행 대기열에 등록되었습니다!', { id: toastId })
+    } catch (e: any) {
+      toast.error(e.message || '일괄 승인 실패', { id: toastId })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const toggleSelection = (postId: string) => {
+    setSelectedIds(prev => 
+      prev.includes(postId) ? prev.filter(id => id !== postId) : [...prev, postId]
+    )
+  }
+
+  const toggleAllSelection = () => {
+    const pendingIds = filteredPosts.filter(p => p.status === 'pending_review').map(p => p.id)
+    if (selectedIds.length === pendingIds.length && pendingIds.length > 0) {
+      setSelectedIds([]) // 전부 해제
+    } else {
+      setSelectedIds(pendingIds) // 전부 선택
     }
   }
 
@@ -144,6 +182,31 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
         </button>
       </div>
 
+      {activeTab === 'pending' && filteredPosts.length > 0 && (
+        <div className="flex items-center gap-3 border-b border-gray-200 pb-3">
+          <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition shadow-xs">
+            <input 
+              type="checkbox" 
+              checked={selectedIds.length > 0 && selectedIds.length === filteredPosts.filter(p => p.status === 'pending_review').length}
+              onChange={toggleAllSelection}
+              className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-xs font-bold text-gray-700">전체 선택 ({selectedIds.length}/{filteredPosts.filter(p => p.status === 'pending_review').length})</span>
+          </label>
+
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkApprove}
+              disabled={isProcessing}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition shadow-xs flex items-center gap-1 animate-in fade-in"
+            >
+              <span>✅</span>
+              <span>선택 {selectedIds.length}개 일괄 예약발행 (시차 적용)</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {filteredPosts.length === 0 ? (
         <div className="bg-white p-12 rounded-xl border border-gray-200 text-center">
           <p className="text-gray-500 font-medium">해당 상태의 피드가 없습니다.</p>
@@ -165,11 +228,25 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                     ? 'border-red-300 ring-1 ring-red-200' 
                     : isPublished 
                     ? 'border-emerald-300 ring-1 ring-emerald-100' 
+                    : selectedIds.includes(post.id)
+                    ? 'border-indigo-400 ring-2 ring-indigo-200 bg-indigo-50/20'
                     : 'border-gray-300 ring-1 ring-gray-100'
                 }`}
               >
                 {/* 메인 피드 Card 컴포넌트 */}
-                <PostCard post={post} currentUser={{ id: 'admin' }} hideDeleteButton={true} />
+                <div className="relative">
+                  {isPending && (
+                    <div className="absolute top-4 left-4 z-10 bg-white/90 p-1 rounded-md shadow-sm border border-gray-200 backdrop-blur-sm">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedIds.includes(post.id)}
+                        onChange={() => toggleSelection(post.id)}
+                        className="w-5 h-5 rounded border-gray-300 text-indigo-600 cursor-pointer focus:ring-indigo-500"
+                      />
+                    </div>
+                  )}
+                  <PostCard post={post} currentUser={{ id: 'admin' }} hideDeleteButton={true} />
+                </div>
 
                 {/* 진단 결과 카드 영역 */}
                 <div className="bg-gray-50 border-t border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

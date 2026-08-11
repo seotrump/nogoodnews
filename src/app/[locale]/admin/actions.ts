@@ -862,4 +862,21 @@ export async function toggleAutoBotSettings(isActive: boolean, targetCount: numb
     throw new Error('자동 생성 설정 업데이트에 실패했습니다.')
   }
   revalidatePath('/[locale]/admin/robot', 'page')
-}
+}
+
+export async function toggleAutoFeedSettings(isActive: boolean, targetCount: number) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !isAdmin(user)) throw new Error('Unauthorized')
+  
+  const { error } = await supabaseAdmin
+    .from('site_settings')
+    .upsert({ id: 'global', is_auto_feed_active: isActive, auto_feed_target_count: targetCount })
+    
+  if (error) {
+    console.error('Failed to update auto feed settings:', error)
+    throw new Error('자동 피드 생성 설정 업데이트에 실패했습니다.')
+  }
+  revalidatePath('/[locale]/admin/robot', 'page')
+}
+

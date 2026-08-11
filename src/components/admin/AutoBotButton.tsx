@@ -3,19 +3,31 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { createAiBot, toggleAutoBotSettings } from '@/app/[locale]/admin/actions'
+import { createAiBot, toggleAutoBotSettings, toggleAutoFeedSettings } from '@/app/[locale]/admin/actions'
 
 interface AutoBotButtonProps {
   initialIsActive?: boolean
   initialTargetCount?: number
+  initialFeedIsActive?: boolean
+  initialFeedTargetCount?: number
 }
 
-export default function AutoBotButton({ initialIsActive = false, initialTargetCount = 100 }: AutoBotButtonProps) {
+export default function AutoBotButton({ 
+  initialIsActive = false, 
+  initialTargetCount = 100,
+  initialFeedIsActive = false,
+  initialFeedTargetCount = 30
+}: AutoBotButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [loadingType, setLoadingType] = useState<'general' | 'pro' | 'cron' | null>(null)
   const [topicKeyword, setTopicKeyword] = useState('')
+  
   const [isAutoBotActive, setIsAutoBotActive] = useState(initialIsActive)
   const [autoBotTargetCount, setAutoBotTargetCount] = useState(initialTargetCount)
+  
+  const [isAutoFeedActive, setIsAutoFeedActive] = useState(initialFeedIsActive)
+  const [autoFeedTargetCount, setAutoFeedTargetCount] = useState(initialFeedTargetCount)
+
 
   const router = useRouter()
 
@@ -148,7 +160,30 @@ export default function AutoBotButton({ initialIsActive = false, initialTargetCo
     if (newCount !== initialTargetCount) {
       try {
         await toggleAutoBotSettings(isAutoBotActive, newCount)
-        toast.success(`목표 개수가 ${newCount}개로 저장되었습니다.`)
+        toast.success(`로봇 목표 개수가 ${newCount}개로 저장되었습니다.`)
+      } catch (e: any) {
+        toast.error('설정 저장 실패')
+      }
+    }
+  }
+
+  const handleToggleFeedCron = async (newIsActive: boolean) => {
+    setIsAutoFeedActive(newIsActive)
+    try {
+      await toggleAutoFeedSettings(newIsActive, autoFeedTargetCount)
+      toast.success(newIsActive ? '자동 피드 크론이 활성화되었습니다.' : '자동 피드 크론이 중지되었습니다.')
+    } catch (e: any) {
+      toast.error(e.message || '설정 저장 실패')
+      setIsAutoFeedActive(!newIsActive)
+    }
+  }
+
+  const handleFeedTargetCountChange = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const newCount = Number(e.target.value)
+    if (newCount !== initialFeedTargetCount) {
+      try {
+        await toggleAutoFeedSettings(isAutoFeedActive, newCount)
+        toast.success(`피드 목표 개수가 ${newCount}개로 저장되었습니다.`)
       } catch (e: any) {
         toast.error('설정 저장 실패')
       }
@@ -216,7 +251,7 @@ export default function AutoBotButton({ initialIsActive = false, initialTargetCo
             <div className={`block w-8 h-5 rounded-full transition-colors ${isAutoBotActive ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
             <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${isAutoBotActive ? 'transform translate-x-3' : ''}`}></div>
           </div>
-          <span className="text-xs font-bold text-gray-700">자동생성</span>
+          <span className="text-xs font-bold text-gray-700">봇 자동생성</span>
         </label>
 
         <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
@@ -226,6 +261,39 @@ export default function AutoBotButton({ initialIsActive = false, initialTargetCo
             value={autoBotTargetCount}
             onChange={(e) => setAutoBotTargetCount(Number(e.target.value))}
             onBlur={handleTargetCountChange}
+            min="1"
+            max="1000"
+            className="w-14 h-6 px-1.5 text-xs text-center border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            disabled={isLoading}
+          />
+          <span className="text-xs text-gray-500">개</span>
+        </div>
+      </div>
+
+      {/* 피드 자동 생성 크론 UI */}
+      <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <div className="relative">
+            <input 
+              type="checkbox" 
+              className="sr-only" 
+              checked={isAutoFeedActive}
+              onChange={(e) => handleToggleFeedCron(e.target.checked)}
+              disabled={isLoading}
+            />
+            <div className={`block w-8 h-5 rounded-full transition-colors ${isAutoFeedActive ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
+            <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${isAutoFeedActive ? 'transform translate-x-3' : ''}`}></div>
+          </div>
+          <span className="text-xs font-bold text-gray-700">피드 버퍼링</span>
+        </label>
+
+        <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
+          <span className="text-xs font-medium text-gray-600">목표</span>
+          <input
+            type="number"
+            value={autoFeedTargetCount}
+            onChange={(e) => setAutoFeedTargetCount(Number(e.target.value))}
+            onBlur={handleFeedTargetCountChange}
             min="1"
             max="1000"
             className="w-14 h-6 px-1.5 text-xs text-center border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 outline-none"

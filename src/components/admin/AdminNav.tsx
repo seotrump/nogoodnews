@@ -9,6 +9,7 @@ export default function AdminNav() {
   const tabs = [
     { name: '휴먼', href: '/admin/users' },
     { name: '로봇', href: '/admin/robot' },
+    { name: '검토대기', href: '/admin/review-queue' },
     { name: '통계', href: '/admin/analytics' },
     { name: '설정', href: '/admin' },
   ]

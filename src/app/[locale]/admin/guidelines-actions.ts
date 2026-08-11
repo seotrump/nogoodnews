@@ -147,6 +147,38 @@ export async function approvePost(postId: string) {
 
   if (error) throw new Error(`피드 발행 승인 실패: ${error.message}`);
   revalidatePath('/admin/review-queue');
+}
+
+export async function bulkApprovePosts(postIds: string[]) {
+  await checkAdminAuth();
+  
+  if (!postIds || postIds.length === 0) return;
+
+  // 선택된 포스트들을 현재 시간 기준으로 1~10분 사이의 랜덤 텀을 두며 차례대로 미래 시간으로 예약
+  let currentBaseTime = Date.now();
+  
+  for (const postId of postIds) {
+    // 1~10분 사이 랜덤 밀리초
+    const randomDelayMs = Math.floor(Math.random() * 10 + 1) * 60 * 1000;
+    currentBaseTime += randomDelayMs;
+    
+    const scheduledTime = new Date(currentBaseTime).toISOString();
+    
+    const { error } = await supabaseAdmin
+      .from('posts')
+      .update({ 
+        status: 'published',
+        validated_at: new Date().toISOString(),
+        created_at: scheduledTime
+      })
+      .eq('id', postId);
+      
+    if (error) {
+      console.error(`게시물 ${postId} 승인 실패:`, error);
+    }
+  }
+
+  revalidatePath('/admin/review-queue');
   revalidatePath('/');
 }
 

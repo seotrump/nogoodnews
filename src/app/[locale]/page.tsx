@@ -69,8 +69,13 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     return locale === 'en' ? !isKo : isKo
   })
 
-  // status 검증 필터링 (status 컬럼이 DB에 있을 경우 rejected/pending_review 게시글 숨김 처리)
-  posts = posts.filter(post => post.status !== 'rejected' && post.status !== 'pending_review')
+  // status 검증 필터링 (rejected/pending_review 숨김) 및 예약 발행 (미래 시간) 숨김 처리
+  const now = Date.now()
+  posts = posts.filter(post => 
+    post.status !== 'rejected' && 
+    post.status !== 'pending_review' && 
+    new Date(post.created_at).getTime() <= now
+  )
 
   // 뱃지 또는 기자단 탭 필터링 (기자단 모아보기)
   if (currentBadge || currentFeed === 'reporter') {

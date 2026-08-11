@@ -28,7 +28,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const offset = (currentPage - 1) * limit
 
   // 전역 설정 (자동생성 정보) 가져오기
-  const { data: siteSettings } = await supabase.from('site_settings').select('is_auto_bot_active, auto_bot_target_count').eq('id', 'global').single()
+  const { data: siteSettings } = await supabase.from('site_settings').select('is_auto_bot_active, auto_bot_target_count, is_auto_feed_active, auto_feed_target_count').eq('id', 'global').single()
 
   // 리스트 탭(로봇)일 때만 데이터를 가져옵니다.
   let aiBots: any[] = []
@@ -89,7 +89,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <AutoBotButton initialIsActive={siteSettings?.is_auto_bot_active || false} initialTargetCount={siteSettings?.auto_bot_target_count || 100} />
+            <AutoBotButton 
+              initialIsActive={siteSettings?.is_auto_bot_active || false} 
+              initialTargetCount={siteSettings?.auto_bot_target_count || 100}
+              initialFeedIsActive={siteSettings?.is_auto_feed_active || false}
+              initialFeedTargetCount={siteSettings?.auto_feed_target_count || 30}
+            />
           </div>
         </div>
 
