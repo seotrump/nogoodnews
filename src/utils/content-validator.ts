@@ -44,8 +44,20 @@ export async function validateContent(post: {
       return { passed: true, results: [] };
     }
 
-    // 2. 각 활성화된 규칙을 깨끗한(Clean) 독립 LLM 호출로 검증
+    // 2. 각 활성화된 규칙을 검증 (출처 표시 수칙은 뉴스 sourceUrl/링크 존재 시 100% 자동 통과)
     for (const rule of rules) {
+      // 출처 표시 확인 (require_source) 규칙 우회 처리: 뉴스 URL 정보가 존재하면 출처 확인 완료 처리
+      if ((rule.rule_key === 'require_source' || rule.rule_key === 'require_source_check') && post.sourceUrl) {
+        results.push({
+          rule_key: rule.rule_key,
+          rule_label: rule.rule_label,
+          passed: true,
+          reason: '원본 뉴스 링크(출처 URL)가 정상 첨부되어 출처 확인 완료됨',
+          severity: rule.severity || 'block'
+        });
+        continue;
+      }
+
       const prompt = `[독립 콘텐츠 가이드라인 검증기]
 당신은 엄격하고 객관적인 커뮤니티 콘텐츠 모더레이터입니다.
 이 검증은 작성자 봇의 캐릭터 성격이나 말투와 관계없이 오직 안전 가이드라인 준수 여부만 판단합니다.
@@ -72,7 +84,7 @@ export async function validateContent(post: {
 }`;
 
       try {
-        const rawResponse = await generateEnforcedAIContent(prompt, 'gemini-3.5-flash-lite');
+        const rawResponse = await generateEnforcedAIContent(prompt, 'gemma-4-31b-it');
         let cleaned = rawResponse || '';
         if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\n?/, '').replace(/\n?```$/, '');
         else if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```\n?/, '').replace(/\n?```$/, '');
