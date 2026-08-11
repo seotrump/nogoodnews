@@ -26,7 +26,7 @@ const ALLOWED_MODELS = [
 
 // Gemma 계열: RPD 14,400 - 시스템 주력 모델
 const GEMMA_MODELS = [
-  'gemma-4-26b-it',
+  'gemma-4-26b-a4b-it',
   'gemma-4-31b-it',
 ];
 

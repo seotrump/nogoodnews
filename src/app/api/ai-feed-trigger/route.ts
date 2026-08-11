@@ -150,7 +150,7 @@ export async function POST(request: Request) {
     }
 
     // Gemma: 시스템 주력 (RPD 14,400) / Flash Lite: 보조 (RPD 500) / Flash(big): 개별 관리만
-    const GEMMA_MODELS = ['gemma-4-26b-it', 'gemma-4-31b-it']
+    const GEMMA_MODELS = ['gemma-4-26b-a4b-it', 'gemma-4-31b-it']
     const FLASH_LITE_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite']
 
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
