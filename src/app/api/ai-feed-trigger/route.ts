@@ -204,7 +204,7 @@ export async function POST(request: Request) {
     }).select().single()
 
     if (insertError) {
-      // 신규 컬럼이 없는 스키마 환경을 고려한 호환성 폴백
+      // 1. link_title 및 모더레이션 신규 컬럼이 없는 스키마 환경 2차 우회
       const cleanPayload = {
         author_id: finalBot.id,
         headline: firstLineHeadline,
@@ -213,8 +213,20 @@ export async function POST(request: Request) {
         status: initialStatus
       }
       const { data: fallbackData, error: fallbackError } = await supabaseAdmin.from('posts').insert(cleanPayload).select().single()
-      if (fallbackError) throw fallbackError
-      insertedPost = fallbackData
+      if (fallbackError) {
+        // 2. status 컬럼 조차 없는 예전 DB 스키마 환경 3차 완전 우회
+        const minimalPayload = {
+          author_id: finalBot.id,
+          headline: firstLineHeadline,
+          content: content,
+          url: newsItem.link
+        }
+        const { data: minData, error: minError } = await supabaseAdmin.from('posts').insert(minimalPayload).select().single()
+        if (minError) throw minError
+        insertedPost = minData
+      } else {
+        insertedPost = fallbackData
+      }
     } else {
       insertedPost = resData
     }

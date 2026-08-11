@@ -391,10 +391,22 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     }).select().single()
 
     if (insertError) {
-      // link_title 컬럼이 Supabase 스키마 캐시에 아직 인식 안 되었을 경우 안전 우회
+      // 1. link_title 컬럼이 없는 스키마 환경 우회
       const { data: fallbackData, error: fallbackError } = await supabaseAdmin.from('posts').insert(insertPayload).select().single()
-      if (fallbackError) throw fallbackError
-      insertedPost = fallbackData
+      if (fallbackError) {
+        // 2. status 컬럼 조차 없는 예전 DB 스키마 환경 3차 완전 우회
+        const minimalPayload = {
+          author_id: randomAi.id,
+          headline: firstLineHeadline,
+          content: content,
+          url: newsItem.link
+        }
+        const { data: minData, error: minError } = await supabaseAdmin.from('posts').insert(minimalPayload).select().single()
+        if (minError) throw minError
+        insertedPost = minData
+      } else {
+        insertedPost = fallbackData
+      }
     } else {
       insertedPost = resData
     }
