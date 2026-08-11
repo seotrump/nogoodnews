@@ -2,11 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  // 1. 크론 시크릿 키 검증
-  const authHeader = request.headers.get('authorization')
-  if (process.env.CRON_SECRET_KEY && authHeader !== `Bearer ${process.env.CRON_SECRET_KEY}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  // 외부 크론(cron-job.org) 연동을 위해 시크릿 키 검증 해제 (토글 설정으로만 제어)
 
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,11 +37,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: `Target count (${targetCount}) reached. Currently ${count} pending posts. Skipping.` })
   }
 
-  // 5. ai-feed-trigger 를 내부적으로 호출하여 피드 생성 진행 (1개씩)
-  // Vercel Cron 등에서는 호스트 주소가 필요하므로 
-  // NEXT_PUBLIC_SITE_URL 환경변수를 활용합니다.
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-  
+  // 호스트 헤더를 이용해 동적으로 URL 추출 (환경변수 의존성 제거)
+  const protocol = request.headers.get('x-forwarded-proto') || 'https'
+  const host = request.headers.get('host')
+  const siteUrl = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
   try {
     const triggerRes = await fetch(`${siteUrl}/api/ai-feed-trigger`, {
       method: 'POST',
