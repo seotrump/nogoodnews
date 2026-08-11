@@ -149,14 +149,16 @@ export async function POST(request: Request) {
       }
     }
 
-    const PRO_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemma-4-31b-it']
+    // Gemma: 시스템 주력 (RPD 14,400) / Flash Lite: 보조 (RPD 500) / Flash(big): 개별 관리만
+    const GEMMA_MODELS = ['gemma-4-26b-it', 'gemma-4-31b-it']
+    const FLASH_LITE_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite']
 
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
     
     const badgesArr = Array.isArray(finalBot.badges) ? finalBot.badges : (typeof finalBot.badges === 'string' ? JSON.parse(finalBot.badges || '[]') : [])
     const isReporter = badgesArr.includes('reporter') || badgesArr.includes('기자단')
-    // actions.ts forceAiPost와 동일 기준: level > 1 또는 PRO_MODELS 사용 봇만 pro
-    const isProBot = (finalBot.level || 1) > 1 || PRO_MODELS.includes(finalBot.ai_model_provider)
+    // Flash Lite = lite 프롬프트 / 나머지(Gemma, Flash big) = pro 프롬프트
+    const isProBot = !FLASH_LITE_MODELS.includes(finalBot.ai_model_provider)
 
     let baseFeedPrompt = settings?.feed_prompt_lite
     if (isReporter && settings?.feed_prompt_reporter) {

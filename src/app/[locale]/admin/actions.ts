@@ -24,13 +24,20 @@ const ALLOWED_MODELS = [
   'gemma-4-26b-a4b-it'
 ] as const;
 
-const PRO_MODELS = [
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
-  'gemini-3.5-flash-lite',
-  'gemini-3-flash-preview',
-  'gemma-4-31b-it'
+// Gemma 계열: RPD 14,400 - 시스템 주력 모델
+const GEMMA_MODELS = [
+  'gemma-4-26b-it',
+  'gemma-4-31b-it',
 ];
+
+// Flash Lite 계열: RPD 500 - 보조 모델 (소수 봇)
+const FLASH_LITE_MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-2.5-flash-lite',
+];
+
+// Flash(big) 계열은 구조적 자동화에서 제외 - 관리자 개별 사용만
 
 
 
@@ -166,8 +173,9 @@ export async function createAiBot(formData: FormData) {
     botId = authData.user!.id
   }
 
-  const isProModel = PRO_MODELS.includes(aiModelProvider);
-  const botBadges = isProModel ? ['pro'] : [];
+  // Gemma 봇 = pro 뱃지, Flash Lite = lite (뱃지 없음), Flash(big) = 개별 관리
+  const isGemmaModel = GEMMA_MODELS.includes(aiModelProvider);
+  const botBadges = isGemmaModel ? ['pro'] : [];
 
   const rawRoleInput = (formData.get('botRole') as string) || (formData.get('role') as string) || 'mixed'
   const finalRole = (rawRoleInput === 'comment_only' || rawRoleInput === 'comment') ? 'comment' : rawRoleInput
@@ -298,14 +306,16 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
         throw new Error('피드를 작성할 수 있는 봇이 존재하지 않습니다. (현재 등록된 봇들은 모두 댓글 전담 봇입니다)')
       }
 
+        // Gemma 봇만 'pro' 강제피드, Flash Lite = 'lite' 강제피드, Flash(big)은 개별 봇 피드 버튼으로
+      // Gemma 봇만 'pro' 강제피드, Flash Lite = 'lite' 강제피드, Flash(big)은 개별 봇 피드 버튼으로
       if (modelType === 'pro') {
-        aiAccounts = aiAccounts.filter((bot: any) => PRO_MODELS.includes(bot.ai_model_provider))
+        aiAccounts = aiAccounts.filter((bot: any) => GEMMA_MODELS.includes(bot.ai_model_provider))
       } else if (modelType === 'lite') {
-        aiAccounts = aiAccounts.filter((bot: any) => !bot.ai_model_provider || !PRO_MODELS.includes(bot.ai_model_provider))
+        aiAccounts = aiAccounts.filter((bot: any) => FLASH_LITE_MODELS.includes(bot.ai_model_provider))
       }
 
       if (aiAccounts.length === 0) {
-        throw new Error(`해당 모델(${modelType === 'pro' ? '프로' : '라이트'}) 피드 작성이 가능한 활성 봇이 없습니다.`)
+        throw new Error(`해당 모델(${modelType === 'pro' ? 'Gemma' : 'Flash Lite'}) 피드 작성이 가능한 활성 봇이 없습니다.`)
       }
     }
 
@@ -362,7 +372,8 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
     const badgesArr = Array.isArray(randomAi.badges) ? randomAi.badges : (typeof randomAi.badges === 'string' ? JSON.parse(randomAi.badges || '[]') : [])
     const isReporter = badgesArr.includes('reporter') || badgesArr.includes('기자단')
-    const isProPost = modelType === 'pro' || PRO_MODELS.includes(randomAi.ai_model_provider)
+    // Flash Lite = lite 프롬프트 / 나머지(Gemma, Flash big, 기타) = pro 프롬프트
+    const isProPost = !FLASH_LITE_MODELS.includes(randomAi.ai_model_provider) || modelType === 'pro'
     
     let baseFeedPrompt = settings?.feed_prompt_lite
     if (isReporter && settings?.feed_prompt_reporter) {
