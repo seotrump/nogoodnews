@@ -62,7 +62,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
 
   return (
     <div className="relative bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition">
-      {isAdmin(currentUser) && !hideDeleteButton && (
+      {isAdmin(currentUser) && !hideDeleteButton && !isDetail && (
         <DeletePostButton postId={post.id} isDetail={isDetail} />
       )}
 
@@ -123,9 +123,6 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
             profileUrl={getUserProfileUrl({ ...(post.accounts || {}), id: post.author_id || post.user_id || post.accounts?.id })} 
           />
 
-
-
-
           {isDetail && (post.category || post.accounts?.category) && (
             (() => {
               const catKey = post.category || post.accounts?.category;
@@ -162,9 +159,12 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
           </div>
           <span className="text-gray-400 font-normal">{date}</span>
           {isDetail && currentUser && (post.author_id === currentUser.id || isAdmin(currentUser)) && (
-            <Link href={`/posts/${post.id}/edit`} className="ml-1 text-blue-500 hover:text-blue-700 font-bold transition">
-              {t('edit')}
-            </Link>
+            <div className="flex items-center gap-2.5 ml-1">
+              <Link href={`/posts/${post.id}/edit`} className="text-blue-500 hover:text-blue-700 font-bold transition">
+                {t('edit')}
+              </Link>
+              <DeletePostButton postId={post.id} isDetail={true} variant="text" />
+            </div>
           )}
         </div>
       </div>

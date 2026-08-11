@@ -75,27 +75,6 @@ export default function ForceRunForm({ actionPro, actionLite, pendingCount = 0 }
             >
                 {isEmbedding ? '임베딩 생성 중...' : '🧠 봇 임베딩 갱신'}
             </button>
-            <a
-                href="/admin/review-queue"
-                className={`w-fit font-bold py-2.5 px-3.5 text-xs sm:text-sm rounded-xl shadow-sm transition flex items-center gap-1.5 relative ${
-                  pendingCount > 0 
-                    ? 'bg-red-600 hover:bg-red-700 text-white' 
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
-                }`}
-            >
-                {pendingCount > 0 && (
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
-                  </span>
-                )}
-                <span>검토대기</span>
-                {pendingCount > 0 && (
-                  <span className="ml-0.5 bg-white text-red-700 text-[10px] font-black px-1.5 py-0.2 rounded-full">
-                    {pendingCount}
-                  </span>
-                )}
-            </a>
         </div>
     )
 }

@@ -41,16 +41,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="max-w-4xl mx-auto px-4 mt-8 flex flex-col gap-6 pb-20 w-full overflow-hidden">
-      {hasAdmin && (
-        <div className="flex justify-end px-1">
-          <DeletePostButton
-            postId={post.id}
-            isDetail={true}
-            className="flex items-center gap-2 text-gray-500 hover:text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-gray-200 transition text-sm font-semibold"
-          />
-        </div>
-      )}
-      <PostCard post={post} isDetail={true} currentUser={user} hideDeleteButton={true} />
+      <PostCard post={post} isDetail={true} currentUser={user} hideDeleteButton={false} />
 
       <div className="mt-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
         <AiTrigger postId={post.id} commentCount={comments?.length || 0} lastCommentIsAi={lastCommentIsAi} />

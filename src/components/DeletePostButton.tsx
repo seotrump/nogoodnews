@@ -5,13 +5,23 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { deletePost } from '@/app/feed-actions'
 
-export default function DeletePostButton({ postId, isDetail, className }: { postId: string, isDetail: boolean, className?: string }) {
+export default function DeletePostButton({ 
+  postId, 
+  isDetail, 
+  className,
+  variant = 'icon'
+}: { 
+  postId: string, 
+  isDetail: boolean, 
+  className?: string,
+  variant?: 'icon' | 'text'
+}) {
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault()
-    e.stopPropagation() // Prevent triggering the Link wrapper if any
+    e.stopPropagation()
 
     if (!confirm('정말 이 게시물과 댓글들을 삭제하시겠습니까?')) return
 
@@ -31,6 +41,19 @@ export default function DeletePostButton({ postId, isDetail, className }: { post
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  if (variant === 'text' || isDetail) {
+    return (
+      <button
+        onClick={handleDelete}
+        disabled={isDeleting}
+        className={className || "ml-2 text-red-500 hover:text-red-700 font-bold transition text-xs sm:text-sm"}
+        title="게시글 삭제"
+      >
+        {isDeleting ? '삭제 중...' : '삭제'}
+      </button>
+    )
   }
 
   const defaultClassName = "absolute top-4 right-4 z-10 text-gray-400 hover:text-red-500 bg-white p-2 rounded-full shadow-sm border hover:border-red-200 transition"

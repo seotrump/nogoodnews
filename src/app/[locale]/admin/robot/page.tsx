@@ -63,6 +63,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const { Link: NextLink } = await import('@/i18n/routing')
   const { default: RobotActionButtons } = await import('@/components/admin/RobotActionButtons')
 
+  // 검토대기 피드 개수 조회
+  const { count: pendingCount } = await supabase
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .in('status', ['rejected', 'pending_review'])
+
   return (
     <>
       <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -81,37 +87,56 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </div>
         </div>
 
-        {/* 탭 헤더 네비게이션 */}
-        <div className="flex flex-wrap items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
-          <Link 
-            href="/admin/robot?tab=list" 
-            className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'list' ? 'bg-gray-900 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-200/70'}`}
+        {/* 탭 헤더 네비게이션 및 우측 검토대기 버튼 */}
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link 
+              href="/admin/robot?tab=list" 
+              className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'list' ? 'bg-gray-900 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-200/70'}`}
+            >
+              📋 로봇 목록
+            </Link>
+            <Link 
+              href="/admin/robot?tab=suspended" 
+              className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'suspended' ? 'bg-gray-900 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-200/70'}`}
+            >
+              🚫 정지 로봇
+            </Link>
+            <Link 
+              href="/admin/robot?tab=badges" 
+              className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'badges' ? 'bg-blue-600 text-white shadow-xs' : 'text-blue-700 hover:bg-blue-100/70'}`}
+            >
+              🎖️ 로봇 뱃지
+            </Link>
+            <Link 
+              href="/admin/robot?tab=builder" 
+              className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'builder' ? 'bg-gray-900 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-200/70'}`}
+            >
+              🛠️ 로봇 빌더
+            </Link>
+            <Link 
+              href="/admin/robot?tab=portfolio" 
+              className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'portfolio' ? 'bg-purple-600 text-white shadow-xs' : 'text-purple-700 hover:bg-purple-100/70'}`}
+            >
+              📊 포트폴리오
+            </Link>
+          </div>
+
+          {/* 오른쪽 정렬된 검토대기 버튼 */}
+          <Link
+            href="/admin/review-queue"
+            className={`px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition flex items-center gap-1.5 whitespace-nowrap ml-auto sm:ml-0 ${
+              (pendingCount || 0) > 0 
+                ? 'bg-red-600 hover:bg-red-700 text-white shadow-xs' 
+                : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-300'
+            }`}
           >
-            📋 로봇 목록
-          </Link>
-          <Link 
-            href="/admin/robot?tab=suspended" 
-            className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'suspended' ? 'bg-gray-900 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-200/70'}`}
-          >
-            🚫 정지 로봇
-          </Link>
-          <Link 
-            href="/admin/robot?tab=badges" 
-            className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'badges' ? 'bg-blue-600 text-white shadow-xs' : 'text-blue-700 hover:bg-blue-100/70'}`}
-          >
-            🎖️ 로봇 뱃지
-          </Link>
-          <Link 
-            href="/admin/robot?tab=builder" 
-            className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'builder' ? 'bg-gray-900 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-200/70'}`}
-          >
-            🛠️ 로봇 빌더
-          </Link>
-          <Link 
-            href="/admin/robot?tab=portfolio" 
-            className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'portfolio' ? 'bg-purple-600 text-white shadow-xs' : 'text-purple-700 hover:bg-purple-100/70'}`}
-          >
-            📊 포트폴리오
+            <span>🚨 검토대기</span>
+            {(pendingCount || 0) > 0 && (
+              <span className="bg-white text-red-700 text-[11px] font-black px-1.5 py-0.2 rounded-full shadow-xs">
+                {pendingCount}
+              </span>
+            )}
           </Link>
         </div>
 

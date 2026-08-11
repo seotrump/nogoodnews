@@ -125,24 +125,24 @@ export default function AutoBotButton() {
   }
 
   return (
-    <div className="ml-auto flex items-center gap-3">
-      {/* 주제어 입력 (선택) */}
+    <div className="ml-auto flex items-center gap-2.5">
+      {/* 주제어 입력 (설명 제거 및 크기 반으로 축소) */}
       <input
         type="text"
         value={topicKeyword}
         onChange={e => setTopicKeyword(e.target.value)}
-        placeholder="주제어 입력 (선택) — 입력 시 주제 기반 생성"
-        className="w-64 h-9 px-3 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white text-gray-900"
+        placeholder="주제어 입력"
+        className="w-32 h-9 px-3 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white text-gray-900"
         disabled={isLoading}
       />
 
-      {/* 오토봇 생성 버튼들 */}
-      <div className="flex items-center gap-2">
+      {/* 오토봇 생성 버튼들 (아이콘 제거 및 라이트봇 / 프로봇 명칭 변경) */}
+      <div className="flex items-center gap-1.5">
         <button 
           type="button" 
           onClick={handleGeneralBot} 
           disabled={isLoading}
-          className={`h-9 px-3.5 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 ${
+          className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
             isLoading && loadingType === 'general'
               ? 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse'
               : isLoading
@@ -150,15 +150,14 @@ export default function AutoBotButton() {
               : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >
-          <span className="text-sm">🤖</span>
-          {isLoading && loadingType === 'general' ? '라이트 생성 중...' : '오토봇 라이트'}
+          {isLoading && loadingType === 'general' ? '라이트 생성중...' : '라이트봇'}
         </button>
 
         <button 
           type="button" 
           onClick={handleProBot} 
           disabled={isLoading}
-          className={`h-9 px-3.5 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 ${
+          className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
             isLoading && loadingType === 'pro'
               ? 'bg-purple-700 text-white animate-pulse'
               : isLoading
@@ -166,8 +165,7 @@ export default function AutoBotButton() {
               : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
           }`}
         >
-          <span className="text-sm">✨</span>
-          {isLoading && loadingType === 'pro' ? '프로 기획 중...' : '오토봇 프로'}
+          {isLoading && loadingType === 'pro' ? '프로 기획중...' : '프로봇'}
         </button>
       </div>
     </div>

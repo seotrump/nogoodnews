@@ -20,6 +20,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
     const router = useRouter()
     const supabase = createClient()
     const [comments, setComments] = useState(initialComments)
+    const [deletedCommentIds, setDeletedCommentIds] = useState<string[]>([])
     const [deletingId, setDeletingId] = useState<string | null>(null)
     const [zoomedImage, setZoomedImage] = useState<string | null>(null)
     const [isSelectMode, setIsSelectMode] = useState(false)
@@ -28,9 +29,9 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
     const [editContent, setEditContent] = useState('')
     const [isSubmittingEdit, setIsSubmittingEdit] = useState(false)
 
-    // 중복 제거 및 정렬 유틸리티
-    const mergeComments = (prev: any[], next: any[]) => {
-        const all = [...prev, ...next]
+    // 중복 제거 및 삭제된 댓글 필터링 후 정렬
+    const mergeComments = (prev: any[], next: any[], deletedIds: string[] = deletedCommentIds) => {
+        const all = [...prev, ...next].filter(c => !deletedIds.includes(c.id))
         const unique = Array.from(new Map(all.map(c => [c.id, c])).values())
         return unique.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
     }
@@ -38,8 +39,8 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
     // 서버 액션(사용자 댓글 작성 등)으로 전달된 최신 initialComments와 
     // Realtime으로 먼저 들어온 comments를 병합하여 누락이나 덮어쓰기 방지
     useEffect(() => {
-        setComments(current => mergeComments(current, initialComments))
-    }, [initialComments])
+        setComments(current => mergeComments(current, initialComments, deletedCommentIds))
+    }, [initialComments, deletedCommentIds])
 
     const toggleSelection = (id: string) => {
         setSelectedCommentIds(prev => 
@@ -59,6 +60,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
         setDeletingId(commentId)
         try {
             await deleteComment(commentId, postId)
+            setDeletedCommentIds(prev => [...prev, commentId])
             setComments(prev => prev.filter(c => c.id !== commentId))
             toast.success('댓글이 삭제되었습니다.')
         } catch (e) {
