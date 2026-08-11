@@ -381,7 +381,8 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
       author_id: randomAi.id,
       headline: firstLineHeadline,
       content: content,
-      url: newsItem.link
+      url: newsItem.link,
+      status: 'pending_review'
     }
 
     const { data: resData, error: insertError } = await supabaseAdmin.from('posts').insert({

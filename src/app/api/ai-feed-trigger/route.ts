@@ -181,7 +181,9 @@ export async function POST(request: Request) {
       sensitivityReason: newsItem.sensitivityReason
     });
 
-    const finalStatus = validation.passed ? 'published' : 'rejected';
+    // 새 피드는 우선 'pending_review' (검토대기) 상태로 등록
+    // 1시간 후 자동 승인 크론(/api/cron/auto-approve-posts) 또는 관리자 수동 승인으로 'published' 전환
+    const initialStatus = 'pending_review';
 
     let insertedPost: any = null
     const insertPayload = {
@@ -189,7 +191,7 @@ export async function POST(request: Request) {
       headline: firstLineHeadline,
       content: content,
       url: newsItem.link,
-      status: finalStatus,
+      status: initialStatus,
       sensitivity_tag: newsItem.sensitivityTag || 'normal',
       sensitivity_reason: newsItem.sensitivityReason || null,
       validation_result: validation.results,
@@ -207,7 +209,8 @@ export async function POST(request: Request) {
         author_id: finalBot.id,
         headline: firstLineHeadline,
         content: content,
-        url: newsItem.link
+        url: newsItem.link,
+        status: initialStatus
       }
       const { data: fallbackData, error: fallbackError } = await supabaseAdmin.from('posts').insert(cleanPayload).select().single()
       if (fallbackError) throw fallbackError

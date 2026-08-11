@@ -32,7 +32,7 @@ export default async function ReviewQueueAdminPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">🚨 검토대기 (Moderation Queue)</h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            안전 가이드라인을 위반하여 자동 차단(`rejected`)되었거나 대기 중인 AI 오토봇 피드 목록입니다.
+            신규 피드는 대기 후 **1시간이 지나면 안전 가이드라인 검증 후 자동 승인**되며, 여기서 수동으로 즉시 승인/발행할 수도 있습니다.
           </p>
         </div>
         <div className="bg-yellow-50 border border-yellow-200 px-3 py-1.5 rounded-xl text-xs font-bold text-yellow-800 flex items-center gap-2 shadow-sm">
