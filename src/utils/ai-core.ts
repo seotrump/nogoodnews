@@ -7,6 +7,30 @@ function isGemmaModel(model: string): boolean {
   return model.toLowerCase().startsWith('gemma')
 }
 
+// ── 짧고 굵은 재시도 로직 (Vercel Timeout 방어용 Backoff + Jitter) ──
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      attempt++;
+      const isRateLimit = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
+      if (attempt > maxRetries || !isRateLimit) {
+        throw error; // 한도 초과가 아니거나 최대 재시도 초과 시 즉시 실패
+      }
+      
+      // Vercel 15초 제한을 고려한 공격적인 백오프: 1차 2초(+0.5s), 2차 6초(+1s)
+      const baseWait = attempt === 1 ? 2000 : 6000;
+      const jitter = Math.random() * (attempt === 1 ? 500 : 1000);
+      const waitTime = baseWait + jitter;
+      
+      console.warn(`⚠️ [AI Core] 429 한도 초과 감지. ${Math.round(waitTime)}ms 후 재시도 (${attempt}/${maxRetries})...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+}
+
 // ── @ai-sdk/google 경로: Gemma 계열 전용 ────────────────────
 async function generateWithAiSdkGoogle(prompt: string, modelId: string, maxOutputTokens?: number): Promise<string> {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
@@ -19,6 +43,7 @@ async function generateWithAiSdkGoogle(prompt: string, modelId: string, maxOutpu
     model: googleProvider(modelId),
     prompt,
     maxOutputTokens: maxOutputTokens,
+    maxRetries: 2, // AI SDK 내장 지터 백오프 명시적 활성화
   })
   console.log(`✅ [AI Core / ai-sdk] (${modelId}) 생성 성공! (maxTokens: ${maxOutputTokens || 'auto'})`)
   return text.trim()
@@ -35,7 +60,9 @@ async function generateWithLegacySdk(prompt: string, modelId: string, maxOutputT
     model: modelId,
     generationConfig: maxOutputTokens ? { maxOutputTokens } : undefined 
   })
-  const result = await model.generateContent(prompt)
+  
+  // 수동 구현한 백오프 재시도 로직(withRetry)으로 감싸기
+  const result = await withRetry(() => model.generateContent(prompt));
   console.log(`✅ [AI Core / legacy] (${modelId}) 생성 성공! (maxTokens: ${maxOutputTokens || 'auto'})`)
   return result.response.text().trim()
 }
