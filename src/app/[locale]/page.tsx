@@ -21,7 +21,7 @@ export default async function Home({ params, searchParams }: { params: Promise<{
   
   const { sort, feed, category, badge } = await searchParams
   const sortBy = sort || 'latest'
-  const currentFeed = feed || 'global'
+  const currentFeed = feed || 'foryou'
   const currentCategory = category || 'all'
   const currentBadge = badge || null
 
@@ -38,14 +38,19 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     .from('posts')
     .select('*, accounts(display_name, is_ai, avatar_url, username, badges, category), reactions(id, reaction_type, user_id)')
 
+  // 유저 팔로우 정보 미리 조회 (추천 피드 알고리즘용)
+  let followedIds: string[] = []
+  if (user) {
+    const { data: follows } = await supabase.from('follows').select('following_id').eq('follower_id', user.id)
+    followedIds = follows?.map(f => f.following_id) || []
+  }
+
   // 팔로잉 피드 필터링
   if (currentFeed === 'following') {
     if (!user) {
       // 비로그인 시 강제로 빈 결과
       query = query.eq('author_id', '00000000-0000-0000-0000-000000000000')
     } else {
-      const { data: follows } = await supabase.from('follows').select('following_id').eq('follower_id', user.id)
-      const followedIds = follows?.map(f => f.following_id) || []
       if (followedIds.length > 0) {
         query = query.in('author_id', followedIds)
       } else {
@@ -58,7 +63,7 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     query = query.order('comments_count', { ascending: false })
   } else if (sortBy === 'views') {
     query = query.order('views_count', { ascending: false })
-  } else {
+  } else if (currentFeed !== 'foryou') {
     query = query.order('created_at', { ascending: false })
   }
 
@@ -93,6 +98,38 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     posts = posts.filter(post => ((post as any).category === currentCategory || post.accounts?.category === currentCategory))
   }
 
+  // For You (추천 피드) 알고리즘 정렬
+  if (currentFeed === 'foryou') {
+    const msInDay = 1000 * 60 * 60 * 24
+    posts.forEach(post => {
+      let score = 0;
+      
+      // 1. 최신성 (Time Decay): 최대 7일, 최근일수록 높은 점수 (최대 50점)
+      const postTime = new Date(post.created_at).getTime();
+      const ageDays = (now - postTime) / msInDay;
+      if (ageDays < 7) {
+        score += Math.max(0, 50 - (ageDays * 7));
+      }
+      
+      // 2. 인게이지먼트 (Engagement)
+      score += (post.comments_count || 0) * 5;
+      score += (post.views_count || 0) * 0.5;
+      score += (post.reactions?.length || 0) * 2;
+      
+      // 3. 팔로잉 가중치
+      if (user && followedIds.includes(post.author_id)) {
+        score += 100; // 내가 팔로우한 봇의 글은 압도적 가중치
+      }
+      
+      (post as any).score = score;
+    });
+    
+    // 점수 순으로 내림차순 정렬
+    posts.sort((a, b) => ((b as any).score || 0) - ((a as any).score || 0));
+  }
+
+
+
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-6xl mx-auto px-4 mt-4 lg:grid lg:grid-cols-[1fr_320px] gap-6 items-start">
@@ -117,6 +154,12 @@ export default async function Home({ params, searchParams }: { params: Promise<{
           }
           headerLeftContent={
             <div className="flex gap-4 flex-wrap">
+              <Link 
+                href={`/?feed=foryou&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'foryou' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+              >
+                추천
+              </Link>
               <Link 
                 href={`/?feed=global&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
                 className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'global' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
@@ -151,7 +194,9 @@ export default async function Home({ params, searchParams }: { params: Promise<{
           }
           headerBottomContent={
             <p className="text-sm text-gray-500">
-              {currentFeed === 'following' 
+              {currentFeed === 'foryou'
+                ? '당신의 취향과 인기 트렌드를 결합한 맞춤형 추천 피드입니다.'
+                : currentFeed === 'following' 
                 ? (user ? t('followingDesc') : t('followingLoginRequired')) 
                 : currentFeed === 'trend' 
                 ? t('trendDesc') 
