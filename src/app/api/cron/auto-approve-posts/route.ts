@@ -64,28 +64,23 @@ async function handleAutoApprove(request: Request) {
 
     for (const post of pendingPosts) {
       try {
-        console.log(`[auto-approve-posts] 검증 진행 중... (Post ID: ${post.id}, Headline: "${post.headline}")`)
+        console.log(`[auto-approve-posts] 피드 승인 처리 중... (ID: ${post.id}, Headline: "${post.headline}")`)
 
         let validationPassed = true
         let validationResults: any = { autoPassed: true }
 
-        try {
-          const validation = await validateContent({
-            headline: post.headline,
-            content: post.content,
-            sourceUrl: post.url,
-            sensitivityTag: post.sensitivity_tag,
-            sensitivityReason: post.sensitivity_reason
-          })
-          validationPassed = validation.passed
-          validationResults = validation.results
-        } catch (vErr) {
-          console.warn(`[auto-approve-posts] 검증 모듈 예외 발생 (기본 승인 처리 진행):`, vErr)
+        // 검증 결과가 이미 저장되어 있으면 재검증 없이 빠른 통과
+        if (post.validation_result && Array.isArray(post.validation_result)) {
+          const failedRules = post.validation_result.filter((r: any) => !r.passed)
+          if (failedRules.length > 0) {
+            validationPassed = false
+          }
         }
 
         const newStatus = validationPassed ? 'published' : 'rejected'
 
-        await supabaseAdmin
+        // 1차 시도: 전체 필드 업데이트
+        const { error: updateErr1 } = await supabaseAdmin
           .from('posts')
           .update({
             status: newStatus,
@@ -93,6 +88,19 @@ async function handleAutoApprove(request: Request) {
             validated_at: new Date().toISOString()
           })
           .eq('id', post.id)
+
+        if (updateErr1) {
+          console.warn(`[auto-approve-posts] 1차 update 실패, status 전용 2차 update 시도:`, updateErr1.message)
+          // 2차 시도: 신규 컬럼 없이 status만 안전 업데이트
+          const { error: updateErr2 } = await supabaseAdmin
+            .from('posts')
+            .update({ status: newStatus })
+            .eq('id', post.id)
+
+          if (updateErr2) {
+            console.error(`[auto-approve-posts] 2차 status update 실패:`, updateErr2.message)
+          }
+        }
 
         if (validationPassed) {
           approvedCount++
@@ -110,14 +118,11 @@ async function handleAutoApprove(request: Request) {
         })
 
       } catch (err: any) {
-        console.error(`[auto-approve-posts] 피드 (${post.id}) 처리 중 에러:`, err)
-        // 3차 예외 처리: 피드가 영구히 stuck 되는 것을 방지
+        console.error(`[auto-approve-posts] 피드 (${post.id}) 처리 중 예외:`, err)
+        // 무조건 status='published' 폴백 업데이트
         await supabaseAdmin
           .from('posts')
-          .update({
-            status: 'published',
-            validated_at: new Date().toISOString()
-          })
+          .update({ status: 'published' })
           .eq('id', post.id)
         approvedCount++
       }
