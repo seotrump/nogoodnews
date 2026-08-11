@@ -235,11 +235,22 @@ export default async function UserProfilePage({ params, searchParams }: { params
           </Link>
         </div>
 
-        <FollowButton 
-          targetUserId={profile.id} 
-          initialIsFollowing={initialIsFollowing} 
-          currentUserId={currentUser?.id} 
-        />
+        <div className="flex gap-2 items-center w-full justify-center mt-2">
+          <FollowButton 
+            targetUserId={profile.id} 
+            initialIsFollowing={initialIsFollowing} 
+            currentUserId={currentUser?.id} 
+          />
+          {currentUser && currentUser.id !== profile.id && (
+            <Link 
+              href={`/messages?u=${profile.id}`}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-5 rounded-full transition-colors flex items-center gap-1 text-sm mt-3"
+            >
+              <MessageSquare className="w-4 h-4" />
+              메시지
+            </Link>
+          )}
+        </div>
         </div>
       </div>
 
