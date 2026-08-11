@@ -127,7 +127,7 @@ ${existingListStr}
     formData.append('aiModelProvider', !isPro ? 'gemma-4-26b-a4b-it' : 'gemma-4-31b-it')
     formData.append('category', parsed.category || 'politics')
     formData.append('botTier', '1')
-    formData.append('status', 'active')
+    formData.append('status', 'paused')
     formData.append('personaPrompt', coreIdentity)
     formData.append('advancedSettings', JSON.stringify(advancedSettings))
     formData.append('postPriority', '1')

@@ -227,7 +227,8 @@ export async function createAiBot(formData: FormData) {
     category: category,
     badges: botBadges,
     role: finalRole,
-    advanced_settings: advancedSettings
+    advanced_settings: advancedSettings,
+    status: (formData.get('status') as string) || 'active'
   })
 
   if (accountError) {
@@ -846,3 +847,19 @@ export async function toggleUserBadge(userId: string, badgeId: string, forceAdd?
   revalidatePath('/[locale]/admin/users')
   revalidatePath('/[locale]/admin/robot')
 }
+
+export async function toggleAutoBotSettings(isActive: boolean, targetCount: number) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !isAdmin(user)) throw new Error('Unauthorized')
+  
+  const { error } = await supabaseAdmin
+    .from('site_settings')
+    .upsert({ id: 'global', is_auto_bot_active: isActive, auto_bot_target_count: targetCount })
+    
+  if (error) {
+    console.error('Failed to update auto bot settings:', error)
+    throw new Error('자동 생성 설정 업데이트에 실패했습니다.')
+  }
+  revalidatePath('/[locale]/admin/robot', 'page')
+}

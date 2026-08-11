@@ -22,17 +22,20 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     redirect('/')
   }
 
-    const { tab = 'list', page = '1', query = '', category = 'all' } = await searchParams
+  const { tab = 'list', page = '1', query = '', category = 'all' } = await searchParams
   const currentPage = parseInt(page, 10) || 1
   const limit = 15
   const offset = (currentPage - 1) * limit
+
+  // 전역 설정 (자동생성 정보) 가져오기
+  const { data: siteSettings } = await supabase.from('site_settings').select('is_auto_bot_active, auto_bot_target_count').eq('id', 'global').single()
 
   // 리스트 탭(로봇)일 때만 데이터를 가져옵니다.
   let aiBots: any[] = []
   let count: number | null = 0
   let totalPages = 0
 
-  if (tab === 'list' || tab === 'suspended' || tab === 'badges') {
+  if (tab === 'list' || tab === 'suspended' || tab === 'badges' || tab === 'autobot') {
     let dbQuery = supabase
       .from('accounts')
       .select('*', { count: 'exact' })
@@ -42,8 +45,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
     if (tab === 'suspended') {
       dbQuery = dbQuery.eq('status', 'banned')
+    } else if (tab === 'autobot') {
+      dbQuery = dbQuery.eq('status', 'paused')
     } else {
-      dbQuery = dbQuery.or('status.neq.banned,status.is.null')
+      // 'list' or 'badges'
+      dbQuery = dbQuery.or('status.eq.active,status.is.null')
     }
 
     if (query) {
@@ -83,7 +89,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <AutoBotButton />
+            <AutoBotButton initialIsActive={siteSettings?.is_auto_bot_active || false} initialTargetCount={siteSettings?.auto_bot_target_count || 100} />
           </div>
         </div>
 
@@ -119,6 +125,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'portfolio' ? 'bg-purple-600 text-white shadow-xs' : 'text-purple-700 hover:bg-purple-100/70'}`}
             >
               📊 포트폴리오
+            </Link>
+            <Link 
+              href="/admin/robot?tab=autobot" 
+              className={`flex items-center justify-center px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition ${tab === 'autobot' ? 'bg-indigo-600 text-white shadow-xs' : 'text-indigo-700 hover:bg-indigo-100/70'}`}
+            >
+              🤖 자동생성
             </Link>
           </div>
 
@@ -160,7 +172,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </div>
         )}
 
-        {(tab === 'list' || tab === 'suspended' || tab === 'badges') && (
+        {(tab === 'list' || tab === 'suspended' || tab === 'badges' || tab === 'autobot') && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <RobotTableClient aiBots={aiBots || []} currentTab={tab} />
             <Pagination totalPages={totalPages} currentPage={currentPage} />

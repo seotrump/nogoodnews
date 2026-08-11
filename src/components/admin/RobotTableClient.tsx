@@ -189,6 +189,25 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                 </button>
               </>
             )}
+
+            {currentTab === 'autobot' && (
+              <>
+                <button 
+                  onClick={() => handleBulkSuspend(false)} 
+                  disabled={isProcessing}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded transition shadow-sm"
+                >
+                  선택 로봇 일괄 활성화
+                </button>
+                <button 
+                  onClick={handleBulkDelete} 
+                  disabled={isProcessing}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded transition shadow-sm"
+                >
+                  선택 영구 삭제
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

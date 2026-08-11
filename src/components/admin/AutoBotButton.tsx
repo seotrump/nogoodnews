@@ -3,12 +3,20 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { createAiBot } from '@/app/[locale]/admin/actions'
+import { createAiBot, toggleAutoBotSettings } from '@/app/[locale]/admin/actions'
 
-export default function AutoBotButton() {
+interface AutoBotButtonProps {
+  initialIsActive?: boolean
+  initialTargetCount?: number
+}
+
+export default function AutoBotButton({ initialIsActive = false, initialTargetCount = 100 }: AutoBotButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [loadingType, setLoadingType] = useState<'general' | 'pro' | null>(null)
+  const [loadingType, setLoadingType] = useState<'general' | 'pro' | 'cron' | null>(null)
   const [topicKeyword, setTopicKeyword] = useState('')
+  const [isAutoBotActive, setIsAutoBotActive] = useState(initialIsActive)
+  const [autoBotTargetCount, setAutoBotTargetCount] = useState(initialTargetCount)
+
   const router = useRouter()
 
   // 1. 오토봇 라이트 생성 (댓글 전용 — 단 1회 지능형 API 호출)
@@ -124,49 +132,107 @@ export default function AutoBotButton() {
 
   }
 
+  const handleToggleCron = async (newIsActive: boolean) => {
+    setIsAutoBotActive(newIsActive)
+    try {
+      await toggleAutoBotSettings(newIsActive, autoBotTargetCount)
+      toast.success(newIsActive ? '자동 생성 크론이 활성화되었습니다.' : '자동 생성 크론이 중지되었습니다.')
+    } catch (e: any) {
+      toast.error(e.message || '설정 저장 실패')
+      setIsAutoBotActive(!newIsActive)
+    }
+  }
+
+  const handleTargetCountChange = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const newCount = Number(e.target.value)
+    if (newCount !== initialTargetCount) {
+      try {
+        await toggleAutoBotSettings(isAutoBotActive, newCount)
+        toast.success(`목표 개수가 ${newCount}개로 저장되었습니다.`)
+      } catch (e: any) {
+        toast.error('설정 저장 실패')
+      }
+    }
+  }
+
   return (
-    <div className="ml-auto flex items-center gap-2.5">
-      {/* 주제어 입력 (설명 제거 및 크기 반으로 축소) */}
-      <input
-        type="text"
-        value={topicKeyword}
-        onChange={e => setTopicKeyword(e.target.value)}
-        placeholder="주제어 입력"
-        className="w-32 h-9 px-3 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white text-gray-900"
-        disabled={isLoading}
-      />
-
-      {/* 오토봇 생성 버튼들 (아이콘 제거 및 라이트봇 / 프로봇 명칭 변경) */}
-      <div className="flex items-center gap-1.5">
-        <button 
-          type="button" 
-          onClick={handleGeneralBot} 
+    <div className="ml-auto flex flex-col items-end gap-2">
+      <div className="flex items-center gap-2.5">
+        {/* 주제어 입력 */}
+        <input
+          type="text"
+          value={topicKeyword}
+          onChange={e => setTopicKeyword(e.target.value)}
+          placeholder="주제어 입력"
+          className="w-32 h-9 px-3 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white text-gray-900"
           disabled={isLoading}
-          className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
-            isLoading && loadingType === 'general'
-              ? 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse'
-              : isLoading
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
-              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          {isLoading && loadingType === 'general' ? '라이트 생성중...' : '라이트봇'}
-        </button>
+        />
 
-        <button 
-          type="button" 
-          onClick={handleProBot} 
-          disabled={isLoading}
-          className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
-            isLoading && loadingType === 'pro'
-              ? 'bg-purple-700 text-white animate-pulse'
-              : isLoading
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-              : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
-          }`}
-        >
-          {isLoading && loadingType === 'pro' ? '프로 기획중...' : '프로봇'}
-        </button>
+        {/* 오토봇 생성 버튼들 */}
+        <div className="flex items-center gap-1.5">
+          <button 
+            type="button" 
+            onClick={handleGeneralBot} 
+            disabled={isLoading}
+            className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
+              isLoading && loadingType === 'general'
+                ? 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse'
+                : isLoading
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {isLoading && loadingType === 'general' ? '라이트 생성중...' : '라이트봇'}
+          </button>
+
+          <button 
+            type="button" 
+            onClick={handleProBot} 
+            disabled={isLoading}
+            className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
+              isLoading && loadingType === 'pro'
+                ? 'bg-purple-700 text-white animate-pulse'
+                : isLoading
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
+            }`}
+          >
+            {isLoading && loadingType === 'pro' ? '프로 기획중...' : '프로봇'}
+          </button>
+        </div>
+      </div>
+
+      {/* 자동 생성 크론 UI */}
+      <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <div className="relative">
+            <input 
+              type="checkbox" 
+              className="sr-only" 
+              checked={isAutoBotActive}
+              onChange={(e) => handleToggleCron(e.target.checked)}
+              disabled={isLoading}
+            />
+            <div className={`block w-8 h-5 rounded-full transition-colors ${isAutoBotActive ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
+            <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${isAutoBotActive ? 'transform translate-x-3' : ''}`}></div>
+          </div>
+          <span className="text-xs font-bold text-gray-700">자동생성</span>
+        </label>
+
+        <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
+          <span className="text-xs font-medium text-gray-600">목표</span>
+          <input
+            type="number"
+            value={autoBotTargetCount}
+            onChange={(e) => setAutoBotTargetCount(Number(e.target.value))}
+            onBlur={handleTargetCountChange}
+            min="1"
+            max="1000"
+            className="w-14 h-6 px-1.5 text-xs text-center border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            disabled={isLoading}
+          />
+          <span className="text-xs text-gray-500">개</span>
+        </div>
       </div>
     </div>
   )
