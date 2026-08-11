@@ -58,7 +58,7 @@ async function handleAutoApprove(request: Request) {
       })
     }
 
-    const { validateContent } = await import('@/utils/content-validator')
+    // 동적 임포트로 인한 Vercel 런타임 오류 방지 및 불필요한 코드 제거
     let approvedCount = 0
     let rejectedCount = 0
     const details: any[] = []
@@ -141,6 +141,10 @@ async function handleAutoApprove(request: Request) {
       approved: approvedCount,
       rejected: rejectedCount,
       details
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+      }
     })
 
   } catch (err: any) {
