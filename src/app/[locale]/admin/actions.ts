@@ -26,12 +26,21 @@ const ALLOWED_MODELS = [
 
 // Gemma 계열: RPD 14,400 - 시스템 주력 모델
 const GEMMA_MODELS = [
-  'gemma-4-26b-a4b-it',
-  'gemma-4-31b-it',
+  'gemma-4-26b-a4b-it',  // 라이트 봇 기본 (댓글 전담, lite 프롬프트)
+  'gemma-4-31b-it',      // 프로 봇 기본 (피드·혼합, pro 프롬프트)
 ];
 
 // Flash Lite 계열: RPD 500 - 보조 모델 (소수 봇)
 const FLASH_LITE_MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
+  'gemini-2.5-flash-lite',
+];
+
+// 라이트 프롬프트(4줄) 대상: Gemma 26B + Flash Lite
+// → 나머지(Gemma 31B, Flash big 등)는 pro 프롬프트(6줄)
+const LITE_PROMPT_MODELS = [
+  'gemma-4-26b-a4b-it',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
   'gemini-2.5-flash-lite',
@@ -372,8 +381,8 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
     const badgesArr = Array.isArray(randomAi.badges) ? randomAi.badges : (typeof randomAi.badges === 'string' ? JSON.parse(randomAi.badges || '[]') : [])
     const isReporter = badgesArr.includes('reporter') || badgesArr.includes('기자단')
-    // Flash Lite = lite 프롬프트 / 나머지(Gemma, Flash big, 기타) = pro 프롬프트
-    const isProPost = !FLASH_LITE_MODELS.includes(randomAi.ai_model_provider) || modelType === 'pro'
+    // 26B + Flash Lite = lite 프롬프트(4줄) / 31B + Flash(big) = pro 프롬프트(6줄)
+    const isProPost = !LITE_PROMPT_MODELS.includes(randomAi.ai_model_provider) || modelType === 'pro'
     
     let baseFeedPrompt = settings?.feed_prompt_lite
     if (isReporter && settings?.feed_prompt_reporter) {
