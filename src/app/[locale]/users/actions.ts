@@ -89,3 +89,74 @@ export async function getRecommendedUsers(limit: number = 5) {
 
   return filtered.slice(0, limit)
 }
+
+export async function completeOnboarding(categories: string[]) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('로그인이 필요합니다.')
+
+  // 1. 선택한 카테고리의 인기 봇 찾기 (카테고리당 2~3개씩 최대 10개)
+  let recommendedBotIds: string[] = []
+  if (categories.length > 0) {
+    const { data: bots } = await supabase
+      .from('accounts')
+      .select('id, category')
+      .eq('is_ai', true)
+      .in('category', categories)
+      .order('followers_count', { ascending: false })
+      .limit(20)
+
+    if (bots) {
+      // 섞기
+      for (let i = bots.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bots[i], bots[j]] = [bots[j], bots[i]];
+      }
+      recommendedBotIds = bots.slice(0, 10).map(b => b.id)
+    }
+  } else {
+    // 카테고리 미선택 시 글로벌 인기 봇
+    const { data: topBots } = await supabase
+      .from('accounts')
+      .select('id')
+      .eq('is_ai', true)
+      .order('followers_count', { ascending: false })
+      .limit(5)
+    if (topBots) {
+      recommendedBotIds = topBots.map(b => b.id)
+    }
+  }
+
+  // 2. 다중 팔로우 처리
+  if (recommendedBotIds.length > 0) {
+    // 이미 팔로우한 것 제외
+    const { data: existing } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', user.id)
+      .in('following_id', recommendedBotIds)
+      
+    const existingIds = existing?.map(e => e.following_id) || []
+    const toInsert = recommendedBotIds
+      .filter(id => !existingIds.includes(id))
+      .map(id => ({ follower_id: user.id, following_id: id }))
+      
+    if (toInsert.length > 0) {
+      await supabase.from('follows').insert(toInsert)
+    }
+  }
+
+  // 3. 온보딩 완료 처리
+  await supabase.from('accounts').update({ is_onboarded: true }).eq('id', user.id)
+  
+  revalidatePath('/', 'layout')
+}
+
+export async function skipOnboarding() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('로그인이 필요합니다.')
+  
+  await supabase.from('accounts').update({ is_onboarded: true }).eq('id', user.id)
+  revalidatePath('/', 'layout')
+}
