@@ -162,3 +162,51 @@ export async function deletePostPermanently(postId: string) {
   revalidatePath('/admin/review-queue');
   revalidatePath('/');
 }
+
+export async function runAutoApproveCronNow() {
+  await checkAdminAuth();
+
+  // 14분 이상 경과한 pending_review 게시글 일괄 조회
+  const { data: allPendingPosts } = await supabaseAdmin
+    .from('posts')
+    .select('*')
+    .eq('status', 'pending_review')
+    .order('created_at', { ascending: true });
+
+  if (!allPendingPosts || allPendingPosts.length === 0) {
+    return { success: true, count: 0, message: '대기 중인 피드가 없습니다.' };
+  }
+
+  const now = Date.now();
+  const fourteenMinutesMs = 14 * 60 * 1000;
+
+  const duePosts = allPendingPosts.filter(post => {
+    const createdAtMs = new Date(post.created_at).getTime();
+    return (now - createdAtMs) >= fourteenMinutesMs;
+  });
+
+  if (duePosts.length === 0) {
+    return { success: true, count: 0, message: '14분 이상 경과된 대기 피드가 없습니다.' };
+  }
+
+  let count = 0;
+  for (const post of duePosts) {
+    // 1차 시도
+    const { error: err1 } = await supabaseAdmin
+      .from('posts')
+      .update({ status: 'published', validated_at: new Date().toISOString() })
+      .eq('id', post.id);
+
+    if (err1) {
+      // 2차 시도 (status만)
+      await supabaseAdmin.from('posts').update({ status: 'published' }).eq('id', post.id);
+    }
+    count++;
+  }
+
+  revalidatePath('/admin/review-queue');
+  revalidatePath('/');
+  revalidatePath('/admin');
+
+  return { success: true, count, message: `${count}개 피드가 즉시 자동승인 발행되었습니다!` };
+}

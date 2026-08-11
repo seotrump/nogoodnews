@@ -2,12 +2,38 @@
 
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { approvePost, deletePostPermanently } from '@/app/[locale]/admin/guidelines-actions'
+import { approvePost, deletePostPermanently, runAutoApproveCronNow } from '@/app/[locale]/admin/guidelines-actions'
 import PostCard from '@/components/PostCard'
 
 export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: any[] }) {
   const [posts, setPosts] = useState(initialPosts)
   const [activeTab, setActiveTab] = useState<'pending' | 'published' | 'rejected' | 'all'>('pending')
+  const [isRunningCron, setIsRunningCron] = useState(false)
+
+  const handleRunCronNow = async () => {
+    setIsRunningCron(true)
+    const toastId = toast.loading('⚡ 15분 경과 대기 피드 크론 일괄 승인 진행 중...')
+    try {
+      const res = await runAutoApproveCronNow()
+      if (res.count && res.count > 0) {
+        setPosts(posts.map(p => {
+          const createdMs = new Date(p.created_at).getTime()
+          const isDue = (Date.now() - createdMs) >= (14 * 60 * 1000)
+          if (p.status === 'pending_review' && isDue) {
+            return { ...p, status: 'published' }
+          }
+          return p
+        }))
+        toast.success(res.message, { id: toastId })
+      } else {
+        toast.success(res.message || '15분 이상 경과된 대기 피드가 없습니다.', { id: toastId })
+      }
+    } catch (e: any) {
+      toast.error(e.message || '크론 실행 실패', { id: toastId })
+    } finally {
+      setIsRunningCron(false)
+    }
+  }
 
   const handleApprove = async (postId: string) => {
     try {
@@ -102,6 +128,19 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
           }`}
         >
           전체 ({posts.length})
+        </button>
+
+        <button
+          onClick={handleRunCronNow}
+          disabled={isRunningCron}
+          className={`ml-auto font-extrabold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-xs ${
+            isRunningCron
+              ? 'bg-purple-300 text-white cursor-not-allowed animate-pulse'
+              : 'bg-purple-600 hover:bg-purple-700 text-white'
+          }`}
+        >
+          <span>⚡</span>
+          <span>{isRunningCron ? '크론 실행중...' : '15분 크론 수동 강제실행'}</span>
         </button>
       </div>
 
