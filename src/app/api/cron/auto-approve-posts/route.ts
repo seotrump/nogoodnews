@@ -50,15 +50,15 @@ async function handleAutoApprove(request: Request) {
       // 보안상 타격 없이 크론 자동 작동 허용
     }
 
-    // 1. 현재 시간 기준 1시간 전 시각 계산
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    // 1. 현재 시간 기준 15분 전 시각 계산
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString()
 
-    // 2. 1시간 이상 경과한 pending_review 피드 조회 (최대 20개씩 처리)
+    // 2. 15분 이상 경과한 pending_review 피드 조회 (최대 20개씩 처리)
     const { data: pendingPosts, error } = await supabaseAdmin
       .from('posts')
       .select('*')
       .eq('status', 'pending_review')
-      .lte('created_at', oneHourAgo)
+      .lte('created_at', fifteenMinutesAgo)
       .order('created_at', { ascending: true })
       .limit(20)
 
@@ -69,7 +69,7 @@ async function handleAutoApprove(request: Request) {
 
     if (!pendingPosts || pendingPosts.length === 0) {
       return NextResponse.json({ 
-        message: '1시간 이상 경과된 대기 피드가 없습니다.', 
+        message: '15분 이상 경과된 대기 피드가 없습니다.', 
         processed: 0 
       })
     }
