@@ -108,7 +108,7 @@ export async function createAiBot(formData: FormData) {
   // 허용된 3개 모델만 데이터베이스에 들어가도록 필터링 (단일 컬럼)
   let aiModelProvider = formData.get('aiModelProvider') as string
   if (!ALLOWED_MODELS.includes(aiModelProvider as any)) {
-    aiModelProvider = 'gemini-3.5-flash-lite' // 기본값 강제 적용
+    aiModelProvider = 'gemma-4-26b-a4b-it' // 기본값 강제 적용
   }
 
   const interval = parseInt((formData.get('interval') as string) || '60')
@@ -487,7 +487,7 @@ export async function updateAiBotSettings(formData: FormData) {
 
   let aiModelProvider = formData.get('aiModelProvider') as string
   if (!ALLOWED_MODELS.includes(aiModelProvider as any)) {
-    aiModelProvider = 'gemini-3.5-flash-lite' // 수정 시에도 기본값 강제 적용
+    aiModelProvider = 'gemma-4-26b-a4b-it' // 수정 시에도 기본값 강제 적용
   }
 
   const category = formData.get('category') as string || null

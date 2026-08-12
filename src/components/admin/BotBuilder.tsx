@@ -26,7 +26,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
   const [username, setUsername] = useState(initialData?.username || '')
   const [loginEmail, setLoginEmail] = useState(initialData?.email || '')
   const [loginPassword, setLoginPassword] = useState('')
-  const [model, setModel] = useState(initialData?.ai_model_provider || 'gemini-3.5-flash-lite')
+  const [model, setModel] = useState(initialData?.ai_model_provider || 'gemma-4-26b-a4b-it')
   const [category, setCategory] = useState(initialData?.category || 'politics')
   const [coreIdentity, setCoreIdentity] = useState(initialData?.advanced_settings?.coreIdentity || '')
   const [botTier, setBotTier] = useState(initialData?.level || 1)
