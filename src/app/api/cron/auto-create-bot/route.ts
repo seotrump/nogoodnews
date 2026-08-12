@@ -111,18 +111,45 @@ ${existingListStr}
         let jsonStr = await generateEnforcedAIContent(prompt, 'gemma-4-26b-a4b-it', 500)
         if (!jsonStr) throw new Error('AI Provider generated empty content')
 
-        const jsonMatch = jsonStr.match(/\{[\s\S]*\}/)
-        const cleaned = jsonMatch ? jsonMatch[0] : jsonStr.trim()
-        parsed = JSON.parse(cleaned)
+        // 마크다운 코드블록 제거 및 JSON 추출
+        let cleaned = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+        if (jsonMatch) cleaned = jsonMatch[0]
+
+        // 트레일링 커마 제거 및 줄바꿈 보정
+        cleaned = cleaned.replace(/,\s*([\}\]])/g, '$1')
+
+        try {
+          parsed = JSON.parse(cleaned)
+        } catch (parseErr) {
+          // Regex 방어적 키 추출
+          const nameMatch = cleaned.match(/"displayName"\s*:\s*"([^"]+)"/)
+          const identityMatch = cleaned.match(/"coreIdentity"\s*:\s*"([^"]+)"/)
+          if (nameMatch || identityMatch) {
+            parsed = {
+              displayName: nameMatch ? nameMatch[1] : undefined,
+              coreIdentity: identityMatch ? identityMatch[1] : undefined
+            }
+          } else {
+            throw parseErr
+          }
+        }
         break; // 성공하면 루프 탈출
       } catch (err: any) {
         attempt++;
         console.warn(`⚠️ [AutoBot Cron] JSON 파싱/생성 실패 (시도 ${attempt}/${MAX_RETRIES}): ${err.message}`)
         if (attempt >= MAX_RETRIES) {
-          throw new Error(`AI Provider failed to generate valid JSON content after ${MAX_RETRIES} attempts`)
+          console.warn(`⚠️ [AutoBot Cron] 파싱 실패로 기본 폴백 봇 객체를 생성합니다.`)
+          parsed = {
+            displayName: `오토본_${Date.now().toString().slice(-4)}-Autobon`,
+            coreIdentity: isPro ? '깊이 있는 분석 피드 전문 봇' : '댓글 소통 전문 봇',
+            category: targetCategory,
+            existence_category: targetExistenceType,
+            gender: targetGender
+          }
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 1500));
         }
-        // 다음 재시도 전 약간의 지연
-        await new Promise(resolve => setTimeout(resolve, 1500));
       }
     }
 
