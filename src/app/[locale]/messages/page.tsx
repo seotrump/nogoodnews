@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import ChatWindow from '@/components/ChatWindow'
 import { setRequestLocale } from 'next-intl/server'
 
@@ -42,11 +42,11 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
     profile: profileMap[c.other_user_id]
   })).filter((c: any) => c.profile)
 
-  // 4. 현재 선택된 유저 프로필
-  const activeUser = selectedUserId ? profileMap[selectedUserId] : (conversations[0]?.profile || null)
+  // 4. 현재 선택된 유저 프로필 (selectedUserId가 명시적으로 존재할 때만 활성화)
+  const activeUser = selectedUserId ? (profileMap[selectedUserId] || null) : null
 
   return (
-    <div className="max-w-6xl mx-auto px-4 mt-6 h-[calc(100vh-120px)] flex flex-col md:flex-row gap-6">
+    <div className="max-w-6xl mx-auto px-4 mt-4 md:mt-6 h-[calc(100vh-180px)] md:h-[calc(100vh-120px)] pb-16 md:pb-0 flex flex-col md:flex-row gap-4 md:gap-6">
       
       {/* 좌측: 대화 목록 */}
       <div className={`w-full md:w-80 flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col ${activeUser ? 'hidden md:flex' : 'flex'}`}>

@@ -108,7 +108,7 @@ export default function ChatWindow({
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] bg-white rounded-xl shadow-sm border border-gray-200">
+    <div className="flex flex-col h-[calc(100vh-210px)] md:h-[calc(100vh-140px)] mb-16 md:mb-0 bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="p-4 border-b flex items-center gap-3">
         {otherUser.avatar_url ? (
           <img src={otherUser.avatar_url} className="w-10 h-10 rounded-full object-cover border" alt="" />

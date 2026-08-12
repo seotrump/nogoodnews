@@ -2,33 +2,43 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { generateText } from 'ai'
 
-// ── Gemma 모델 여부 판별 ──────────────────────────────────────
-function isGemmaModel(model: string): boolean {
-  return model.toLowerCase().startsWith('gemma')
+// ── 모델명 정규화 (옛날 DB 레코드나 이상한 모델명 들어왔을 때 자동 보정) ──────
+function normalizeModelName(model?: string): string {
+  if (!model || model === 'local' || model === 'default') {
+    return 'gemma-4-26b-a4b-it'
+  }
+  const lower = model.toLowerCase()
+  if (lower.includes('31b')) {
+    return 'gemma-4-31b-it' // 프로 봇 31B 모델 독자성 보존
+  }
+  if (lower.includes('26b') || lower.includes('gemma')) {
+    return 'gemma-4-26b-a4b-it' // 라이트 봇 26B 모델 매핑
+  }
+  return model
 }
 
-// ── 짧고 굵은 재시도 로직 (Vercel Timeout 방어용 Backoff + Jitter) ──
-async function withRetry<T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> {
-  let attempt = 0;
-  while (true) {
+// ── Gemma 모델 여부 판별 ──────────────────────────────────────
+function isGemmaModel(model: string): boolean {
+  return model.toLowerCase().includes('gemma')
+}
+
+// ── 동일 모델 최대 3회 반복 재시도 헬퍼 ────────────────────────
+async function retrySameModel<T>(fn: () => Promise<T>, modelName: string, maxAttempts = 3): Promise<T> {
+  let lastError: any = null
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await fn();
-    } catch (error: any) {
-      attempt++;
-      const isRateLimit = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
-      if (attempt > maxRetries || !isRateLimit) {
-        throw error; // 한도 초과가 아니거나 최대 재시도 초과 시 즉시 실패
+      return await fn()
+    } catch (err: any) {
+      lastError = err
+      console.warn(`⚠️ [AI Core] (${modelName}) 호출 실패 (시도 ${attempt}/${maxAttempts}): ${err.message}`)
+      if (attempt < maxAttempts) {
+        // 백오프 대기 (1차 1초, 2차 2.5초)
+        const waitMs = attempt * 1200 + Math.random() * 500
+        await new Promise(res => setTimeout(res, waitMs))
       }
-      
-      // Vercel 15초 제한을 고려한 공격적인 백오프: 1차 2초(+0.5s), 2차 6초(+1s)
-      const baseWait = attempt === 1 ? 2000 : 6000;
-      const jitter = Math.random() * (attempt === 1 ? 500 : 1000);
-      const waitTime = baseWait + jitter;
-      
-      console.warn(`⚠️ [AI Core] 429 한도 초과 감지. ${Math.round(waitTime)}ms 후 재시도 (${attempt}/${maxRetries})...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
     }
   }
+  throw lastError
 }
 
 // ── @ai-sdk/google 경로: Gemma 계열 전용 ────────────────────
@@ -43,13 +53,13 @@ async function generateWithAiSdkGoogle(prompt: string, modelId: string, maxOutpu
     model: googleProvider(modelId),
     prompt,
     maxOutputTokens: maxOutputTokens,
-    maxRetries: 2, // AI SDK 내장 지터 백오프 명시적 활성화
+    maxRetries: 2,
   })
   const trimmed = text.trim()
   if (!trimmed) {
     throw new Error(`[AI Core / ai-sdk] Model ${modelId} generated empty text`)
   }
-  console.log(`✅ [AI Core / ai-sdk] (${modelId}) 생성 성공! (maxTokens: ${maxOutputTokens || 'auto'})`)
+  console.log(`✅ [AI Core / ai-sdk] (${modelId}) 생성 성공!`)
   return trimmed
 }
 
@@ -65,14 +75,13 @@ async function generateWithLegacySdk(prompt: string, modelId: string, maxOutputT
     generationConfig: maxOutputTokens ? { maxOutputTokens } : undefined 
   })
   
-  // 수동 구현한 백오프 재시도 로직(withRetry)으로 감싸기
-  const result = await withRetry(() => model.generateContent(prompt));
-  const text = result.response.text();
-  const trimmed = text.trim();
+  const result = await model.generateContent(prompt)
+  const text = result.response.text()
+  const trimmed = text.trim()
   if (!trimmed) {
-    throw new Error(`[AI Core / legacy] Model ${modelId} generated empty text`);
+    throw new Error(`[AI Core / legacy] Model ${modelId} generated empty text`)
   }
-  console.log(`✅ [AI Core / legacy] (${modelId}) 생성 성공! (maxTokens: ${maxOutputTokens || 'auto'})`)
+  console.log(`✅ [AI Core / legacy] (${modelId}) 생성 성공!`)
   return trimmed
 }
 
@@ -82,55 +91,55 @@ export async function generateEnforcedAIContent(
   preferredModel?: string,
   maxOutputTokens?: number
 ): Promise<string> {
-  let primaryModel = preferredModel || 'gemma-4-26b-a4b-it'
-  if (primaryModel === 'gemma-4-31b-it') {
-    primaryModel = 'gemma-4-26b-a4b-it' // Force fallback to faster 26B
-  }
+  // 1. 모델명 정규화 (base-gemma, local 등 정식 명칭으로 보정)
+  const primaryModel = normalizeModelName(preferredModel)
 
-  // Gemma 계열: @ai-sdk/google 경로 사용 (1차 시도 → fallback Gemini)
+  // 2. Gemma 계열 모델일 경우
   if (isGemmaModel(primaryModel)) {
     try {
-      return await generateWithAiSdkGoogle(prompt, primaryModel, maxOutputTokens)
-    } catch (err1) {
-      console.warn(
-        `⚠️  [AI Core] Gemma (${primaryModel}) 실패. Gemini fallback 진행...`,
-        err1
+      // 1순위 동일 Gemma 모델로 최대 3회 재시도
+      return await retrySameModel(
+        () => generateWithAiSdkGoogle(prompt, primaryModel, maxOutputTokens),
+        primaryModel,
+        3
       )
-      // Gemma 실패 시 안정적인 Gemma 26B 또는 Gemini Lite 모델로 강등
+    } catch (err1) {
+      console.warn(`⚠️ [AI Core] 1순위 Gemma (${primaryModel}) 3회 시도 모두 실패. Fallback(Gemini Lite) 진행...`, err1)
       try {
-        return await generateWithAiSdkGoogle(prompt, 'gemma-4-26b-a4b-it', maxOutputTokens)
+        // Gemma 3회 모두 실패 시 2순위 Gemini Lite로 3회 재시도
+        return await retrySameModel(
+          () => generateWithLegacySdk(prompt, 'gemini-3.1-flash-lite', maxOutputTokens),
+          'gemini-3.1-flash-lite',
+          3
+        )
       } catch (err2) {
-        console.warn('⚠️  [AI Core] Gemma 26b fallback 실패. Gemini Lite 시도...', err2)
-        return await generateWithLegacySdk(prompt, 'gemini-3.1-flash-lite', maxOutputTokens)
+        console.error('🚨 [AI Core] Gemma 및 Fallback 모델 모두 3회 시도 실패!', err2)
+        throw new Error('All AI generation retries failed.')
       }
     }
   }
 
-  // Gemini 계열: 구 SDK 경로 사용 (기존 동작 유지)
-  const fallbackModel1 =
-    primaryModel === 'gemini-3.5-flash-lite' ? 'gemini-3.1-flash-lite' : 'gemini-3.5-flash-lite'
-  const fallbackModel2 = 'gemini-2.5-flash'
+  // 3. Gemini 계열 모델일 경우
+  const fallbackModel = primaryModel === 'gemini-3.5-flash-lite' ? 'gemini-3.1-flash-lite' : 'gemini-3.5-flash-lite'
 
   try {
-    return await generateWithLegacySdk(prompt, primaryModel, maxOutputTokens)
-  } catch (err1) {
-    console.warn(
-      `⚠️  [AI Core] 1순위 (${primaryModel}) 실패. 2순위 (${fallbackModel1}) 시도...`,
-      err1
+    // 1순위 동일 Gemini 모델로 최대 3회 재시도
+    return await retrySameModel(
+      () => generateWithLegacySdk(prompt, primaryModel, maxOutputTokens),
+      primaryModel,
+      3
     )
+  } catch (err1) {
+    console.warn(`⚠️ [AI Core] 1순위 Gemini (${primaryModel}) 3회 시도 모두 실패. 2순위 (${fallbackModel}) 시도...`, err1)
     try {
-      return await generateWithLegacySdk(prompt, fallbackModel1, maxOutputTokens)
-    } catch (err2) {
-      console.warn(
-        `⚠️  [AI Core] 2순위 (${fallbackModel1}) 실패. 최종 (${fallbackModel2}) 시도...`,
-        err2
+      return await retrySameModel(
+        () => generateWithLegacySdk(prompt, fallbackModel, maxOutputTokens),
+        fallbackModel,
+        3
       )
-      try {
-        return await generateWithLegacySdk(prompt, fallbackModel2, maxOutputTokens)
-      } catch (err3) {
-        console.error('🚨 [AI Core] 모든 AI 모델 호출 실패!', err3)
-        throw new Error('All configured AI models failed to generate content.')
-      }
+    } catch (err2) {
+      console.error('🚨 [AI Core] 모든 Gemini 모델 3회 시도 실패!', err2)
+      throw new Error('All configured AI models failed after retries.')
     }
   }
 }

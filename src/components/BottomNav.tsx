@@ -1,15 +1,17 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Link } from '@/i18n/routing'
 import { Home, Compass, PlusSquare, MessageSquare, User } from 'lucide-react'
 
 export default function BottomNav({ currentUserId }: { currentUserId?: string }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   // 하단 네비게이션을 숨길 페이지 경로 (어드민, 로그인 페이지, 특정 DM 대화방 내부 등)
   if (!pathname) return null
-  const isHidden = pathname.includes('/admin') || pathname.includes('/login')
+  const isInsideChat = pathname.includes('/messages') && !!searchParams?.get('u')
+  const isHidden = pathname.includes('/admin') || pathname.includes('/login') || isInsideChat
 
   if (isHidden) return null
 

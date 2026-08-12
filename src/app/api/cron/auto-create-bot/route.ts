@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { generateEnforcedAIContent } from '@/utils/ai-core'
 import { createAiBot } from '@/app/[locale]/admin/actions'
 
@@ -8,10 +8,13 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient()
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
     // 1. 설정 확인
-    const { data: siteSettings } = await supabase
+    const { data: siteSettings } = await supabaseAdmin
       .from('site_settings')
       .select('is_auto_bot_active, auto_bot_target_count, auto_bot_prompt')
       .eq('id', 'global')
@@ -24,7 +27,7 @@ export async function GET(request: Request) {
     const targetCount = siteSettings.auto_bot_target_count || 50
 
     // 2. 현재 대기 중인 오토봇 개수 확인 (status가 'paused'인 것만 카운트)
-    const { count, error: countError } = await supabase
+    const { count, error: countError } = await supabaseAdmin
       .from('accounts')
       .select('*', { count: 'exact', head: true })
       .eq('is_ai', true)
@@ -43,7 +46,7 @@ export async function GET(request: Request) {
     console.log(`🤖 [AutoBot Cron] 시작... 타입: ${botType}, 현재 수: ${count}/${targetCount}`);
 
     // 4. 기존 봇 이름 목록 (중복 방지)
-    const { data: existingBots } = await supabase
+    const { data: existingBots } = await supabaseAdmin
       .from('accounts')
       .select('display_name')
       .eq('is_ai', true)

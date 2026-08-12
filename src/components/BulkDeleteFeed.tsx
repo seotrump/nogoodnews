@@ -158,7 +158,7 @@ export default function BulkDeleteFeed({
             )}
           </div>
           
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0 ml-auto justify-end">
             {hasAdmin && !hideInternalDeleteButton && (
               <button
                 onClick={handleToggleDeleteMode}

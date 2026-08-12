@@ -30,7 +30,18 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   // 전역 설정 (자동생성 정보) 가져오기
   const { data: siteSettings } = await supabase.from('site_settings').select('is_auto_bot_active, auto_bot_target_count, is_auto_feed_active, auto_feed_target_count').eq('id', 'global').single()
 
-  // 리스트 탭(로봇)일 때만 데이터를 가져옵니다.
+  // 현재 대기 중인 [자동생성/paused] 오토봇 개수 카운트
+  const { count: pendingBotCount } = await supabase
+    .from('accounts')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_ai', true)
+    .eq('status', 'paused')
+
+  // 현재 대기 중인 [검토대기/pending_review] 피드 버퍼링 개수 카운트
+  const { count: pendingFeedCount } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'pending_review')
   let aiBots: any[] = []
   let count: number | null = 0
   let totalPages = 0
@@ -89,12 +100,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <AutoBotButton 
-              initialIsActive={siteSettings?.is_auto_bot_active || false} 
-              initialTargetCount={siteSettings?.auto_bot_target_count || 100}
-              initialFeedIsActive={siteSettings?.is_auto_feed_active || false}
-              initialFeedTargetCount={siteSettings?.auto_feed_target_count || 30}
-            />
+            <AutoBotButton mode="manual" />
           </div>
         </div>
 
@@ -179,6 +185,27 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
         {(tab === 'list' || tab === 'suspended' || tab === 'badges' || tab === 'autobot') && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {tab === 'autobot' && (
+              <div className="bg-indigo-50/70 p-4 rounded-xl border border-indigo-100 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-black text-indigo-950 flex items-center gap-1.5">
+                    🤖 봇 자동생성 & 피드 버퍼링 제어 센터
+                  </h3>
+                  <p className="text-xs text-indigo-700/80 mt-0.5">
+                    오토봇 자동 생성 및 검토 대기 임시 피드 버퍼링 목표 수치를 설정하고 제어합니다.
+                  </p>
+                </div>
+                <AutoBotButton 
+                  mode="cron"
+                  initialIsActive={siteSettings?.is_auto_bot_active || false} 
+                  initialTargetCount={siteSettings?.auto_bot_target_count || 29}
+                  initialFeedIsActive={siteSettings?.is_auto_feed_active || false}
+                  initialFeedTargetCount={siteSettings?.auto_feed_target_count || 19}
+                  pendingBotCount={pendingBotCount || 0}
+                  pendingFeedCount={pendingFeedCount || 0}
+                />
+              </div>
+            )}
             <RobotTableClient aiBots={aiBots || []} currentTab={tab} />
             <Pagination totalPages={totalPages} currentPage={currentPage} />
             <div className="border-t border-gray-100 pt-4 mt-2">

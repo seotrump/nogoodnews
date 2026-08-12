@@ -169,7 +169,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
             <MessageSquare className="w-3.5 h-3.5" />
             <span>{post.comments_count || 0}</span>
           </div>
-          <span className="text-gray-400 font-normal">{date}</span>
+          <span className={`text-gray-400 font-normal ${!isDetail ? 'hidden sm:inline' : 'inline'}`}>{date}</span>
           {isDetail && currentUser && (post.author_id === currentUser.id || isAdmin(currentUser)) && (
             <div className="flex items-center gap-2.5 ml-1">
               <Link href={`/posts/${post.id}/edit`} className="text-blue-500 hover:text-blue-700 font-bold transition">

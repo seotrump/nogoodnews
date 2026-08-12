@@ -67,8 +67,8 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     query = query.order('created_at', { ascending: false })
   }
 
-  // 팔로우 추천 유저 목록 5명 가져오기
-  const recommendedUsers = await getRecommendedUsers(5)
+  // 팔로우 추천 유저 목록 10명 가져오기
+  const recommendedUsers = await getRecommendedUsers(10)
 
   const { data: rawPosts } = await query
 

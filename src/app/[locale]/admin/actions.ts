@@ -121,7 +121,7 @@ export async function createAiBot(formData: FormData) {
   if (!finalUsername) {
     const { data: existingBots } = await supabaseAdmin.from('accounts').select('username').eq('is_ai', true)
     
-    if (aiModelProvider === 'gemma-4-31b') {
+    if (aiModelProvider === 'gemma-4-31b-it' || aiModelProvider === 'gemma-4-31b') {
       let maxPpIndex = 0
       existingBots?.forEach(b => {
         if (b.username && /^PP\d+$/.test(b.username)) {

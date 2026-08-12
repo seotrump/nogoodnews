@@ -10,13 +10,19 @@ interface AutoBotButtonProps {
   initialTargetCount?: number
   initialFeedIsActive?: boolean
   initialFeedTargetCount?: number
+  pendingBotCount?: number
+  pendingFeedCount?: number
+  mode?: 'manual' | 'cron' | 'all'
 }
 
 export default function AutoBotButton({ 
   initialIsActive = false, 
-  initialTargetCount = 100,
+  initialTargetCount = 29,
   initialFeedIsActive = false,
-  initialFeedTargetCount = 30
+  initialFeedTargetCount = 19,
+  pendingBotCount = 0,
+  pendingFeedCount = 0,
+  mode = 'all'
 }: AutoBotButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [loadingType, setLoadingType] = useState<'general' | 'pro' | 'cron' | null>(null)
@@ -191,117 +197,128 @@ export default function AutoBotButton({
   }
 
   return (
-    <div className="ml-auto flex flex-col items-end gap-2">
-      <div className="flex items-center gap-2.5">
-        {/* 주제어 입력 */}
-        <input
-          type="text"
-          value={topicKeyword}
-          onChange={e => setTopicKeyword(e.target.value)}
-          placeholder="주제어 입력"
-          className="w-32 h-9 px-3 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white text-gray-900"
-          disabled={isLoading}
-        />
-
-        {/* 오토봇 생성 버튼들 */}
-        <div className="flex items-center gap-1.5">
-          <button 
-            type="button" 
-            onClick={handleGeneralBot} 
-            disabled={isLoading}
-            className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
-              isLoading && loadingType === 'general'
-                ? 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse'
-                : isLoading
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
-                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            {isLoading && loadingType === 'general' ? '라이트 생성중...' : '라이트봇'}
-          </button>
-
-          <button 
-            type="button" 
-            onClick={handleProBot} 
-            disabled={isLoading}
-            className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
-              isLoading && loadingType === 'pro'
-                ? 'bg-purple-700 text-white animate-pulse'
-                : isLoading
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-                : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
-            }`}
-          >
-            {isLoading && loadingType === 'pro' ? '프로 기획중...' : '프로봇'}
-          </button>
-        </div>
-      </div>
-
-      {/* 자동 생성 크론 UI */}
-      <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <div className="relative">
-            <input 
-              type="checkbox" 
-              className="sr-only" 
-              checked={isAutoBotActive}
-              onChange={(e) => handleToggleCron(e.target.checked)}
-              disabled={isLoading}
-            />
-            <div className={`block w-8 h-5 rounded-full transition-colors ${isAutoBotActive ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
-            <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${isAutoBotActive ? 'transform translate-x-3' : ''}`}></div>
-          </div>
-          <span className="text-xs font-bold text-gray-700">봇 자동생성</span>
-        </label>
-
-        <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
-          <span className="text-xs font-medium text-gray-600">목표</span>
+    <div className="ml-auto flex flex-col sm:flex-row items-end sm:items-center gap-2">
+      {/* 1. 수동 봇 강제생성 UI */}
+      {(mode === 'manual' || mode === 'all') && (
+        <div className="flex items-center gap-2.5">
           <input
-            type="number"
-            value={autoBotTargetCount}
-            onChange={(e) => setAutoBotTargetCount(Number(e.target.value))}
-            onBlur={handleTargetCountChange}
-            min="1"
-            max="1000"
-            className="w-14 h-6 px-1.5 text-xs text-center border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+            type="text"
+            value={topicKeyword}
+            onChange={e => setTopicKeyword(e.target.value)}
+            placeholder="주제어 입력"
+            className="w-28 sm:w-32 h-9 px-3 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white text-gray-900"
             disabled={isLoading}
           />
-          <span className="text-xs text-gray-500">개</span>
-        </div>
-      </div>
-
-      {/* 피드 자동 생성 크론 UI */}
-      <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <div className="relative">
-            <input 
-              type="checkbox" 
-              className="sr-only" 
-              checked={isAutoFeedActive}
-              onChange={(e) => handleToggleFeedCron(e.target.checked)}
+          <div className="flex items-center gap-1.5">
+            <button 
+              type="button" 
+              onClick={handleGeneralBot} 
               disabled={isLoading}
-            />
-            <div className={`block w-8 h-5 rounded-full transition-colors ${isAutoFeedActive ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
-            <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${isAutoFeedActive ? 'transform translate-x-3' : ''}`}></div>
-          </div>
-          <span className="text-xs font-bold text-gray-700">피드 버퍼링</span>
-        </label>
+              className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
+                isLoading && loadingType === 'general'
+                  ? 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse'
+                  : isLoading
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {isLoading && loadingType === 'general' ? '라이트 생성중...' : '라이트봇'}
+            </button>
 
-        <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
-          <span className="text-xs font-medium text-gray-600">목표</span>
-          <input
-            type="number"
-            value={autoFeedTargetCount}
-            onChange={(e) => setAutoFeedTargetCount(Number(e.target.value))}
-            onBlur={handleFeedTargetCountChange}
-            min="1"
-            max="1000"
-            className="w-14 h-6 px-1.5 text-xs text-center border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            disabled={isLoading}
-          />
-          <span className="text-xs text-gray-500">개</span>
+            <button 
+              type="button" 
+              onClick={handleProBot} 
+              disabled={isLoading}
+              className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
+                isLoading && loadingType === 'pro'
+                  ? 'bg-purple-700 text-white animate-pulse'
+                  : isLoading
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
+              }`}
+            >
+              {isLoading && loadingType === 'pro' ? '프로 기획중...' : '프로봇'}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* 2. 크론 자동생성 & 피드 버퍼링 UI */}
+      {(mode === 'cron' || mode === 'all') && (
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+          {/* 자동 생성 크론 UI */}
+          <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={isAutoBotActive}
+                  onChange={(e) => handleToggleCron(e.target.checked)}
+                  disabled={isLoading}
+                />
+                <div className={`block w-8 h-5 rounded-full transition-colors ${isAutoBotActive ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${isAutoBotActive ? 'transform translate-x-3' : ''}`}></div>
+              </div>
+              <span className="text-xs font-bold text-gray-700">봇 자동생성</span>
+            </label>
+
+            <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
+              <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                대기 {pendingBotCount}개
+              </span>
+              <span className="text-xs font-medium text-gray-600">/ 목표</span>
+              <input
+                type="number"
+                value={autoBotTargetCount}
+                onChange={(e) => setAutoBotTargetCount(Number(e.target.value))}
+                onBlur={handleTargetCountChange}
+                min="1"
+                max="1000"
+                className="w-14 h-6 px-1.5 text-xs text-center border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                disabled={isLoading}
+              />
+              <span className="text-xs text-gray-500">개</span>
+            </div>
+          </div>
+
+          {/* 피드 자동 생성 크론 UI */}
+          <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={isAutoFeedActive}
+                  onChange={(e) => handleToggleFeedCron(e.target.checked)}
+                  disabled={isLoading}
+                />
+                <div className={`block w-8 h-5 rounded-full transition-colors ${isAutoFeedActive ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${isAutoFeedActive ? 'transform translate-x-3' : ''}`}></div>
+              </div>
+              <span className="text-xs font-bold text-gray-700">피드 버퍼링</span>
+            </label>
+
+            <div className="flex items-center gap-1.5 border-l border-gray-300 pl-3">
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                대기 {pendingFeedCount}개
+              </span>
+              <span className="text-xs font-medium text-gray-600">/ 목표</span>
+              <input
+                type="number"
+                value={autoFeedTargetCount}
+                onChange={(e) => setAutoFeedTargetCount(Number(e.target.value))}
+                onBlur={handleFeedTargetCountChange}
+                min="1"
+                max="1000"
+                className="w-14 h-6 px-1.5 text-xs text-center border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                disabled={isLoading}
+              />
+              <span className="text-xs text-gray-500">개</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
