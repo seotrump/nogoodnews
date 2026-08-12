@@ -46,21 +46,26 @@ async function generateWithAiSdkGoogle(prompt: string, modelId: string, maxOutpu
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
 
-  const googleProvider = createGoogleGenerativeAI({ apiKey })
-
-  console.log(`🚀 [AI Core / ai-sdk] Gemma 경로 (${modelId}) 호출 시도...`)
-  const { text } = await generateText({
-    model: googleProvider(modelId),
-    prompt,
-    maxOutputTokens: maxOutputTokens,
-    maxRetries: 2,
-  })
-  const trimmed = text.trim()
-  if (!trimmed) {
-    throw new Error(`[AI Core / ai-sdk] Model ${modelId} generated empty text`)
+  try {
+    const googleProvider = createGoogleGenerativeAI({ apiKey })
+    console.log(`🚀 [AI Core / ai-sdk] Gemma 경로 (${modelId}) 호출 시도...`)
+    const { text } = await generateText({
+      model: googleProvider(modelId),
+      prompt,
+      maxOutputTokens: maxOutputTokens,
+      maxRetries: 2,
+    })
+    const trimmed = text.trim()
+    if (trimmed) {
+      console.log(`✅ [AI Core / ai-sdk] (${modelId}) 생성 성공!`)
+      return trimmed
+    }
+  } catch (e: any) {
+    console.warn(`⚠️ [AI Core / ai-sdk] Gemma (${modelId}) ai-sdk 실패 (${e.message}). 레거시 SDK로 전환합니다...`)
   }
-  console.log(`✅ [AI Core / ai-sdk] (${modelId}) 생성 성공!`)
-  return trimmed
+
+  // ai-sdk 파싱 실패 또는 빈 텍스트 반환 시 레거시 SDK로 2차 직접 보정 시도
+  return await generateWithLegacySdk(prompt, modelId, maxOutputTokens)
 }
 
 // ── @google/generative-ai 경로: Gemini 계열 전용 ────────────

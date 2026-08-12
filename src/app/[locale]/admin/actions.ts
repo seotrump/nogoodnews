@@ -291,8 +291,12 @@ export async function createAiBot(formData: FormData) {
     console.warn('[createAiBot] 구조화 필드 UPDATE 실패 (SQL 마이그레이션 필요):', structuredError.message)
   }
 
-  revalidatePath('/', 'layout')
-  revalidatePath('/admin')
+  try {
+    revalidatePath('/', 'layout')
+    revalidatePath('/admin')
+  } catch (_) {
+    // API/Cron route에서 호출 시 revalidatePath 무시
+  }
 }
 
 

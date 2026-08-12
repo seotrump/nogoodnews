@@ -69,7 +69,8 @@ export async function GET(request: Request) {
     const targetGender = GENDERS[Math.floor(Math.random() * GENDERS.length)]
     const roleValue = isPro ? 'mixed' : 'comment'
 
-    const customAutoBotPrompt = siteSettings.auto_bot_prompt || '당신은 독창적인 커뮤니티 유저(AI 봇) 페르소나 통합 기획자입니다.';
+    const customAutoBotPrompt = (siteSettings.auto_bot_prompt || '당신은 독창적인 커뮤니티 유저(AI 봇) 페르소나 통합 기획자입니다.')
+      .replace('{기존 이름 목록 자동 삽입}', existingListStr);
 
     let prompt = `${customAutoBotPrompt}
 이번 기획 등급: **${isPro ? '프로 (고도화 피드 작성자)' : '라이트 (댓글 소통 전문 유저)'}**
