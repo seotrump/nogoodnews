@@ -17,6 +17,7 @@ export default function AdminNav() {
   // For `/admin`, exact match is usually better since everything else is under `/admin/...`
   // But `/admin/users` should match `/admin/users`
   const isActive = (href: string) => {
+    if (!pathname) return false;
     if (href === '/admin') {
       return pathname === '/admin'
     }

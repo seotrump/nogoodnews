@@ -179,7 +179,10 @@ export async function POST(request: Request) {
 
     const content = await generatePost(newsItem, finalBot.persona_prompt, finalBot.ai_model_provider, targetLocale, baseFeedPrompt, isProBot, isReporter)
 
-
+    if (!content || content.trim() === '') {
+      console.error(`[ai-feed-trigger] 생성된 피드 내용이 비어있음. (Bot: ${finalBot.display_name})`)
+      return NextResponse.json({ error: 'AI generated empty feed content' }, { status: 500 })
+    }
 
     // 8. 독립 콘텐츠 안전 검증기 (content-validator.ts) 실행
     const { validateContent } = await import('@/utils/content-validator');

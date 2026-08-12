@@ -42,7 +42,8 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
         document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000; SameSite=Lax`
         await updateLocaleCookie(selectedLocale)
         // 새 언어 라우트로 바로 하드 이동하여 로고 클릭 시에도 언어 라우트 유지 보장
-        window.location.href = `/${selectedLocale}${pathname.replace(`/${locale}`, '')}?t=${Date.now()}`
+        const safePathname = pathname || ''
+        window.location.href = `/${selectedLocale}${safePathname.replace(`/${locale}`, '')}?t=${Date.now()}`
       } else {
         window.location.href = `${pathname}?t=${Date.now()}`
       }

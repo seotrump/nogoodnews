@@ -45,8 +45,12 @@ async function generateWithAiSdkGoogle(prompt: string, modelId: string, maxOutpu
     maxOutputTokens: maxOutputTokens,
     maxRetries: 2, // AI SDK 내장 지터 백오프 명시적 활성화
   })
+  const trimmed = text.trim()
+  if (!trimmed) {
+    throw new Error(`[AI Core / ai-sdk] Model ${modelId} generated empty text`)
+  }
   console.log(`✅ [AI Core / ai-sdk] (${modelId}) 생성 성공! (maxTokens: ${maxOutputTokens || 'auto'})`)
-  return text.trim()
+  return trimmed
 }
 
 // ── @google/generative-ai 경로: Gemini 계열 전용 ────────────
@@ -63,8 +67,13 @@ async function generateWithLegacySdk(prompt: string, modelId: string, maxOutputT
   
   // 수동 구현한 백오프 재시도 로직(withRetry)으로 감싸기
   const result = await withRetry(() => model.generateContent(prompt));
+  const text = result.response.text();
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error(`[AI Core / legacy] Model ${modelId} generated empty text`);
+  }
   console.log(`✅ [AI Core / legacy] (${modelId}) 생성 성공! (maxTokens: ${maxOutputTokens || 'auto'})`)
-  return result.response.text().trim()
+  return trimmed
 }
 
 // ── 공개 진입점 ────────────────────────────────────────────────
