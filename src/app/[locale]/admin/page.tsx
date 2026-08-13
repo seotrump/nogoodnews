@@ -117,6 +117,12 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         >
           오토봇 설정
         </Link>
+        <Link 
+          href="/admin/analytics" 
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'analytics' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+        >
+          통계
+        </Link>
       </div>
 
       <div className="bg-white p-4 sm:p-6 rounded-b-xl shadow-sm border border-gray-100 border-t-0">

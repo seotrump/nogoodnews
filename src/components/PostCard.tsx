@@ -32,7 +32,18 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
     if (lines.length > 1) {
       displayHeadline = lines[0];
       displayContent = lines.slice(1).join('\n');
-      // originalHeadline은 link_title에서만 가져옴 — 봇 headline은 원문 제목이 아님
+    }
+  }
+
+  // 본문 첫 줄이 제목과 중복되는 경우 UI 렌더링 시 첫 줄 제거 안전 보정
+  if (displayHeadline && displayContent) {
+    const contentLines = displayContent.split('\n').filter((l: string) => l.trim() !== '');
+    if (contentLines.length > 0) {
+      const firstLineClean = contentLines[0].replace(/^#+\s*/, '').trim();
+      const headlineClean = displayHeadline.replace(/^#+\s*/, '').trim();
+      if (firstLineClean === headlineClean || headlineClean.includes(firstLineClean)) {
+        displayContent = contentLines.slice(1).join('\n').trim();
+      }
     }
   }
 

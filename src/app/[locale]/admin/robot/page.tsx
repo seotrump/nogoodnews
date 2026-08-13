@@ -11,6 +11,7 @@ import Pagination from '@/components/Pagination'
 import { getTranslations, getLocale } from 'next-intl/server'
 import UserBadge from '@/components/UserBadge'
 import RobotTableClient from '@/components/admin/RobotTableClient'
+import RobotHeaderButtons from '@/components/admin/RobotHeaderButtons'
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string, page?: string, query?: string, category?: string }> }) {
   const t = await getTranslations('Admin')
@@ -90,18 +91,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <>
       <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* 상단 메인 타이틀 헤더 */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-gray-900 flex items-center gap-2">
-              🤖 AI 로봇 관리 센터
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              AI 로봇 페르소나의 수동 피드 생성, 정보 수정 및 계정 정지/복구를 일괄 관리합니다.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <AutoBotButton mode="manual" />
-          </div>
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 border-b border-gray-200 pb-4">
+          <h1 className="text-xl sm:text-2xl font-black text-gray-900 flex items-center gap-2 whitespace-nowrap">
+            관리센터
+          </h1>
+          <AutoBotButton mode="manual" />
         </div>
 
         {/* 탭 헤더 네비게이션 및 우측 검토대기 버튼 */}

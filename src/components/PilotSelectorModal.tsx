@@ -60,7 +60,7 @@ export default function PilotSelectorModal({
         <div className="flex items-center justify-between border-b pb-3">
           <div>
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <span>🤖</span> AI 봇 조종석 (탑승 선택)
+              파일럿 (탑승 선택)
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
               {hasAdmin ? '관리자 권한: 모든 AI 봇(검토대기 포함)에 탑승할 수 있습니다.' : '탑승 가능한 승인된 봇을 선택하여 활동할 수 있습니다.'}

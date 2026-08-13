@@ -6,9 +6,11 @@ import ImageUploadPreview from '@/components/ImageUploadPreview'
 import posthog from 'posthog-js'
 import { toast } from 'react-hot-toast'
 import { useActivePersona } from '@/context/ActivePersonaContext'
+import { useLocale } from 'next-intl'
 
 export default function CreatePostFormClient({ t }: { t: any }) {
   const formRef = useRef<HTMLFormElement>(null)
+  const locale = useLocale()
   const [headline, setHeadline] = useState('')
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -17,16 +19,18 @@ export default function CreatePostFormClient({ t }: { t: any }) {
   const [pollOptions, setPollOptions] = useState<string[]>(['', ''])
 
   const { activeBot, isPiloting } = useActivePersona()
+  const isEn = locale === 'en'
+  const actionLabel = isEn ? 'Cross' : '탑승'
 
   const handleTransform = async () => {
     if (!content.trim()) {
-      toast.error('변환할 본문 내용을 먼저 입력하세요.')
+      toast.error(isEn ? 'Please enter a topic or text first.' : '생성할 주제나 글을 먼저 입력하세요.')
       return
     }
     if (!activeBot) return
 
     setIsTransforming(true)
-    const toastId = toast.loading(`${activeBot.display_name} 말투로 변환하는 중...`)
+    const toastId = toast.loading(isEn ? `${activeBot.display_name} ${actionLabel} in progress...` : `${activeBot.display_name} 탑승 생성 중...`)
 
     try {
       const res = await fetch('/api/ai-persona-transform', {
@@ -37,14 +41,14 @@ export default function CreatePostFormClient({ t }: { t: any }) {
 
       const data = await res.json()
       if (!res.ok || !data.success) {
-        throw new Error(data.error || '변환 실패')
+        throw new Error(data.error || (isEn ? 'Failed to process' : '생성 실패'))
       }
 
       setContent(data.transformed)
-      toast.success(`${activeBot.display_name} 말투로 변환되었습니다!`, { id: toastId })
+      toast.success(isEn ? `${activeBot.display_name} ${actionLabel} Complete!` : `${activeBot.display_name} 탑승 완료!`, { id: toastId })
     } catch (err: any) {
       console.error(err)
-      toast.error(err.message || '말투 변환 실패', { id: toastId })
+      toast.error(err.message || (isEn ? 'Failed' : '탑승 실패'), { id: toastId })
     } finally {
       setIsTransforming(false)
     }
@@ -108,8 +112,8 @@ export default function CreatePostFormClient({ t }: { t: any }) {
               disabled={isTransforming || !content.trim()}
               className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white rounded font-bold text-xs shadow-xs transition-colors flex items-center gap-1"
             >
-              <span>✨</span>
-              <span>{isTransforming ? '변환 중...' : `${activeBot.display_name} 말투로 변환`}</span>
+              <span>🚀</span>
+              <span>{isTransforming ? (isEn ? 'Cross...' : '탑승 중...') : (isEn ? `${activeBot.display_name} Cross` : `${activeBot.display_name} 탑승`)}</span>
             </button>
           )}
         </div>
@@ -119,7 +123,7 @@ export default function CreatePostFormClient({ t }: { t: any }) {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           required
-          placeholder={isPiloting && activeBot ? `${activeBot.display_name}의 톤앤매너로 글을 쓰거나 개략적으로 적은 후 [✨ 말투 변환]을 눌러보세요...` : t.contentPlaceholder}
+          placeholder={isPiloting && activeBot ? (isEn ? `Write a topic or notes, then click [🚀 ${activeBot.display_name} Cross]...` : `${activeBot.display_name} 시각으로 작성할 주제나 메모를 적은 후 [🚀 탑승]을 눌러보세요...`) : t.contentPlaceholder}
           rows={5}
           className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
         />

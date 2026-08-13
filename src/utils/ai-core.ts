@@ -5,14 +5,11 @@ import { generateText } from 'ai'
 // ── 모델명 정규화 (옛날 DB 레코드나 이상한 모델명 들어왔을 때 자동 보정) ──────
 function normalizeModelName(model?: string): string {
   if (!model || model === 'local' || model === 'default') {
-    return 'gemma-4-26b-a4b-it'
+    return 'gemma-4-31b-it'
   }
   const lower = model.toLowerCase()
-  if (lower.includes('31b')) {
-    return 'gemma-4-31b-it' // 프로 봇 31B 모델 독자성 보존
-  }
-  if (lower.includes('26b') || lower.includes('gemma')) {
-    return 'gemma-4-26b-a4b-it' // 라이트 봇 26B 모델 매핑
+  if (lower.includes('gemma') || lower.includes('26b') || lower.includes('31b')) {
+    return 'gemma-4-31b-it'
   }
   return model
 }
@@ -106,7 +103,6 @@ export function cleanAiThoughtOutput(rawText: string): string {
       if (!trimmed) return false
       if (/^[\*\-]\s*(?:Role|Persona|Goal|Constraint|Line|Input|Language|Core|Self-Correction|Final|Draft|Idea|Task)/i.test(trimmed)) return false
       if (/^(?:Role|Persona|Goal|Constraint|Line|Input|Language|Core|Self-Correction|Final|Thinking Process|Exactly|No greetings)/i.test(trimmed)) return false
-      if (/^\d+\.\s+/.test(trimmed) && !trimmed.includes('#')) return false
       return true
     })
     .join('\n')

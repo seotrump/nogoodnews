@@ -190,47 +190,53 @@ export async function generatePost(
     ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL POST ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
     : 'CRITICAL WARNING: YOU MUST WRITE THE FINAL 3 LINES ENTIRELY IN ENGLISH. DO NOT USE ANY KOREAN WORDS. TRANSLATE EVERYTHING TO ENGLISH BEFORE OUTPUTTING.';
 
-  // ── 라이트 fallback: 4줄 ──────────────────────
-  const fallbackPrompt = `[지시: 피드 게시글 4줄 즉시 작성]
-생각 과정(CoT), 서론, 인사말, 메타데이터, 부연 설명을 절대로 출력하지 말고, 오직 아래 4줄 구조만 즉시 출력하세요.
+  // ── 라이트 fallback: 4개 요소 ──────────────────────
+  const fallbackPrompt = `[지시: 피드 게시글 4개 요소 즉시 작성]
+생각 과정(CoT), 서론, 인사말, 메타데이터, 부연 설명을 절대로 출력하지 말고, 숫자로 번호를 매기지 마세요. 오직 아래 요소를 줄바꿈하여 순서대로 출력하세요.
 
-1줄: 기사의 핵심을 찌르는 짧은 명사형 제목 (# 기호 사용 금지)
-2줄: 페르소나 말투로 신랄하게 요약한 본문
-3줄: 유저들의 댓글을 유도하는 신랄한 질문이나 한 줄 평
-4줄: 띄어쓰기로 구분된 해시태그 3~4개 (#키워드1 #키워드2 #키워드3)`
+- 기사의 핵심을 찌르는 짧은 명사형 제목 (# 기호 사용 금지)
+- 페르소나 말투로 신랄하게 요약한 본문
+- 유저들의 댓글을 유도하는 신랄한 질문이나 한 줄 평
+- 띄어쓰기로 구분된 해시태그 3~4개 (#키워드1 #키워드2 #키워드3)`
 
-  // ── 프로 fallback: 6줄 ──────────────────────
-  const proFallbackPrompt = `[지시: 전문 피드 게시글 6줄 즉시 작성]
-생각 과정, 서론, 인사말, 메타데이터를 일절 출력하지 말고, 오직 아래 6줄 구조만 즉시 출력하세요.
+  // ── 프로 fallback: 전문 심층 분석형 ──────────────────────
+  const proFallbackPrompt = `[지시: 전문 커뮤니티 애널리스트 심층 분석글 작성]
+당신은 해당 분야의 전문 지식과 깊이 있는 통찰력을 갖춘 네임드 애널리스트 봇입니다.
+가벼운 1줄 요약이 아닌, 각 단락마다 2~3문장 이상의 깊이 있는 데이터·구조 분석·파급효과를 전문 용어와 명확한 논리로 작성하세요.
+생각 과정(CoT), 서론, 인사말, 메타데이터를 일절 출력하지 말고, 숫자 목록(1., 2.) 대신 아래 요소를 줄바꿈하여 순서대로 즉시 출력하세요:
 
-1줄: 전문적인 명사형 헤드라인 (# 기호 금지)
-2줄: 사건 인과관계 전문적 요약
-3줄: 구조적 원인 및 배경 분석
-4줄: 파급 효과 및 심층 분석
-5줄: 유저 토론 유도 질문
-6줄: 띄어쓰기로 구분된 해시태그 4~5개`
+- 전문적인 명사형 테마 헤드라인 (# 기호 금지)
+- (핵심 요약): 사건의 인과관계와 핵심 내용을 전문적인 톤으로 2~3문장 입체적 요약
+- (구조적 분석): 사건의 배경, 역사적 맥락, 구조적 원인을 2~3문장 심층 분석
+- (전문 파장 분석): 이면의 파급 효과, 경제·사회적 파장, 미래 전망을 2~3문장 깊이 있게 분석
+- (토론 질문): 유저들의 전문적인 토론과 찬반 논쟁을 유도하는 날카로운 질문 1문장
+- 띄어쓰기로 구분된 전문 해시태그 4~5개 (#키워드1 #키워드2 #키워드3 #키워드4)`
 
-  // ── 기자단 fallback: 8줄 ─────────────────────
-  const reporterFallbackPrompt = `[지시: 뉴스 보도 기사글 8줄 즉시 작성]
-생각 과정, 서론, 인사말, 메타데이터를 일절 출력하지 말고, 오직 아래 8줄 구조만 즉시 출력하세요.
+  // ── 기자단 fallback: 객관적 전문 보도 기사형 ─────────────────────
+  const reporterFallbackPrompt = `[지시: 공신력 있는 언론 보도 기사글 작성]
+당신은 공신력 있는 커뮤니티 기자단 리포터봇입니다.
+속어나 어그로성 문구를 일절 배제하고, 객관적 팩트, 수치, 이해관계자 시각, 기자 논평이 담긴 풍부한 보도 기사(단락당 2~3문장)를 작성하세요.
+생각 과정(CoT), 서론, 인사말, 메타데이터를 일절 출력하지 말고, 숫자 목록(1., 2.) 대신 아래 요소를 줄바꿈하여 순서대로 즉시 출력하세요:
 
-1줄: 사실 중심 명사형 헤드라인 (# 기호 금지)
-2줄: 육하원칙 핵심 리드 문장
-3줄: 사건 구조적 배경
-4줄: 수치 및 팩트 중심 상세 내용
-5줄: 이해관계자 시각 및 찬반 논점
-6줄: 향후 파급 효과 및 전망
-7줄: 핵심 정리 한 줄 평
-8줄: 띄어쓰기로 구분된 해시태그 5~6개`
+- 사실 중심의 객관적 명사형 헤드라인 (# 기호 금지)
+- (리드): 육하원칙을 포함한 핵심 보도 리드 2~3문장
+- (사건 배경): 발생 구조적 배경 및 관련 맥락 2~3문장
+- (상세 팩트): 주요 수치, 데이터, 팩트 중심 상세 설명 2~3문장
+- (시각/논점): 이해관계자 입장 차이 및 전문가 시각/찬반 논점 2~3문장
+- (전망): 향후 사회·경제적 파급 효과 및 전망 2~3문장
+- (기자 논평): 객관성을 유지한 짧은 기자 논평 1문장
+- 띄어쓰기로 구분된 해시태그 5~6개 (#키워드1 #키워드2 #키워드3 #키워드4 #키워드5)`
 
-  // 티어 우선순위: reporter > pro > lite
+  // DB 프롬프트에 옛날 영문 메타데이터(Role:, Goal: 등)가 포함되어 있으면 한글 Fallback 프롬프트 우선 사용
+  const isLegacyEnglishPrompt = (p?: string) => p && (/\b(?:Role|Persona|Goal|Constraint|Line 1|Line 2)\b/i.test(p));
+
   let finalBasePrompt: string;
   if (isReporter) {
-    finalBasePrompt = baseFeedPrompt || reporterFallbackPrompt;
+    finalBasePrompt = (!baseFeedPrompt || isLegacyEnglishPrompt(baseFeedPrompt)) ? reporterFallbackPrompt : baseFeedPrompt;
   } else if (isPro) {
-    finalBasePrompt = baseFeedPrompt || proFallbackPrompt;
+    finalBasePrompt = (!baseFeedPrompt || isLegacyEnglishPrompt(baseFeedPrompt)) ? proFallbackPrompt : baseFeedPrompt;
   } else {
-    finalBasePrompt = baseFeedPrompt || fallbackPrompt;
+    finalBasePrompt = (!baseFeedPrompt || isLegacyEnglishPrompt(baseFeedPrompt)) ? fallbackPrompt : baseFeedPrompt;
   }
 
   if (locale === 'en') {
@@ -257,7 +263,7 @@ ${personaPrompt}
 - 생각 과정, * Role, * Goal, * Persona, Self-Correction, 인사말을 절대로 출력하지 마세요.
 - ${languageInstruction}
 `
-  return await generateEnforcedAIContent(prompt, provider, 1024);
+  return await generateEnforcedAIContent(prompt, provider, 2048);
 }
 
 // ==========================================

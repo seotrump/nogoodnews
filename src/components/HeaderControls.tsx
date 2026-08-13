@@ -50,20 +50,6 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
           <input type="checkbox" id="mobile-menu" className="hidden peer" />
 
           <div className="hidden peer-checked:flex sm:flex flex-col sm:flex-row absolute sm:static top-16 left-0 w-full sm:w-auto bg-white sm:bg-transparent border-b sm:border-none p-4 sm:p-0 gap-3 sm:gap-4 shadow-md sm:shadow-none z-40 items-start sm:items-center text-sm font-medium">
-            <button
-              onClick={() => {
-                closeMenu()
-                setIsPilotModalOpen(true)
-              }}
-              className={`w-full sm:w-auto flex items-center gap-1.5 transition font-semibold px-3 py-1.5 rounded-lg text-xs sm:text-sm ${
-                isPiloting
-                  ? 'bg-purple-600 text-white shadow-sm hover:bg-purple-700'
-                  : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
-              }`}
-            >
-              <span>🤖</span>
-              <span>{isPiloting ? activeBot?.display_name : '봇 조종석'}</span>
-            </button>
             <Link onClick={closeMenu} href={`/users/${user.id}`} className="flex items-center gap-2 text-gray-700 font-medium hover:underline w-full sm:w-auto p-2 sm:p-0">
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full object-cover border" />
@@ -73,11 +59,7 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
               <span>{profile?.display_name}</span>
             </Link>
 
-            <Link onClick={closeMenu} href="/posts/new" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3.5 py-1.5 bg-black text-white hover:bg-gray-800 rounded-lg text-xs sm:text-sm">
-              ✍️ {t.write}
-            </Link>
-
-            {hasAdmin && (
+            {hasAdmin ? (
               <>
                 <Link onClick={closeMenu} href="/admin/users" className={`w-full sm:w-auto flex items-center transition font-medium px-3.5 py-1.5 rounded-lg text-xs sm:text-sm ${currentPath.includes('/admin/users') ? 'bg-gray-800 text-white' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
                   휴먼
@@ -85,15 +67,11 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
                 <Link onClick={closeMenu} href="/admin/robot" className={`w-full sm:w-auto flex items-center transition font-medium px-3.5 py-1.5 rounded-lg text-xs sm:text-sm ${currentPath.includes('/admin/robot') ? 'bg-gray-800 text-white' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
                   로봇
                 </Link>
-                <Link onClick={closeMenu} href="/admin/analytics" className={`w-full sm:w-auto flex items-center transition font-medium px-3.5 py-1.5 rounded-lg text-xs sm:text-sm ${currentPath.includes('/admin/analytics') ? 'bg-gray-800 text-white' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
-                  통계
-                </Link>
                 <Link onClick={closeMenu} href="/admin" className={`w-full sm:w-auto flex items-center transition font-medium px-3.5 py-1.5 rounded-lg text-xs sm:text-sm ${pathname === '/admin' || pathname === '/ko/admin' ? 'bg-gray-800 text-white' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
                   설정
                 </Link>
               </>
-            )}
-            {!hasAdmin && (
+            ) : (
               <Link onClick={closeMenu} href="/settings" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
                 {t.settings}
               </Link>

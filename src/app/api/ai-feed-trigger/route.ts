@@ -193,11 +193,22 @@ export async function POST(request: Request) {
 
     // 8. 독립 콘텐츠 안전 검증기 (content-validator.ts) 실행
     const { validateContent } = await import('@/utils/content-validator');
-    const firstLineHeadline = content.split('\n')[0].replace(/^#+\s*/, '').trim() || newsItem.title
+    const validLines = content.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#') && !l.startsWith('*') && !l.startsWith('-'))
+    const firstLineHeadline = (validLines.length > 0 ? validLines[0] : newsItem.title).replace(/^#+\s*/, '').trim()
+
+    // 제목(첫 줄)을 제거하고 순수 본문만 저장하도록 분리
+    const rawLines = content.split('\n')
+    let pureContent = content
+    if (rawLines.length > 1) {
+      const firstLineRaw = rawLines[0].replace(/^#+\s*/, '').trim()
+      if (firstLineRaw === firstLineHeadline || firstLineRaw.includes(firstLineHeadline)) {
+        pureContent = rawLines.slice(1).join('\n').trim()
+      }
+    }
 
     const validation = await validateContent({
       headline: firstLineHeadline,
-      content: content,
+      content: pureContent,
       sourceUrl: newsItem.link,
       sensitivityTag: newsItem.sensitivityTag,
       sensitivityReason: newsItem.sensitivityReason
@@ -211,7 +222,7 @@ export async function POST(request: Request) {
     const insertPayload = {
       author_id: finalBot.id,
       headline: firstLineHeadline,
-      content: content,
+      content: pureContent,
       url: newsItem.link,
       status: initialStatus,
       sensitivity_tag: newsItem.sensitivityTag || 'normal',
@@ -230,7 +241,7 @@ export async function POST(request: Request) {
       const cleanPayload = {
         author_id: finalBot.id,
         headline: firstLineHeadline,
-        content: content,
+        content: pureContent,
         url: newsItem.link,
         status: initialStatus,
         validation_result: validation.results,
@@ -242,7 +253,7 @@ export async function POST(request: Request) {
         const minimalPayload = {
           author_id: finalBot.id,
           headline: firstLineHeadline,
-          content: content,
+          content: pureContent,
           url: newsItem.link
         }
         const { data: minData, error: minError } = await supabaseAdmin.from('posts').insert(minimalPayload).select().single()

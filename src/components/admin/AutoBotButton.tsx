@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
+import { Link } from '@/i18n/routing'
+import PilotSelectorModal from '@/components/PilotSelectorModal'
+import { useActivePersona } from '@/context/ActivePersonaContext'
 import { createAiBot, toggleAutoBotSettings, toggleAutoFeedSettings } from '@/app/[locale]/admin/actions'
 
 interface AutoBotButtonProps {
@@ -196,11 +199,68 @@ export default function AutoBotButton({
     }
   }
 
+  const [isPilotModalOpen, setIsPilotModalOpen] = useState(false)
+  const { activeBot, isPiloting } = useActivePersona()
+
   return (
-    <div className="ml-auto flex flex-col sm:flex-row items-end sm:items-center gap-2">
-      {/* 1. 수동 봇 강제생성 UI */}
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+      {/* 1. 수동 봇 강제생성 UI (파일럿 - 피드 - 프로봇 - 라이트봇 - 주제어입력란 순 동일 행 배치) */}
       {(mode === 'manual' || mode === 'all') && (
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 1) 파일럿 */}
+          <button
+            type="button"
+            onClick={() => setIsPilotModalOpen(true)}
+            className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
+              isPiloting
+                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+            }`}
+          >
+            {isPiloting ? activeBot?.display_name : '파일럿'}
+          </button>
+
+          {/* 2) 피드 */}
+          <Link
+            href="/posts/new"
+            className="h-9 px-3.5 bg-black text-white hover:bg-gray-800 rounded-xl text-xs font-bold transition shadow-xs flex items-center justify-center"
+          >
+            피드
+          </Link>
+
+          {/* 3) 프로봇 */}
+          <button 
+            type="button" 
+            onClick={handleProBot} 
+            disabled={isLoading}
+            className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
+              isLoading && loadingType === 'pro'
+                ? 'bg-purple-700 text-white animate-pulse'
+                : isLoading
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
+            }`}
+          >
+            {isLoading && loadingType === 'pro' ? '프로 기획중...' : '프로봇'}
+          </button>
+
+          {/* 4) 라이트봇 */}
+          <button 
+            type="button" 
+            onClick={handleGeneralBot} 
+            disabled={isLoading}
+            className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
+              isLoading && loadingType === 'general'
+                ? 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse'
+                : isLoading
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {isLoading && loadingType === 'general' ? '라이트 생성중...' : '라이트봇'}
+          </button>
+
+          {/* 5) 주제어 입력란 */}
           <input
             type="text"
             value={topicKeyword}
@@ -209,37 +269,12 @@ export default function AutoBotButton({
             className="w-28 sm:w-32 h-9 px-3 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white text-gray-900"
             disabled={isLoading}
           />
-          <div className="flex items-center gap-1.5">
-            <button 
-              type="button" 
-              onClick={handleGeneralBot} 
-              disabled={isLoading}
-              className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
-                isLoading && loadingType === 'general'
-                  ? 'bg-purple-100 text-purple-700 border border-purple-300 animate-pulse'
-                  : isLoading
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {isLoading && loadingType === 'general' ? '라이트 생성중...' : '라이트봇'}
-            </button>
 
-            <button 
-              type="button" 
-              onClick={handleProBot} 
-              disabled={isLoading}
-              className={`h-9 px-3 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center ${
-                isLoading && loadingType === 'pro'
-                  ? 'bg-purple-700 text-white animate-pulse'
-                  : isLoading
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
-              }`}
-            >
-              {isLoading && loadingType === 'pro' ? '프로 기획중...' : '프로봇'}
-            </button>
-          </div>
+          <PilotSelectorModal
+            isOpen={isPilotModalOpen}
+            onClose={() => setIsPilotModalOpen(false)}
+            hasAdmin={true}
+          />
         </div>
       )}
 

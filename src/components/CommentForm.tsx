@@ -6,17 +6,21 @@ import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
 import posthog from 'posthog-js'
 import { useActivePersona } from '@/context/ActivePersonaContext'
+import { useLocale } from 'next-intl'
 
 const supabase = createClient()
 
 export default function CommentForm({ postId }: { postId: string }) {
   const formRef = useRef<HTMLFormElement>(null)
+  const locale = useLocale()
   const [content, setContent] = useState('')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isTransforming, setIsTransforming] = useState(false)
 
   const { activeBot, isPiloting } = useActivePersona()
+  const isEn = locale === 'en'
+  const actionLabel = isEn ? 'Cross' : '탑승'
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items
@@ -65,13 +69,13 @@ export default function CommentForm({ postId }: { postId: string }) {
 
   const handleTransform = async () => {
     if (!content.trim()) {
-      toast.error('변환할 내용을 먼저 작성해주세요.')
+      toast.error(isEn ? 'Please enter a topic or comment draft first.' : '생성할 주제나 내용을 먼저 작성해주세요.')
       return
     }
     if (!activeBot) return
 
     setIsTransforming(true)
-    const toastId = toast.loading(`${activeBot.display_name} 말투로 다듬는 중...`)
+    const toastId = toast.loading(isEn ? `${activeBot.display_name} ${actionLabel} in progress...` : `${activeBot.display_name} 탑승 생성 중...`)
 
     try {
       const res = await fetch('/api/ai-persona-transform', {
@@ -82,14 +86,14 @@ export default function CommentForm({ postId }: { postId: string }) {
 
       const data = await res.json()
       if (!res.ok || !data.success) {
-        throw new Error(data.error || '변환 실패')
+        throw new Error(data.error || (isEn ? 'Failed' : '생성 실패'))
       }
 
       setContent(data.transformed)
-      toast.success(`${activeBot.display_name} 말투로 변환 완료!`, { id: toastId })
+      toast.success(isEn ? `${activeBot.display_name} ${actionLabel} Complete!` : `${activeBot.display_name} 탑승 완료!`, { id: toastId })
     } catch (err: any) {
       console.error(err)
-      toast.error(err.message || '말투 변환 실패', { id: toastId })
+      toast.error(err.message || (isEn ? 'Failed' : '탑승 실패'), { id: toastId })
     } finally {
       setIsTransforming(false)
     }
@@ -115,7 +119,7 @@ export default function CommentForm({ postId }: { postId: string }) {
         <div className="bg-purple-50 px-3 py-1.5 border-b border-purple-100 flex items-center justify-between text-xs text-purple-800 font-semibold">
           <span className="flex items-center gap-1.5">
             <img src={activeBot.avatar_url} alt="Bot" className="w-4 h-4 rounded-full" />
-            🤖 {activeBot.display_name} 봇 명의로 댓글 작성 중
+            🤖 {activeBot.display_name} {isEn ? 'bot commenting' : '봇 명의로 댓글 작성 중'}
           </span>
           <button
             type="button"
@@ -123,8 +127,8 @@ export default function CommentForm({ postId }: { postId: string }) {
             disabled={isTransforming || !content.trim()}
             className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white rounded font-bold shadow-xs transition-colors flex items-center gap-1 text-[11px]"
           >
-            <span>✨</span>
-            <span>{isTransforming ? '변환 중...' : `${activeBot.display_name} 말투로 변환`}</span>
+            <span>🚀</span>
+            <span>{isTransforming ? (isEn ? 'Cross...' : '탑승 중...') : (isEn ? `${activeBot.display_name} Cross` : `${activeBot.display_name} 탑승`)}</span>
           </button>
         </div>
       )}
@@ -137,7 +141,7 @@ export default function CommentForm({ postId }: { postId: string }) {
           required
           onPaste={handlePaste}
           className="w-full text-sm focus:outline-none resize-none bg-transparent"
-          placeholder={isPiloting && activeBot ? `${activeBot.display_name}의 시각으로 작성하거나 대충 적고 [✨ 말투 변환]을 눌러보세요...` : "Ctrl+V로 캡처한 이미지를 붙여넣거나 댓글을 남겨주세요..."}
+          placeholder={isPiloting && activeBot ? (isEn ? `Enter a topic, then click [🚀 ${activeBot.display_name} Cross]...` : `${activeBot.display_name} 시각으로 댓글 작성할 주제를 적고 [🚀 탑승]을 눌러보세요...`) : "Ctrl+V로 캡처한 이미지를 붙여넣거나 댓글을 남겨주세요..."}
           rows={3}
         />
         {imageUrl && (
