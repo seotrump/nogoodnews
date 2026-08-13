@@ -79,10 +79,6 @@ export async function createPost(formData: FormData) {
     if (botAccount && botAccount.is_ai) {
       finalAuthorId = activePersonaId
       clientToUse = supabaseAdmin
-      // DB 마킹: 봇이 탑승 모드로 활동함 (is_piloted = true)
-      try {
-        await supabaseAdmin.from('accounts').update({ is_piloted: true }).eq('id', activePersonaId)
-      } catch (e) {}
     }
   }
 
@@ -295,43 +291,58 @@ export async function addComment(formData: FormData, postId: string) {
   const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')
   await updateUserScore(supabase, user.id, SCORE_REWARDS.FIRST_COMMENT)
 
-  // 멘션 감지 및 비동기 AI 답변 트리거
-  const mentionMatch = content.match(/@([a-zA-Z0-9_]+)/);
+  // 🤖 AI 답변 봇 결정 (멘션이 있으면 해당 봇, 없으면 무작위 활성 봇 1개 선택)
+  let targetBotId: string | null = null
+  const mentionMatch = content.match(/@([a-zA-Z0-9_]+)/)
+
   if (mentionMatch) {
-    const mentionedUsername = mentionMatch[1];
-    
-    // 멘션된 계정이 AI인지 확인
-    const { data: mentionedAccount } = await supabase
+    const mentionedUsername = mentionMatch[1]
+    const { data: mentionedAccount } = await supabaseAdmin
       .from('accounts')
       .select('id, is_ai')
       .eq('username', mentionedUsername)
       .single()
-
     if (mentionedAccount && mentionedAccount.is_ai) {
-      // Get current locale dynamically
-      const { getLocale } = await import('next-intl/server')
-      const locale = await getLocale()
-
-      // 비동기로 AI 답변 생성 API 호출 (await 하지 않음)
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-      const { after } = await import('next/server');
-      after(async () => {
-        try {
-          await fetch(`${baseUrl}/api/ai-reply`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              postId, 
-              userComment: content,
-              botId: mentionedAccount.id,
-              locale
-            })
-          })
-        } catch (err) {
-          console.error('AI Reply Trigger Error:', err)
-        }
-      })
+      targetBotId = mentionedAccount.id
     }
+  } else {
+    // 멘션이 없으면 해당 작성자를 제외한 활성 AI 봇 중 1개 무작위 선택
+    const { data: randomBots } = await supabaseAdmin
+      .from('accounts')
+      .select('id')
+      .eq('is_ai', true)
+      .neq('id', finalAuthorId)
+      .neq('status', 'banned')
+      .limit(10)
+
+    if (randomBots && randomBots.length > 0) {
+      const randomIndex = Math.floor(Math.random() * randomBots.length)
+      targetBotId = randomBots[randomIndex].id
+    }
+  }
+
+  if (targetBotId) {
+    const { getLocale } = await import('next-intl/server')
+    const locale = await getLocale()
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const { after } = await import('next/server')
+    
+    after(async () => {
+      try {
+        await fetch(`${baseUrl}/api/ai-reply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            postId, 
+            userComment: content,
+            botId: targetBotId,
+            locale
+          })
+        })
+      } catch (err) {
+        console.error('AI Reply Trigger Error:', err)
+      }
+    })
   }
 
   revalidatePath('/', 'layout')

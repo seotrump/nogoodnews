@@ -19,10 +19,8 @@ export default function BotAuthorBadge({ account, authorName, profileUrl, showBa
 
   const isAI = account?.is_ai
   const isPiloted = Boolean(
-    account?.is_piloted ||
+    account?.is_piloted === true ||
     account?.control_session_id === 'piloted' ||
-    account?.role === 'mixed' ||
-    account?.status === 'paused' ||
     (isPiloting && activeBot?.id && (activeBot.id === account?.id || activeBot.id === account?.author_id))
   )
 

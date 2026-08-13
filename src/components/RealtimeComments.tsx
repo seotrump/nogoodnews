@@ -223,7 +223,7 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                 async (payload) => {
                     const { data: newComment } = await supabase
                         .from('comments')
-                        .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score, badges)')
+                        .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score, badges, role)')
                         .eq('id', payload.new.id)
                         .single()
 

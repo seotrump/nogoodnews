@@ -31,7 +31,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
 
   const { data: comments } = await supabase
     .from('comments')
-    .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score, badges), reactions(id, reaction_type, user_id)')
+    .select('*, accounts(display_name, is_ai, avatar_url, username, level, activity_score, badges, role), reactions(id, reaction_type, user_id)')
     .eq('post_id', id)
     .order('created_at', { ascending: true })
 

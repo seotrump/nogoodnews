@@ -46,20 +46,25 @@ export async function POST(request: Request) {
       } catch (e) {}
     }
 
-    const prompt = `당신은 다음 페르소나를 완벽히 연기하는 AI 봇 유저 [${bot.display_name}] 입니다.
+    const prompt = `[작업 Directive: 입력글을 페르소나 톤앤매너로 문장 재작성 (Text Rewriting)]
+당신은 사용자가 입력한 게시글 초안을 이 캐릭터 봇의 목소리, 말투, 세계관으로 완전히 '다시 작성(Rewriting)'해주는 AI 코파일럿 에디터입니다.
+절대로 입력 텍스트에 대답/답변(Reply/Comment)하거나 대화를 나누지 마세요!
 
-[필수 페르소나]
-- 닉네임: ${bot.display_name}
+[페르소나 캐릭터]
+- 이름: ${bot.display_name}
 - 정체성: ${coreIdentity}
-- 말투: ${speechStyle}
+- 말투 및 톤앤매너: ${speechStyle}
 
-[입력 텍스트]
-"${text}"
+[사용자가 작성한 원본 초안]
+${text}
 
-[엄격 출력 규칙 - 위반 금지!]
-1. 절대로 영문 설명, 생각 과정(CoT), Draft, Idea, 페르소나 안내 메타데이터를 출력하지 마세요.
-2. 인사말이나 AI 스러운 서론/결론은 절대 금지합니다.
-3. 입력 텍스트를 위 페르소나 봇의 말투와 관점으로 다듬은 '최종 1~2문장의 커뮤니티 한국어 문장'만 딱 단 한 줄로 출력하세요.`
+[핵심 명령]
+위 [사용자가 작성한 원본 초안]에 담긴 핵심 정보, 사건, 주장을 100% 유지하면서, [페르소나 캐릭터]의 말투, 어휘, 세계관, 뼈때리는 문체로 '원문 전체를 교정/재작성'하세요.
+
+[출력 제약 조건]
+1. 원문에 대한 답변/대댓글/대화를 작성하지 말고, 오직 '재작성된 본문 글'만 출력하세요.
+2. 서론, 인사말, 생각 과정(CoT), Attempt, '재작성 결과:' 같은 서두 문구를 일절 포함하지 마세요.
+3. 무조건 100% 한국어로만 작성하세요.`
 
     const modelToUse = bot.ai_model_provider || 'gemma-4-26b-a4b-it'
     const rawTransformed = await generateEnforcedAIContent(prompt, modelToUse, 500)

@@ -90,6 +90,30 @@ async function generateWithLegacySdk(prompt: string, modelId: string, maxOutputT
   return trimmed
 }
 
+// ── AI 결과물에서 생각 과정/메타데이터/찌꺼기 정제 ────────────────────
+export function cleanAiThoughtOutput(rawText: string): string {
+  if (!rawText) return ''
+  let cleaned = rawText
+    // 1. <think> ... </think> 태그 및 내부 사고과정 내용 제거
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    // 2. ```markdown ... ``` 코드블록 마크다운 감싸기 제거
+    .replace(/^```(?:markdown|html|json)?\n/gi, '')
+    .replace(/\n```$/gi, '')
+    // 3. 메타데이터 줄 단위 정제 (* Role, * Persona, * Goal, * Self-Correction 등)
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim()
+      if (!trimmed) return false
+      if (/^[\*\-]\s*(?:Role|Persona|Goal|Constraint|Line|Input|Language|Core|Self-Correction|Final|Draft|Idea|Task)/i.test(trimmed)) return false
+      if (/^(?:Role|Persona|Goal|Constraint|Line|Input|Language|Core|Self-Correction|Final|Thinking Process|Exactly|No greetings)/i.test(trimmed)) return false
+      if (/^\d+\.\s+/.test(trimmed) && !trimmed.includes('#')) return false
+      return true
+    })
+    .join('\n')
+
+  return cleaned.trim()
+}
+
 // ── 공개 진입점 ────────────────────────────────────────────────
 export async function generateEnforcedAIContent(
   prompt: string,
@@ -98,12 +122,13 @@ export async function generateEnforcedAIContent(
 ): Promise<string> {
   // 1. 모델명 정규화 (base-gemma, local 등 정식 명칭으로 보정)
   const primaryModel = normalizeModelName(preferredModel)
+  let rawResult = ''
 
   // 2. Gemma 계열 모델일 경우
   if (isGemmaModel(primaryModel)) {
     try {
       // 1순위 동일 Gemma 모델로 최대 3회 재시도
-      return await retrySameModel(
+      rawResult = await retrySameModel(
         () => generateWithAiSdkGoogle(prompt, primaryModel, maxOutputTokens),
         primaryModel,
         3
@@ -112,7 +137,7 @@ export async function generateEnforcedAIContent(
       console.warn(`⚠️ [AI Core] 1순위 Gemma (${primaryModel}) 3회 시도 모두 실패. Fallback(Gemini Lite) 진행...`, err1)
       try {
         // Gemma 3회 모두 실패 시 2순위 Gemini Lite로 3회 재시도
-        return await retrySameModel(
+        rawResult = await retrySameModel(
           () => generateWithLegacySdk(prompt, 'gemini-3.1-flash-lite', maxOutputTokens),
           'gemini-3.1-flash-lite',
           3
@@ -122,29 +147,31 @@ export async function generateEnforcedAIContent(
         throw new Error('All AI generation retries failed.')
       }
     }
-  }
+  } else {
+    // 3. Gemini 계열 모델일 경우
+    const fallbackModel = primaryModel === 'gemini-3.5-flash-lite' ? 'gemini-3.1-flash-lite' : 'gemini-3.5-flash-lite'
 
-  // 3. Gemini 계열 모델일 경우
-  const fallbackModel = primaryModel === 'gemini-3.5-flash-lite' ? 'gemini-3.1-flash-lite' : 'gemini-3.5-flash-lite'
-
-  try {
-    // 1순위 동일 Gemini 모델로 최대 3회 재시도
-    return await retrySameModel(
-      () => generateWithLegacySdk(prompt, primaryModel, maxOutputTokens),
-      primaryModel,
-      3
-    )
-  } catch (err1) {
-    console.warn(`⚠️ [AI Core] 1순위 Gemini (${primaryModel}) 3회 시도 모두 실패. 2순위 (${fallbackModel}) 시도...`, err1)
     try {
-      return await retrySameModel(
-        () => generateWithLegacySdk(prompt, fallbackModel, maxOutputTokens),
-        fallbackModel,
+      // 1순위 동일 Gemini 모델로 최대 3회 재시도
+      rawResult = await retrySameModel(
+        () => generateWithLegacySdk(prompt, primaryModel, maxOutputTokens),
+        primaryModel,
         3
       )
-    } catch (err2) {
-      console.error('🚨 [AI Core] 모든 Gemini 모델 3회 시도 실패!', err2)
-      throw new Error('All configured AI models failed after retries.')
+    } catch (err1) {
+      console.warn(`⚠️ [AI Core] 1순위 Gemini (${primaryModel}) 3회 시도 모두 실패. 2순위 (${fallbackModel}) 시도...`, err1)
+      try {
+        rawResult = await retrySameModel(
+          () => generateWithLegacySdk(prompt, fallbackModel, maxOutputTokens),
+          fallbackModel,
+          3
+        )
+      } catch (err2) {
+        console.error('🚨 [AI Core] 모든 Gemini 모델 3회 시도 실패!', err2)
+        throw new Error('All configured AI models failed after retries.')
+      }
     }
   }
+
+  return cleanAiThoughtOutput(rawResult)
 }
