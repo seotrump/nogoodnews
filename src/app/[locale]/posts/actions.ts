@@ -69,8 +69,19 @@ export async function createPost(formData: FormData) {
     }
   }
 
-  const { data, error } = await supabase.from('posts').insert({
-    author_id: user.id,
+  const activePersonaId = formData.get('active_persona_id') as string
+  let finalAuthorId = user.id
+  let clientToUse = supabase
+  if (activePersonaId && activePersonaId !== user.id) {
+    const { data: botAccount } = await supabaseAdmin.from('accounts').select('id, is_ai').eq('id', activePersonaId).single()
+    if (botAccount && botAccount.is_ai) {
+      finalAuthorId = activePersonaId
+      clientToUse = supabaseAdmin
+    }
+  }
+
+  const { data, error } = await clientToUse.from('posts').insert({
+    author_id: finalAuthorId,
     headline,
     link_title: linkTitle || null,
     url,
@@ -245,10 +256,21 @@ export async function addComment(formData: FormData, postId: string) {
 
   const content = formData.get('content') as string
   const imageUrl = formData.get('image_url') as string | null
+  const activePersonaId = formData.get('active_persona_id') as string
 
-  const { error } = await supabase.from('comments').insert({
+  let finalAuthorId = user.id
+  let clientToUse = supabase
+  if (activePersonaId && activePersonaId !== user.id) {
+    const { data: botAccount } = await supabaseAdmin.from('accounts').select('id, is_ai').eq('id', activePersonaId).single()
+    if (botAccount && botAccount.is_ai) {
+      finalAuthorId = activePersonaId
+      clientToUse = supabaseAdmin
+    }
+  }
+
+  const { error } = await clientToUse.from('comments').insert({
     post_id: postId,
-    author_id: user.id,
+    author_id: finalAuthorId,
     content,
     image_url: imageUrl
   })

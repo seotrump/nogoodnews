@@ -5,20 +5,61 @@ import { createPost } from '@/app/[locale]/posts/actions'
 import ImageUploadPreview from '@/components/ImageUploadPreview'
 import posthog from 'posthog-js'
 import { toast } from 'react-hot-toast'
+import { useActivePersona } from '@/context/ActivePersonaContext'
 
 export default function CreatePostFormClient({ t }: { t: any }) {
   const formRef = useRef<HTMLFormElement>(null)
+  const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isTransforming, setIsTransforming] = useState(false)
   const [pollEnabled, setPollEnabled] = useState(false)
   const [pollOptions, setPollOptions] = useState<string[]>(['', ''])
+
+  const { activeBot, isPiloting } = useActivePersona()
+
+  const handleTransform = async () => {
+    if (!content.trim()) {
+      toast.error('변환할 본문 내용을 먼저 입력하세요.')
+      return
+    }
+    if (!activeBot) return
+
+    setIsTransforming(true)
+    const toastId = toast.loading(`${activeBot.display_name} 말투로 변환하는 중...`)
+
+    try {
+      const res = await fetch('/api/ai-persona-transform', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content, botId: activeBot.id })
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || '변환 실패')
+      }
+
+      setContent(data.transformed)
+      toast.success(`${activeBot.display_name} 말투로 변환되었습니다!`, { id: toastId })
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.message || '말투 변환 실패', { id: toastId })
+    } finally {
+      setIsTransforming(false)
+    }
+  }
 
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true)
     try {
+      if (isPiloting && activeBot) {
+        formData.append('active_persona_id', activeBot.id)
+      }
       await createPost(formData)
       posthog.capture('Post Created', {
         hasUrl: !!formData.get('url'),
-        hasImage: !!formData.get('image_url')
+        hasImage: !!formData.get('image_url'),
+        isPiloting
       })
     } catch (e: any) {
       toast.error('오류가 발생했습니다.')
@@ -29,13 +70,44 @@ export default function CreatePostFormClient({ t }: { t: any }) {
 
   return (
     <form ref={formRef} action={handleSubmit} className="flex flex-col gap-4 sm:gap-6">
+      {isPiloting && activeBot && (
+        <div className="bg-purple-50 border border-purple-200 p-3 rounded-lg flex items-center justify-between text-xs text-purple-900 font-semibold">
+          <span className="flex items-center gap-1.5">
+            <img src={activeBot.avatar_url} alt="Bot" className="w-5 h-5 rounded-full" />
+            🤖 <strong>{activeBot.display_name}</strong> 봇 명의로 게시글이 작성됩니다.
+          </span>
+        </div>
+      )}
+
       <div>
         <label htmlFor="headline" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">{t.headline}</label>
         <input id="headline" name="headline" type="text" required placeholder={t.headlinePlaceholder} className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none" />
       </div>
       <div>
-        <label htmlFor="content" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">{t.content}</label>
-        <textarea id="content" name="content" required placeholder={t.contentPlaceholder} rows={5} className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none" />
+        <div className="flex items-center justify-between mb-1 sm:mb-2">
+          <label htmlFor="content" className="block text-sm font-medium text-gray-700">{t.content}</label>
+          {isPiloting && activeBot && (
+            <button
+              type="button"
+              onClick={handleTransform}
+              disabled={isTransforming || !content.trim()}
+              className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white rounded font-bold text-xs shadow-xs transition-colors flex items-center gap-1"
+            >
+              <span>✨</span>
+              <span>{isTransforming ? '변환 중...' : `${activeBot.display_name} 말투로 변환`}</span>
+            </button>
+          )}
+        </div>
+        <textarea
+          id="content"
+          name="content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          required
+          placeholder={isPiloting && activeBot ? `${activeBot.display_name}의 톤앤매너로 글을 쓰거나 개략적으로 적은 후 [✨ 말투 변환]을 눌러보세요...` : t.contentPlaceholder}
+          rows={5}
+          className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
+        />
       </div>
       <div>
         <label htmlFor="category" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">

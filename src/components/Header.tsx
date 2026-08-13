@@ -8,6 +8,7 @@ import HeaderControls from '@/components/HeaderControls'
 import OnboardingModal from '@/components/OnboardingModal'
 import { getTranslations, getLocale } from 'next-intl/server';
 import BottomNav from '@/components/BottomNav';
+import PilotStatusBar from '@/components/PilotStatusBar';
 
 export default async function Header() {
   const t = await getTranslations('Header');
@@ -30,7 +31,8 @@ export default async function Header() {
 
   return (
     <>
-      <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
+      <PilotStatusBar />
+      <header className="bg-white border-b sticky top-0 z-40 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="text-2xl font-black tracking-tighter shrink-0 flex items-center h-full py-3">
             {siteLogo ? (

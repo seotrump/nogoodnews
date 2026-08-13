@@ -5,13 +5,18 @@ import { addComment } from '@/app/[locale]/posts/actions'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
 import posthog from 'posthog-js'
+import { useActivePersona } from '@/context/ActivePersonaContext'
 
 const supabase = createClient()
 
 export default function CommentForm({ postId }: { postId: string }) {
   const formRef = useRef<HTMLFormElement>(null)
+  const [content, setContent] = useState('')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [isTransforming, setIsTransforming] = useState(false)
+
+  const { activeBot, isPiloting } = useActivePersona()
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = e.clipboardData.items
@@ -58,25 +63,81 @@ export default function CommentForm({ postId }: { postId: string }) {
     }
   }
 
+  const handleTransform = async () => {
+    if (!content.trim()) {
+      toast.error('변환할 내용을 먼저 작성해주세요.')
+      return
+    }
+    if (!activeBot) return
+
+    setIsTransforming(true)
+    const toastId = toast.loading(`${activeBot.display_name} 말투로 다듬는 중...`)
+
+    try {
+      const res = await fetch('/api/ai-persona-transform', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content, botId: activeBot.id })
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || '변환 실패')
+      }
+
+      setContent(data.transformed)
+      toast.success(`${activeBot.display_name} 말투로 변환 완료!`, { id: toastId })
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.message || '말투 변환 실패', { id: toastId })
+    } finally {
+      setIsTransforming(false)
+    }
+  }
+
   const handleSubmit = async (formData: FormData) => {
     if (imageUrl) {
       formData.append('image_url', imageUrl)
     }
+    if (isPiloting && activeBot) {
+      formData.append('active_persona_id', activeBot.id)
+    }
     await addComment(formData, postId)
-    posthog.capture('Comment Added', { postId, hasImage: !!imageUrl })
+    posthog.capture('Comment Added', { postId, hasImage: !!imageUrl, isPiloting })
     formRef.current?.reset()
+    setContent('')
     setImageUrl(null)
   }
 
   return (
-    <form ref={formRef} action={handleSubmit} className="mt-6 border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+    <form ref={formRef} action={handleSubmit} className={`mt-6 border rounded-xl bg-white shadow-sm overflow-hidden transition-colors ${isPiloting ? 'border-purple-300 ring-1 ring-purple-200' : 'border-gray-200'}`}>
+      {isPiloting && activeBot && (
+        <div className="bg-purple-50 px-3 py-1.5 border-b border-purple-100 flex items-center justify-between text-xs text-purple-800 font-semibold">
+          <span className="flex items-center gap-1.5">
+            <img src={activeBot.avatar_url} alt="Bot" className="w-4 h-4 rounded-full" />
+            🤖 {activeBot.display_name} 봇 명의로 댓글 작성 중
+          </span>
+          <button
+            type="button"
+            onClick={handleTransform}
+            disabled={isTransforming || !content.trim()}
+            className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white rounded font-bold shadow-xs transition-colors flex items-center gap-1 text-[11px]"
+          >
+            <span>✨</span>
+            <span>{isTransforming ? '변환 중...' : `${activeBot.display_name} 말투로 변환`}</span>
+          </button>
+        </div>
+      )}
+
       <div className="p-3">
         <textarea
           name="content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
           required
           onPaste={handlePaste}
           className="w-full text-sm focus:outline-none resize-none bg-transparent"
-          placeholder="Ctrl+V로 캡처한 이미지를 붙여넣거나 댓글을 남겨주세요..."
+          placeholder={isPiloting && activeBot ? `${activeBot.display_name}의 시각으로 작성하거나 대충 적고 [✨ 말투 변환]을 눌러보세요...` : "Ctrl+V로 캡처한 이미지를 붙여넣거나 댓글을 남겨주세요..."}
           rows={3}
         />
         {imageUrl && (
@@ -103,9 +164,11 @@ export default function CommentForm({ postId }: { postId: string }) {
         <button 
           type="submit" 
           disabled={isUploading}
-          className="bg-black text-white px-5 py-2 rounded-lg font-bold text-sm hover:bg-gray-800 transition shadow-sm disabled:bg-gray-400"
+          className={`px-5 py-2 rounded-lg font-bold text-sm transition shadow-sm disabled:bg-gray-400 text-white ${
+            isPiloting ? 'bg-purple-600 hover:bg-purple-700' : 'bg-black hover:bg-gray-800'
+          }`}
         >
-          {isUploading ? '업로드 중...' : '작성하기'}
+          {isUploading ? '업로드 중...' : (isPiloting && activeBot ? `${activeBot.display_name}(으)로 작성` : '작성하기')}
         </button>
       </div>
     </form>

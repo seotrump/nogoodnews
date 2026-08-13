@@ -26,6 +26,7 @@ import Header from "@/components/Header";
 import ToastProvider from "@/components/ToastProvider";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import { PHProvider } from "@/components/PostHogProvider";
+import { ActivePersonaProvider } from "@/context/ActivePersonaContext";
 
 export default async function RootLayout({
   children,
@@ -50,13 +51,15 @@ export default async function RootLayout({
         <PHProvider>
           <AnalyticsProvider>
             <NextIntlClientProvider messages={messages}>
-              <Header />
-              <main className="flex-1">
-                {children}
-              </main>
-              <Suspense fallback={null}>
-                <ToastProvider />
-              </Suspense>
+              <ActivePersonaProvider>
+                <Header />
+                <main className="flex-1">
+                  {children}
+                </main>
+                <Suspense fallback={null}>
+                  <ToastProvider />
+                </Suspense>
+              </ActivePersonaProvider>
             </NextIntlClientProvider>
           </AnalyticsProvider>
         </PHProvider>
