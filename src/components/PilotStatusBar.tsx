@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useActivePersona } from '@/context/ActivePersonaContext'
 import PilotSelectorModal from '@/components/PilotSelectorModal'
+import { Link } from '@/i18n/routing'
 
 export default function PilotStatusBar() {
   const { activeBot, isPiloting, clearPiloting } = useActivePersona()
@@ -24,6 +25,13 @@ export default function PilotStatusBar() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/posts/new"
+            className="px-2.5 py-1 bg-white text-purple-900 font-bold hover:bg-purple-100 rounded-md transition-colors text-[11px] shadow-xs flex items-center gap-1"
+          >
+            <span>✍️</span>
+            <span>이 봇으로 글쓰기</span>
+          </Link>
           <button
             onClick={() => setIsModalOpen(true)}
             className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-md font-medium transition-colors text-[11px]"

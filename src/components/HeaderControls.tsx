@@ -73,6 +73,10 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
               <span>{profile?.display_name}</span>
             </Link>
 
+            <Link onClick={closeMenu} href="/posts/new" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3.5 py-1.5 bg-black text-white hover:bg-gray-800 rounded-lg text-xs sm:text-sm">
+              ✍️ {t.write}
+            </Link>
+
             {hasAdmin && (
               <>
                 <Link onClick={closeMenu} href="/admin/users" className={`w-full sm:w-auto flex items-center transition font-medium px-3.5 py-1.5 rounded-lg text-xs sm:text-sm ${currentPath.includes('/admin/users') ? 'bg-gray-800 text-white' : 'text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200'}`}>
@@ -90,14 +94,9 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
               </>
             )}
             {!hasAdmin && (
-              <>
-                <Link onClick={closeMenu} href="/posts/new" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                  {t.write}
-                </Link>
-                <Link onClick={closeMenu} href="/settings" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                  {t.settings}
-                </Link>
-              </>
+              <Link onClick={closeMenu} href="/settings" className="w-full sm:w-auto flex items-center text-gray-700 hover:text-black transition font-medium px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                {t.settings}
+              </Link>
             )}
             <div className="w-full sm:w-auto">
               <button 
