@@ -20,8 +20,10 @@ export default function PilotStatusBar() {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
           </span>
           <img src={activeBot.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=bot'} alt="Avatar" className="w-5 h-5 rounded-full border border-white/40" />
-          <span className="font-semibold">
-            🤖 <strong className="underline underline-offset-2">{activeBot.display_name}</strong> 봇 조종 모드 (휴먼 탑승 중)
+          <span className="font-semibold flex items-center gap-1.5">
+            <span>🏎️</span>
+            <strong className="underline underline-offset-2">{activeBot.display_name}</strong>
+            <span className="bg-white/20 text-white font-black text-[10px] px-1.5 py-0.5 rounded tracking-wider">PILOT MODE</span>
           </span>
         </div>
         <div className="flex items-center gap-2">

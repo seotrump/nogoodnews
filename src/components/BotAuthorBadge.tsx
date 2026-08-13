@@ -35,6 +35,12 @@ export default function BotAuthorBadge({ account, authorName, profileUrl, showBa
           <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
         )}
         <span>{authorName}</span>
+        {(account?.is_piloted || account?.role === 'mixed' || account?.claimed_by_user_id) && (
+          <span className="text-[10px] bg-purple-600 text-white font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-2xs tracking-wider leading-none">
+            <span>🏎️</span>
+            <span>PILOT</span>
+          </span>
+        )}
         {showBadge && <UserBadge badges={account?.badges} />}
       </Link>
 
