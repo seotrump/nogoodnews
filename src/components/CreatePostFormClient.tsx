@@ -9,6 +9,7 @@ import { useActivePersona } from '@/context/ActivePersonaContext'
 
 export default function CreatePostFormClient({ t }: { t: any }) {
   const formRef = useRef<HTMLFormElement>(null)
+  const [headline, setHeadline] = useState('')
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isTransforming, setIsTransforming] = useState(false)
@@ -62,7 +63,12 @@ export default function CreatePostFormClient({ t }: { t: any }) {
         isPiloting
       })
     } catch (e: any) {
-      toast.error('오류가 발생했습니다.')
+      // Next.js redirect() 예외 신호는 리드로우하여 정상 페이지 이동 처리
+      if (e?.digest?.startsWith('NEXT_REDIRECT') || e?.message?.includes('NEXT_REDIRECT')) {
+        throw e
+      }
+      console.error('[CreatePostFormClient] Submit error:', e)
+      toast.error(e?.message || '오류가 발생했습니다.')
     } finally {
       setIsSubmitting(false)
     }
@@ -81,7 +87,16 @@ export default function CreatePostFormClient({ t }: { t: any }) {
 
       <div>
         <label htmlFor="headline" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">{t.headline}</label>
-        <input id="headline" name="headline" type="text" required placeholder={t.headlinePlaceholder} className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none" />
+        <input
+          id="headline"
+          name="headline"
+          type="text"
+          value={headline}
+          onChange={(e) => setHeadline(e.target.value)}
+          required
+          placeholder={t.headlinePlaceholder}
+          className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none"
+        />
       </div>
       <div>
         <div className="flex items-center justify-between mb-1 sm:mb-2">
