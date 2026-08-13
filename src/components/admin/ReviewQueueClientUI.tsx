@@ -49,7 +49,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
 
   const handleBulkApprove = async () => {
     if (selectedIds.length === 0) return
-    if (!confirm(`선택한 ${selectedIds.length}개 피드를 자연스러운 시간 텀을 두고 예약 발행하시겠습니까?`)) return
+    if (!confirm(`선택한 ${selectedIds.length}개 피드를 예약 발행하시겠습니까?`)) return
     
     setIsProcessing(true)
     const toastId = toast.loading(`피드 ${selectedIds.length}개 예약 발행 중...`)
@@ -60,9 +60,30 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
       // 상태 낙관적 업데이트 (ui에서는 published로 간주)
       setPosts(posts.map(p => selectedIds.includes(p.id) ? { ...p, status: 'published' } : p))
       setSelectedIds([])
-      toast.success('선택된 피드들이 성공적으로 예약 발행 대기열에 등록되었습니다!', { id: toastId })
+      toast.success('선택 피드가 예약 발행 대기열에 등록되었습니다.', { id: toastId })
     } catch (e: any) {
       toast.error(e.message || '일괄 승인 실패', { id: toastId })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return
+    if (!confirm(`선택한 ${selectedIds.length}개 피드를 영구 삭제하시겠습니까?`)) return
+
+    setIsProcessing(true)
+    const toastId = toast.loading(`피드 ${selectedIds.length}개 삭제 중...`)
+
+    try {
+      for (const id of selectedIds) {
+        await deletePostPermanently(id)
+      }
+      setPosts(posts.filter(p => !selectedIds.includes(p.id)))
+      setSelectedIds([])
+      toast.success('선택한 피드가 영구 삭제되었습니다.', { id: toastId })
+    } catch (e: any) {
+      toast.error(e.message || '일괄 삭제 실패', { id: toastId })
     } finally {
       setIsProcessing(false)
     }
@@ -106,7 +127,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
     const createdMs = new Date(createdAtStr).getTime()
     const diffMs = Date.now() - createdMs
     const remainingMs = (5 * 60 * 1000) - diffMs
-    if (remainingMs <= 0) return '발행 대기 (스케줄러 호출 대기)'
+    if (remainingMs <= 0) return '발행 대기'
     const remainingMinutes = Math.ceil(remainingMs / (60 * 1000))
     return `발행 대기 (-${remainingMinutes}분)`
   }
@@ -123,7 +144,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          <span>⏳ 대기중 (15분 스케줄)</span>
+          <span>⏳ 대기</span>
           <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
             {posts.filter(p => p.status === 'pending_review').length}
           </span>
@@ -137,7 +158,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          <span>✅ 자동승인 완료</span>
+          <span>✅ 승인</span>
           <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
             {posts.filter(p => p.status === 'published').length}
           </span>
@@ -151,7 +172,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          <span>🚨 위반 차단됨</span>
+          <span>🚨 차단됨</span>
           <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
             {posts.filter(p => p.status === 'rejected').length}
           </span>
@@ -168,22 +189,23 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
           전체 ({posts.length})
         </button>
 
-        <button
-          onClick={handleRunCronNow}
-          disabled={isRunningCron}
-          className={`ml-auto font-extrabold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-xs ${
-            isRunningCron
-              ? 'bg-purple-300 text-white cursor-not-allowed animate-pulse'
-              : 'bg-purple-600 hover:bg-purple-700 text-white'
-          }`}
-        >
-          <span>⚡</span>
-          <span>{isRunningCron ? '크론 실행중...' : '15분 크론 수동 강제실행'}</span>
-        </button>
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleRunCronNow}
+            disabled={isRunningCron}
+            className={`font-extrabold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow-xs ${
+              isRunningCron
+                ? 'bg-purple-300 text-white cursor-not-allowed animate-pulse'
+                : 'bg-purple-600 hover:bg-purple-700 text-white'
+            }`}
+          >
+            <span>{isRunningCron ? '크론실행중...' : '크론실행'}</span>
+          </button>
+        </div>
       </div>
 
       {activeTab === 'pending' && filteredPosts.length > 0 && (
-        <div className="flex items-center gap-3 border-b border-gray-200 pb-3">
+        <div className="flex items-center gap-3 border-b border-gray-200 pb-3 flex-wrap">
           <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition shadow-xs">
             <input 
               type="checkbox" 
@@ -195,14 +217,25 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
           </label>
 
           {selectedIds.length > 0 && (
-            <button
-              onClick={handleBulkApprove}
-              disabled={isProcessing}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition shadow-xs flex items-center gap-1 animate-in fade-in"
-            >
-              <span>✅</span>
-              <span>선택 {selectedIds.length}개 일괄 예약발행 (시차 적용)</span>
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={handleBulkApprove}
+                disabled={isProcessing}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs flex items-center gap-1 animate-in fade-in"
+              >
+                <span>✅</span>
+                <span>선택 {selectedIds.length}개 일괄 승인</span>
+              </button>
+
+              <button
+                onClick={handleBulkDelete}
+                disabled={isProcessing}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs flex items-center gap-1 animate-in fade-in"
+              >
+                <span>🗑️</span>
+                <span>선택 {selectedIds.length}개 삭제</span>
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -233,23 +266,8 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                     : 'border-gray-300 ring-1 ring-gray-100'
                 }`}
               >
-                {/* 메인 피드 Card 컴포넌트 */}
-                <div className="relative">
-                  {isPending && (
-                    <div className="absolute top-4 left-4 z-10 bg-white/90 p-1 rounded-md shadow-sm border border-gray-200 backdrop-blur-sm">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedIds.includes(post.id)}
-                        onChange={() => toggleSelection(post.id)}
-                        className="w-5 h-5 rounded border-gray-300 text-indigo-600 cursor-pointer focus:ring-indigo-500"
-                      />
-                    </div>
-                  )}
-                  <PostCard post={post} currentUser={{ id: 'admin' }} hideDeleteButton={true} />
-                </div>
-
                 {/* 진단 결과 카드 영역 */}
-                <div className="bg-gray-50 border-t border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="bg-gray-50 border-b border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   
                   {/* 자가검열 상태 및 위반 사유 안내 */}
                   <div className="flex flex-col gap-1.5 flex-1">
@@ -269,6 +287,23 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                           ⏳ {getMinutesRemaining(post.created_at)}
                         </span>
                       )}
+
+                      <div className="flex items-center gap-2 ml-1">
+                        {!isPublished && (
+                          <button
+                            onClick={() => handleApprove(post.id)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-2.5 py-1 rounded-full transition shadow-xs flex items-center gap-1"
+                          >
+                            <span>즉시발행</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(post.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-2.5 py-1 rounded-full transition shadow-xs flex items-center gap-1"
+                        >
+                          <span>영구삭제</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* 자가검열 위반 항목 상세 사유 목록 */}
@@ -292,34 +327,36 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                       </div>
                     )}
 
-                    {isPending && failedRules.length === 0 && (
-                      <div className="mt-1 flex items-center gap-2 text-xs font-bold text-gray-600">
-                        <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded">가이드라인 검증 통과</span>
-                        <span className="text-gray-400">|</span>
-                        <span>자동 발행 스케줄러 대기 중</span>
+                    {isPending && (
+                      <div className="mt-1 flex items-center justify-between w-full">
+                        {failedRules.length === 0 ? (
+                          <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                            <span className="bg-gray-200 text-gray-700 px-2 py-0.5 rounded">가이드라인 검증 통과</span>
+                            <span className="text-gray-400">|</span>
+                            <span>자동 발행 스케줄러 대기 중</span>
+                          </div>
+                        ) : (
+                          <div /> // 빈 공간 차지용
+                        )}
+                        <div className="flex items-center gap-2 ml-auto">
+                          <label className="text-xs font-bold text-gray-600 cursor-pointer flex items-center gap-1.5 hover:text-indigo-600 transition">
+                            선택
+                            <input 
+                              type="checkbox" 
+                              checked={selectedIds.includes(post.id)}
+                              onChange={() => toggleSelection(post.id)}
+                              className="w-5 h-5 rounded border-gray-300 text-indigo-600 cursor-pointer focus:ring-indigo-500"
+                            />
+                          </label>
+                        </div>
                       </div>
                     )}
                   </div>
+                </div>
 
-                  {/* 수동 발행 승인 및 영구 삭제 버튼 */}
-                  <div className="flex items-center gap-2 justify-end shrink-0 self-end sm:self-center">
-                    {!isPublished && (
-                      <button
-                        onClick={() => handleApprove(post.id)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-xs flex items-center gap-1"
-                      >
-                        <span>✓</span>
-                        <span>수동 즉시 발행</span>
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-xs flex items-center gap-1"
-                    >
-                      <span>🗑️</span>
-                      <span>영구 삭제</span>
-                    </button>
-                  </div>
+                {/* 메인 피드 Card 컴포넌트 */}
+                <div className="relative">
+                  <PostCard post={post} currentUser={{ id: 'admin' }} hideDeleteButton={true} />
                 </div>
               </div>
             )

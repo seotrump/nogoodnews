@@ -116,19 +116,6 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
     opinion: '오피니언' 
   };
 
-  const realmMap: Record<string, string> = {
-    earth_physical: '지구 (물리세계)',
-    earth_metaphysical: '지구 (형이상학적/개념)',
-    celestial: '천상/영계',
-    extraterrestrial: '외계/타차원',
-    dimensional: '차원세계',
-    digital: '디지털/사이버',
-    cyber: '사이버공간',
-    human: '인간사회',
-    mechanical: '기계/AI'
-  };
-
-
   return (
     <div className="flex flex-col gap-3">
       {/* 일괄 처리 툴바 */}
@@ -213,16 +200,16 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
       </div>
 
       <div className="overflow-x-auto scrollbar-none">
-        <table className="w-full text-left border-collapse min-w-[750px]">
+        <table className="w-full text-left border-collapse min-w-full">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-100 text-xs text-gray-600 font-bold uppercase tracking-wider">
-              <th className="p-3 w-10 text-center">선택</th>
-              <th className="p-3 w-14 text-center">등급</th>
-              <th className="p-3 w-36">닉네임 / 등급</th>
-              <th className="p-3 w-14 text-center">얼굴</th>
-              <th className="p-3 w-28">아이디</th>
+              <th className="p-2.5 sm:p-3 w-10 text-center">선택</th>
+              <th className="p-3 w-14 text-center hidden sm:table-cell">등급</th>
+              <th className="p-2.5 sm:p-3">닉네임 / 등급</th>
+              <th className="p-3 w-14 text-center hidden sm:table-cell">얼굴</th>
+              <th className="p-3 w-28 hidden sm:table-cell">아이디</th>
               <th className="p-3 w-24 text-center hidden sm:table-cell">카테고리</th>
-              <th className="p-3 text-center min-w-[200px]">관리 액션</th>
+              <th className="p-2.5 sm:p-3 text-center min-w-[140px] sm:min-w-[200px]">관리 액션</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -233,7 +220,7 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
 
               return (
                 <tr key={userItem.id} className={`hover:bg-gray-50 transition ${isSelected ? 'bg-blue-50/50' : ''}`}>
-                  <td className="p-3 text-center">
+                  <td className="p-2.5 sm:p-3 text-center">
                     <input 
                       type="checkbox" 
                       checked={isSelected} 
@@ -241,14 +228,14 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                       className="w-4 h-4 rounded border-gray-300 text-black cursor-pointer"
                     />
                   </td>
-                  <td className="p-3 text-center">
+                  <td className="p-3 text-center hidden sm:table-cell">
                     <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold inline-block min-w-[28px]">
                       {userItem.level || 1}
                     </span>
                   </td>
-                  <td className="p-3">
+                  <td className="p-2.5 sm:p-3">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <Link href={`/users/${userItem.id}`} className="font-bold text-gray-900 text-sm hover:underline">
+                      <Link href={`/users/${userItem.id}`} className="font-bold text-gray-900 text-xs sm:text-sm hover:underline">
                         {userItem.display_name}
                       </Link>
                       
@@ -268,10 +255,10 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                     </div>
                   </td>
 
-                  <td className="p-3 text-center">
+                  <td className="p-3 text-center hidden sm:table-cell">
                     <img src={userItem.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${userItem.id}`} alt="avatar" className="w-8 h-8 rounded-full border shadow-xs mx-auto bg-white object-cover min-w-[32px]" />
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 hidden sm:table-cell">
                     <Link href={`/users/${userItem.id}`} className="text-gray-500 text-xs truncate max-w-[110px] block hover:underline">
                       @{userItem.username || userItem.id.substring(0, 8)}
                     </Link>
@@ -281,7 +268,7 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                   </td>
 
                   {/* 관리 액션 버튼 열: 피드 / 수정 / 정지 한 줄(Horizontal Row)로 나열 */}
-                  <td className="p-3 text-center">
+                  <td className="p-2.5 sm:p-3 text-center">
                     <div className="flex flex-row items-center justify-center gap-1.5 whitespace-nowrap">
                       {/* 1. 피드 버튼 (활성 봇 탭에서만 표시) */}
                       {currentTab === 'list' && (

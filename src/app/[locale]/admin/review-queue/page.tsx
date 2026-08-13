@@ -31,28 +31,9 @@ export default async function ReviewQueueAdminPage() {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
-      <div className="mb-2 flex justify-between items-end flex-wrap gap-2">
+      <div className="mb-2 flex justify-between items-center flex-wrap gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">🚨 검토대기 (Moderation Queue)</h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            신규 피드는 대기 후 **15분이 지나면 안전 가이드라인 검증 후 자동 승인**되며, 여기서 수동으로 즉시 승인/발행할 수도 있습니다.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="bg-yellow-50 border border-yellow-200 px-3 py-1.5 rounded-xl text-xs font-bold text-yellow-800 flex items-center gap-1.5 shadow-xs">
-            <span>⏳ 대기중:</span>
-            <span className="text-sm text-yellow-900 font-extrabold">{pendingCount}개</span>
-          </div>
-          <div className="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-800 flex items-center gap-1.5 shadow-xs">
-            <span>✅ 자동승인 완료:</span>
-            <span className="text-sm text-emerald-900 font-extrabold">{approvedCount}개</span>
-          </div>
-          {rejectedCount > 0 && (
-            <div className="bg-red-50 border border-red-200 px-3 py-1.5 rounded-xl text-xs font-bold text-red-800 flex items-center gap-1.5 shadow-xs">
-              <span>🚨 차단됨:</span>
-              <span className="text-sm text-red-900 font-extrabold">{rejectedCount}개</span>
-            </div>
-          )}
+          <h1 className="text-xl sm:text-2xl font-black text-gray-900">검토대기</h1>
         </div>
       </div>
 
