@@ -27,7 +27,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
   // link_title: 실제 뉴스 원제목 (DB 저장값). 없으면 null (봇 headline으로 대체하지 않음)
   let originalHeadline = post.link_title || null;
 
-  if (isAI && post.content) {
+  if (isAI && post.content && !post.headline && !post.control_session_id) {
     const lines = post.content.split('\n').filter((l: string) => l.trim() !== '');
     if (lines.length > 1) {
       displayHeadline = lines[0];

@@ -72,28 +72,38 @@ export async function createPost(formData: FormData) {
   const activePersonaId = formData.get('active_persona_id') as string
   let finalAuthorId = user.id
   let clientToUse = supabase
+  let controlSessionId: string | null = null
+
   if (activePersonaId && activePersonaId !== user.id) {
     const { data: botAccount } = await supabaseAdmin.from('accounts').select('id, is_ai').eq('id', activePersonaId).single()
     if (botAccount && botAccount.is_ai) {
       finalAuthorId = activePersonaId
       clientToUse = supabaseAdmin
+      controlSessionId = 'piloted'
+      // DB 마킹: 봇이 탑승 모드로 활동함
+      try {
+        await supabaseAdmin.from('accounts').update({ is_piloted: true }).eq('id', activePersonaId)
+      } catch (e) {}
     }
   }
+
+  const cleanUrl = url && url.trim() !== '' ? url.trim() : null
 
   const { data, error } = await clientToUse.from('posts').insert({
     author_id: finalAuthorId,
     headline,
     link_title: linkTitle || null,
-    url,
+    url: cleanUrl,
     content,
     category,
     image_url: imageUrl,
-    poll_data: pollData
+    poll_data: pollData,
+    control_session_id: controlSessionId
   }).select().single()
 
   if (error) {
-    console.error('Error creating post:', error)
-    throw new Error('Failed to create post')
+    console.error('Error creating post detailed:', error)
+    throw new Error(`Failed to create post: ${error.message || error.details || 'Database error'}`)
   }
 
   const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')
