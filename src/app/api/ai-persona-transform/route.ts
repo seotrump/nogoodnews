@@ -48,30 +48,62 @@ export async function POST(request: Request) {
 
     const prompt = `당신은 다음 페르소나를 완벽히 연기하는 AI 봇 유저 [${bot.display_name}] 입니다.
 
-[페르소나 정체성 및 말투 설정]
+[필수 페르소나]
 - 닉네임: ${bot.display_name}
 - 정체성: ${coreIdentity}
-- 말투 스타일: ${speechStyle}
+- 말투: ${speechStyle}
 
-[입력받은 유저의 원본 초안]
+[입력 텍스트]
 "${text}"
 
-[요청사항]
-위 유저의 원본 초안 텍스트 내용을 바탕으로, 당신(봇) 고유의 톤앤매너와 말투, 세계관에 맞춰 뼈때리는 문장으로 자연스럽게 자동 재작성(변환)해주세요.
-- 인사말이나 AI 스러운 서론/결론은 절대 금지합니다.
-- 오직 커뮤니티 피드/댓글에 바로 게시할 수 있는 본문 문장만 출력하세요.`
+[엄격 출력 규칙 - 위반 금지!]
+1. 절대로 영문 설명, 생각 과정(CoT), Draft, Idea, 페르소나 안내 메타데이터를 출력하지 마세요.
+2. 인사말이나 AI 스러운 서론/결론은 절대 금지합니다.
+3. 입력 텍스트를 위 페르소나 봇의 말투와 관점으로 다듬은 '최종 1~2문장의 커뮤니티 한국어 문장'만 딱 단 한 줄로 출력하세요.`
 
     const modelToUse = bot.ai_model_provider || 'gemma-4-26b-a4b-it'
-    const transformed = await generateEnforcedAIContent(prompt, modelToUse, 800)
+    const rawTransformed = await generateEnforcedAIContent(prompt, modelToUse, 500)
+    const cleanedText = cleanPersonaTransformResult(rawTransformed)
 
     return NextResponse.json({
       success: true,
       original: text,
-      transformed: transformed.trim(),
+      transformed: cleanedText,
       botName: bot.display_name
     })
   } catch (err: any) {
     console.error('[ai-persona-transform] Error:', err)
     return NextResponse.json({ error: err.message || 'Failed to transform text' }, { status: 500 })
   }
+}
+
+function cleanPersonaTransformResult(rawText: string): string {
+  if (!rawText) return ''
+  
+  // 1. 큰따옴표로 둘러싸인 최종 문장이 있는 경우 추출 (예: "논리라는 얄팍한 틀에...")
+  const doubleQuoteMatches = rawText.match(/"([^"\n]{10,})"/g)
+  if (doubleQuoteMatches && doubleQuoteMatches.length > 0) {
+    const lastQuote = doubleQuoteMatches[doubleQuoteMatches.length - 1].replace(/^"|"$/g, '').trim()
+    if (lastQuote && !lastQuote.includes('Persona Name') && !lastQuote.includes('Input:')) {
+      return lastQuote
+    }
+  }
+
+  // 2. 불필요한 생각 메타데이터 라인 제거 (* Persona Name, Draft, Idea 등)
+  const lines = rawText.split('\n')
+    .map(line => line.trim())
+    .filter(line => {
+      if (!line) return false
+      if (line.startsWith('*') || line.startsWith('-') || line.startsWith('Draft') || line.startsWith('Idea') || line.startsWith('Input') || line.startsWith('Task')) return false
+      if (line.includes('Persona Name:') || line.includes('Identity:') || line.includes('Speech Style:') || line.includes('Constraints:')) return false
+      return true
+    })
+
+  if (lines.length > 0) {
+    const cleanStr = lines[lines.length - 1].replace(/^["'“”]|["'“”]$/g, '').trim()
+    if (cleanStr) return cleanStr
+  }
+
+  // 3. Fallback: 불필요한 영문 메타데이터 제거 후 반환
+  return rawText.replace(/\*[\s\S]*?\n\n/g, '').replace(/^["'“”]|["'“”]$/g, '').trim()
 }
