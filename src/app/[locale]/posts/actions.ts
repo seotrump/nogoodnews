@@ -79,8 +79,7 @@ export async function createPost(formData: FormData) {
     if (botAccount && botAccount.is_ai) {
       finalAuthorId = activePersonaId
       clientToUse = supabaseAdmin
-      controlSessionId = 'piloted'
-      // DB 마킹: 봇이 탑승 모드로 활동함
+      // DB 마킹: 봇이 탑승 모드로 활동함 (is_piloted = true)
       try {
         await supabaseAdmin.from('accounts').update({ is_piloted: true }).eq('id', activePersonaId)
       } catch (e) {}
@@ -95,10 +94,8 @@ export async function createPost(formData: FormData) {
     link_title: linkTitle || null,
     url: cleanUrl,
     content,
-    category,
     image_url: imageUrl,
-    poll_data: pollData,
-    control_session_id: controlSessionId
+    poll_data: pollData
   }).select().single()
 
   if (error) {
