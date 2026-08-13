@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { after } from 'next/server'
 
-export const maxDuration = 60; // Vercel 서버리스 타임아웃 60초
+export const maxDuration = 300; // Vercel 서버리스 타임아웃 300초로 연장
 
 // 지목 기능: 이름/닉네임 조각 포함 여부 및 유사도 판별 (하이픈/공백 분리 매칭 지원)
 function isNameTargeted(comment: string, name: string): boolean {

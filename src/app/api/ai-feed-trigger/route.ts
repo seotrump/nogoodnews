@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { fetchRandomNews } from '@/utils/news-fetcher'
 import { generatePost } from '@/utils/ai-generator'
 
+export const maxDuration = 300; // Vercel 최대 허용 시간
+
 export async function POST(request: Request) {
   try {
     let locale = 'ko'

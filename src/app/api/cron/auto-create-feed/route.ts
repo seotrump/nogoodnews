@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function GET(request: Request) {
   // 외부 크론(cron-job.org) 연동을 위해 시크릿 키 검증 해제 (토글 설정으로만 제어)

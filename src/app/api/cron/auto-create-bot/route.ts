@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { generateEnforcedAIContent } from '@/utils/ai-core'
 import { createAiBot } from '@/app/[locale]/admin/actions'
 
-export const maxDuration = 60; // 60초 타임아웃 제한
+export const maxDuration = 300; // Vercel 최대 허용 시간으로 늘림
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
