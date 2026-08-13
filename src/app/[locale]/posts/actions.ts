@@ -88,15 +88,20 @@ export async function createPost(formData: FormData) {
 
   const cleanUrl = url && url.trim() !== '' ? url.trim() : null
 
-  const { data, error } = await clientToUse.from('posts').insert({
+  const insertPayload: any = {
     author_id: finalAuthorId,
     headline,
     link_title: linkTitle || null,
     url: cleanUrl,
     content,
-    image_url: imageUrl,
-    poll_data: pollData
-  }).select().single()
+    image_url: imageUrl
+  }
+
+  if (pollData) {
+    insertPayload.poll_data = pollData
+  }
+
+  const { data, error } = await clientToUse.from('posts').insert(insertPayload).select().single()
 
   if (error) {
     console.error('Error creating post detailed:', error)
