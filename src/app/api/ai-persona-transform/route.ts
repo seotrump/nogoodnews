@@ -79,31 +79,41 @@ export async function POST(request: Request) {
 
 function cleanPersonaTransformResult(rawText: string): string {
   if (!rawText) return ''
-  
-  // 1. 큰따옴표로 둘러싸인 최종 문장이 있는 경우 추출 (예: "논리라는 얄팍한 틀에...")
-  const doubleQuoteMatches = rawText.match(/"([^"\n]{10,})"/g)
+
+  // 1. 큰따옴표로 둘러싸인 한글 포함 최종 문장 추출
+  const doubleQuoteMatches = rawText.match(/"([^"\n]{6,})"/g)
   if (doubleQuoteMatches && doubleQuoteMatches.length > 0) {
-    const lastQuote = doubleQuoteMatches[doubleQuoteMatches.length - 1].replace(/^"|"$/g, '').trim()
-    if (lastQuote && !lastQuote.includes('Persona Name') && !lastQuote.includes('Input:')) {
-      return lastQuote
+    for (let i = doubleQuoteMatches.length - 1; i >= 0; i--) {
+      const q = doubleQuoteMatches[i].replace(/^"|"$/g, '').trim()
+      if (q && /[가-힣]/.test(q) && !q.includes('Persona Name') && !q.includes('Input:')) {
+        return q.replace(/\([a-zA-Z\s,.'"-]{3,}\)/g, '').trim()
+      }
     }
   }
 
-  // 2. 불필요한 생각 메타데이터 라인 제거 (* Persona Name, Draft, Idea 등)
+  // 2. 불필요한 메타데이터 및 영어설명 라인 제거
   const lines = rawText.split('\n')
     .map(line => line.trim())
     .filter(line => {
       if (!line) return false
-      if (line.startsWith('*') || line.startsWith('-') || line.startsWith('Draft') || line.startsWith('Idea') || line.startsWith('Input') || line.startsWith('Task')) return false
-      if (line.includes('Persona Name:') || line.includes('Identity:') || line.includes('Speech Style:') || line.includes('Constraints:')) return false
+      if (line.startsWith('*') || line.startsWith('-') || line.startsWith('Draft') || line.startsWith('Idea') || line.startsWith('Input') || line.startsWith('Task') || line.startsWith('Constraints')) return false
+      if (line.includes('Persona Name') || line.includes('Identity:') || line.includes('Speech Style:') || line.includes('Constraints:')) return false
+      // 한글이 전혀 없는 pure English line 제거
+      if (!/[가-힣]/.test(line)) return false
       return true
     })
 
   if (lines.length > 0) {
-    const cleanStr = lines[lines.length - 1].replace(/^["'“”]|["'“”]$/g, '').trim()
-    if (cleanStr) return cleanStr
+    for (let i = lines.length - 1; i >= 0; i--) {
+      let l = lines[i]
+        .replace(/\([a-zA-Z\s,.'"-]{3,}\)/g, '')
+        .replace(/^["'“”]|["'“”]$/g, '')
+        .trim()
+      if (l && /[가-힣]/.test(l)) {
+        return l
+      }
+    }
   }
 
-  // 3. Fallback: 불필요한 영문 메타데이터 제거 후 반환
   return rawText.replace(/\*[\s\S]*?\n\n/g, '').replace(/^["'“”]|["'“”]$/g, '').trim()
 }

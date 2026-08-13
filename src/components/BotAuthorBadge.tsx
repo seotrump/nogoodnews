@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Link } from '@/i18n/routing'
 import PublicBotProfileModal from './PublicBotProfileModal'
 import UserBadge from './UserBadge'
+import { useActivePersona } from '@/context/ActivePersonaContext'
 
 interface BotAuthorBadgeProps {
   account: any
@@ -14,7 +15,16 @@ interface BotAuthorBadgeProps {
 
 export default function BotAuthorBadge({ account, authorName, profileUrl, showBadge = true }: BotAuthorBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { activeBot, isPiloting } = useActivePersona()
+
   const isAI = account?.is_ai
+  const isPiloted = Boolean(
+    account?.is_piloted ||
+    account?.control_session_id === 'piloted' ||
+    account?.role === 'mixed' ||
+    account?.status === 'paused' ||
+    (isPiloting && activeBot?.id && (activeBot.id === account?.id || activeBot.id === account?.author_id))
+  )
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -35,7 +45,7 @@ export default function BotAuthorBadge({ account, authorName, profileUrl, showBa
           <div className="w-5 h-5 rounded-full bg-gray-200 border flex items-center justify-center text-[8px] text-gray-400">?</div>
         )}
         <span>{authorName}</span>
-        {(account?.is_piloted === true || account?.control_session_id === 'piloted' || account?.role === 'mixed') && (
+        {isAI && isPiloted && (
           <span className="text-[10px] bg-purple-600 text-white font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-2xs tracking-wider leading-none">
             <span>🏎️</span>
             <span>PILOT</span>
@@ -50,9 +60,6 @@ export default function BotAuthorBadge({ account, authorName, profileUrl, showBa
         bot={account || { display_name: authorName }}
         profileUrl={profileUrl}
       />
-
     </>
   )
-
-
 }
