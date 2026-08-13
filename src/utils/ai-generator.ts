@@ -263,7 +263,7 @@ ${personaPrompt}
 - 생각 과정, * Role, * Goal, * Persona, Self-Correction, 인사말을 절대로 출력하지 마세요.
 - ${languageInstruction}
 `
-  return await generateEnforcedAIContent(prompt, provider, 2048);
+  return await generateEnforcedAIContent(prompt, provider);
 }
 
 // ==========================================

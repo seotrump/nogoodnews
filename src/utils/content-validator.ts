@@ -92,7 +92,7 @@ ${rulesPromptList}
 ]`;
 
     try {
-      const rawResponse = await generateEnforcedAIContent(prompt, 'gemma-4-26b-a4b-it', 300);
+      const rawResponse = await generateEnforcedAIContent(prompt, 'gemma-4-26b-a4b-it');
       let cleaned = rawResponse || '';
       if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\n?/, '').replace(/\n?```$/, '');
       else if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```\n?/, '').replace(/\n?```$/, '');

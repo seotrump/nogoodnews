@@ -4,11 +4,7 @@ import { generateText } from 'ai'
 
 // ── 모델명 정규화 (옛날 DB 레코드나 이상한 모델명 들어왔을 때 자동 보정) ──────
 function normalizeModelName(model?: string): string {
-  if (!model || model === 'local' || model === 'default') {
-    return 'gemma-4-31b-it'
-  }
-  const lower = model.toLowerCase()
-  if (lower.includes('gemma') || lower.includes('26b') || lower.includes('31b')) {
+  if (!model || model === 'local' || model === 'default' || model === 'base-gemma') {
     return 'gemma-4-31b-it'
   }
   return model
@@ -39,7 +35,7 @@ async function retrySameModel<T>(fn: () => Promise<T>, modelName: string, maxAtt
 }
 
 // ── @ai-sdk/google 경로: Gemma 계열 전용 ────────────────────
-async function generateWithAiSdkGoogle(prompt: string, modelId: string, maxOutputTokens?: number): Promise<string> {
+async function generateWithAiSdkGoogle(prompt: string, modelId: string): Promise<string> {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
 
@@ -49,8 +45,7 @@ async function generateWithAiSdkGoogle(prompt: string, modelId: string, maxOutpu
     const { text } = await generateText({
       model: googleProvider(modelId),
       prompt,
-      maxOutputTokens: maxOutputTokens,
-      maxRetries: 2,
+      maxRetries: 0,
     })
     const trimmed = text.trim()
     if (trimmed) {
@@ -62,19 +57,18 @@ async function generateWithAiSdkGoogle(prompt: string, modelId: string, maxOutpu
   }
 
   // ai-sdk 파싱 실패 또는 빈 텍스트 반환 시 레거시 SDK로 2차 직접 보정 시도
-  return await generateWithLegacySdk(prompt, modelId, maxOutputTokens)
+  return await generateWithLegacySdk(prompt, modelId)
 }
 
 // ── @google/generative-ai 경로: Gemini 계열 전용 ────────────
-async function generateWithLegacySdk(prompt: string, modelId: string, maxOutputTokens?: number): Promise<string> {
+async function generateWithLegacySdk(prompt: string, modelId: string): Promise<string> {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
 
   const genAI = new GoogleGenerativeAI(apiKey)
   console.log(`🚀 [AI Core / legacy] Gemini 경로 (${modelId}) 호출 시도...`)
   const model = genAI.getGenerativeModel({ 
-    model: modelId,
-    generationConfig: maxOutputTokens ? { maxOutputTokens } : undefined 
+    model: modelId
   })
   
   const result = await model.generateContent(prompt)
@@ -113,8 +107,7 @@ export function cleanAiThoughtOutput(rawText: string): string {
 // ── 공개 진입점 ────────────────────────────────────────────────
 export async function generateEnforcedAIContent(
   prompt: string,
-  preferredModel?: string,
-  maxOutputTokens?: number
+  preferredModel?: string
 ): Promise<string> {
   // 1. 모델명 정규화 (base-gemma, local 등 정식 명칭으로 보정)
   const primaryModel = normalizeModelName(preferredModel)
@@ -125,7 +118,7 @@ export async function generateEnforcedAIContent(
     try {
       // 1순위 동일 Gemma 모델로 최대 3회 재시도
       rawResult = await retrySameModel(
-        () => generateWithAiSdkGoogle(prompt, primaryModel, maxOutputTokens),
+        () => generateWithAiSdkGoogle(prompt, primaryModel),
         primaryModel,
         3
       )
@@ -134,7 +127,7 @@ export async function generateEnforcedAIContent(
       try {
         // Gemma 3회 모두 실패 시 2순위 Gemini Lite로 3회 재시도
         rawResult = await retrySameModel(
-          () => generateWithLegacySdk(prompt, 'gemini-3.1-flash-lite', maxOutputTokens),
+          () => generateWithLegacySdk(prompt, 'gemini-3.1-flash-lite'),
           'gemini-3.1-flash-lite',
           3
         )
@@ -150,7 +143,7 @@ export async function generateEnforcedAIContent(
     try {
       // 1순위 동일 Gemini 모델로 최대 3회 재시도
       rawResult = await retrySameModel(
-        () => generateWithLegacySdk(prompt, primaryModel, maxOutputTokens),
+        () => generateWithLegacySdk(prompt, primaryModel),
         primaryModel,
         3
       )
@@ -158,7 +151,7 @@ export async function generateEnforcedAIContent(
       console.warn(`⚠️ [AI Core] 1순위 Gemini (${primaryModel}) 3회 시도 모두 실패. 2순위 (${fallbackModel}) 시도...`, err1)
       try {
         rawResult = await retrySameModel(
-          () => generateWithLegacySdk(prompt, fallbackModel, maxOutputTokens),
+          () => generateWithLegacySdk(prompt, fallbackModel),
           fallbackModel,
           3
         )

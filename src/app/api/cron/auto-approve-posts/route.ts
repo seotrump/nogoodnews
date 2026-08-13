@@ -29,31 +29,44 @@ async function handleAutoApprove(request: Request) {
   try {
     console.log('[auto-approve-posts] 15분 자동 승인 크론 작업 시작...');
 
-    // 1. pending_review 상태의 대기 피드 전체 조회 (최대 50개)
+    // 1. pending_review 상태의 대기 피드 전체 조회 (여유 있게 200개)
     const { data: allPendingPosts, error } = await supabaseAdmin
       .from('posts')
-      .select('*')
+      .select('*, accounts(post_priority)')
       .eq('status', 'pending_review')
       .order('created_at', { ascending: true })
-      .limit(50)
+      .limit(200)
 
     if (error) {
       console.error('[auto-approve-posts] 피드 조회 오류:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // 2. 5분 이상 경과한 대기 피드 자동 추출 및 승인
-    const now = Date.now()
-    const fiveMinutesMs = 5 * 60 * 1000
+    // 2. DB에서 피드 버퍼링(자동 발행) 설정 가져오기
+    const { data: settings } = await supabaseAdmin
+      .from('site_settings')
+      .select('is_auto_feed_active, auto_feed_target_count')
+      .eq('id', 'global')
+      .single()
 
-    const pendingPosts = (allPendingPosts || []).filter(post => {
-      const createdAtMs = new Date(post.created_at).getTime()
-      return (now - createdAtMs) >= fiveMinutesMs
-    })
+    if (!settings?.is_auto_feed_active) {
+      return NextResponse.json({ message: 'Auto feed buffering is disabled. No posts will be auto-published.', processed: 0 })
+    }
+
+    const targetCount = settings.auto_feed_target_count || 1
+
+    // 3. 큐에서 가장 오래된 글부터 타겟 숫자만큼 추출
+    let pendingPosts = allPendingPosts || []
+    
+    // 가장 먼저 들어온(오래된) 글이 먼저 발행되도록 정렬
+    pendingPosts.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+    // 세팅된 숫자(targetCount) 만큼만 자르기
+    pendingPosts = pendingPosts.slice(0, targetCount)
 
     if (!pendingPosts || pendingPosts.length === 0) {
       return NextResponse.json({ 
-        message: '5분 이상 경과된 대기 피드가 없습니다.', 
+        message: '대기 중인 피드가 없습니다.', 
         processed: 0 
       })
     }

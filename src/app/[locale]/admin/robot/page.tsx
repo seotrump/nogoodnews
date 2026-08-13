@@ -12,10 +12,14 @@ import { getTranslations, getLocale } from 'next-intl/server'
 import UserBadge from '@/components/UserBadge'
 import RobotTableClient from '@/components/admin/RobotTableClient'
 import RobotHeaderButtons from '@/components/admin/RobotHeaderButtons'
+import ForceRunForm from '../ForceRunForm'
+import { forceAiPost } from '../actions'
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string, page?: string, query?: string, category?: string }> }) {
   const t = await getTranslations('Admin')
   const locale = await getLocale()
+  const boundForceAiPostPro = forceAiPost.bind(null, locale, 'pro')
+  const boundForceAiPostLite = forceAiPost.bind(null, locale, 'lite')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -91,11 +95,16 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <>
       <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* 상단 메인 타이틀 헤더 */}
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4 border-b border-gray-200 pb-4">
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 flex items-center gap-2 whitespace-nowrap">
-            관리센터
-          </h1>
-          <AutoBotButton mode="manual" />
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 border-b border-gray-200 pb-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <h1 className="text-xl sm:text-2xl font-black text-gray-900 flex items-center gap-2 whitespace-nowrap">
+              관리센터
+            </h1>
+            <AutoBotButton mode="manual" />
+          </div>
+          <div className="flex items-center">
+            <ForceRunForm actionPro={boundForceAiPostPro} actionLite={boundForceAiPostLite} pendingCount={pendingFeedCount || 0} />
+          </div>
         </div>
 
         {/* 탭 헤더 네비게이션 및 우측 검토대기 버튼 */}

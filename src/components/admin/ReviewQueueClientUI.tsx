@@ -1,16 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 import { approvePost, bulkApprovePosts, deletePostPermanently, runAutoApproveCronNow } from '@/app/[locale]/admin/guidelines-actions'
 import PostCard from '@/components/PostCard'
 
 export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: any[] }) {
+  const router = useRouter()
   const [posts, setPosts] = useState(initialPosts)
   const [activeTab, setActiveTab] = useState<'pending' | 'published' | 'rejected' | 'all'>('pending')
   const [isRunningCron, setIsRunningCron] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [currentTime, setCurrentTime] = useState(Date.now())
+
+  // 서버에서 prop으로 전달된 posts가 변경될 때마다(router.refresh) 로컬 상태 동기화
+  useEffect(() => {
+    setPosts(initialPosts)
+  }, [initialPosts])
+
+  // 1분마다 타이머 갱신 및 서버 데이터 재조회(자동 새로고침)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now())
+      router.refresh()
+    }, 60000)
+    return () => clearInterval(timer)
+  }, [router])
 
   const handleRunCronNow = async () => {
     setIsRunningCron(true)
@@ -19,9 +36,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
       const res = await runAutoApproveCronNow()
       if (res.count && res.count > 0) {
         setPosts(posts.map(p => {
-          const createdMs = new Date(p.created_at).getTime()
-          const isDue = (Date.now() - createdMs) >= (5 * 60 * 1000) // 백엔드와 동일하게 5분으로 통일
-          if (p.status === 'pending_review' && isDue) {
+          if (p.status === 'pending_review') {
             return { ...p, status: 'published' }
           }
           return p
@@ -122,14 +137,9 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
     return true
   })
 
-  // 생성 시간 기준 5분 경과 여부 및 남은 시간 계산 함수
-  const getMinutesRemaining = (createdAtStr: string) => {
-    const createdMs = new Date(createdAtStr).getTime()
-    const diffMs = Date.now() - createdMs
-    const remainingMs = (5 * 60 * 1000) - diffMs
-    if (remainingMs <= 0) return '발행 대기'
-    const remainingMinutes = Math.ceil(remainingMs / (60 * 1000))
-    return `발행 대기 (-${remainingMinutes}분)`
+  // 발행 대기 메시지
+  const getPendingMessage = () => {
+    return '다음 자동 승인 시 일괄 발행 예정'
   }
 
   return (
@@ -284,7 +294,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 bg-gray-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
-                          ⏳ {getMinutesRemaining(post.created_at)}
+                          ⏳ {getPendingMessage()}
                         </span>
                       )}
 

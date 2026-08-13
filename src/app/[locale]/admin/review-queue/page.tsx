@@ -20,7 +20,7 @@ export default async function ReviewQueueAdminPage() {
   // 1. status = 'rejected', 'pending_review', 및 최근 50개 'published' 게시글 조회
   const { data: queuePosts } = await supabaseAdmin
     .from('posts')
-    .select('*, accounts(display_name, avatar_url, username)')
+    .select('*, accounts(display_name, avatar_url, username, post_priority)')
     .in('status', ['rejected', 'pending_review', 'published'])
     .order('created_at', { ascending: false })
     .limit(100);

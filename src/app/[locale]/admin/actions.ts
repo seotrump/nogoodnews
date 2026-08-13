@@ -5,6 +5,7 @@ import { createClient as createServerClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { fetchRandomNews } from '@/utils/news-fetcher'
 import { generatePost } from '@/utils/ai-generator'
+import { generateEmbedding } from '@/utils/embedding'
 import { isAdmin, ADMIN_EMAIL } from '@/utils/auth'
 
 const supabaseAdmin = createClient(
@@ -236,6 +237,18 @@ export async function createAiBot(formData: FormData) {
     throw new Error('Failed to update AI account')
   }
 
+  // ── 1.5단계: 봇 생성 즉시 페르소나 임베딩 자동 생성 ────
+  try {
+    const embeddingText = `${displayName} ${finalRole} ${category || ''} ${personaPrompt}`
+    const embeddingVector = await generateEmbedding(embeddingText)
+    await supabaseAdmin.from('accounts').update({
+      persona_embedding: JSON.stringify(embeddingVector)
+    }).eq('id', botId)
+    console.log(`✅ [createAiBot] 봇 자동 임베딩 생성 완료: ${displayName}`)
+  } catch (embedError) {
+    console.error(`⚠️ [createAiBot] 임베딩 생성 실패 (봇 생성은 유지됨): ${displayName}`, embedError)
+  }
+
   // ── 2단계: 구조화 필드 UPDATE (v5.04 마이그레이션 이후) ────
   const existenceCategory = (formData.get('existenceCategory') as string) || (formData.get('existence_category') as string) || null
   const existenceDetail = (formData.get('existenceDetail') as string) || (formData.get('existence_detail') as string) || null
@@ -327,23 +340,22 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
       }
       aiAccounts = [targetBot]
     } else {
-      // 강제 추첨 시 댓글 전담 봇 전수 제외
-      aiAccounts = aiAccounts.filter((bot: any) => !isCommentOnlyBot(bot))
-
-      if (aiAccounts.length === 0) {
-        throw new Error('피드를 작성할 수 있는 봇이 존재하지 않습니다. (현재 등록된 봇들은 모두 댓글 전담 봇입니다)')
+      // 강제 추첨 시 기본적으로 댓글 전담 봇 제외하지만, 제외 후 남은 봇이 없으면(전부 댓글 전담이면) 예외적으로 포함 허용
+      let filteredAccounts = aiAccounts.filter((bot: any) => !isCommentOnlyBot(bot))
+      if (filteredAccounts.length === 0) {
+        filteredAccounts = aiAccounts // fallback: allow comment bots if no post bots exist
       }
+      aiAccounts = filteredAccounts
 
-        // Gemma 봇만 'pro' 강제피드, Flash Lite = 'lite' 강제피드, Flash(big)은 개별 봇 피드 버튼으로
-      // Gemma 봇만 'pro' 강제피드, Flash Lite = 'lite' 강제피드, Flash(big)은 개별 봇 피드 버튼으로
+      // Gemma 봇(31b 등 프로)만 'pro' 강제피드, Flash Lite + Gemma(26b 라이트) = 'lite' 강제피드
       if (modelType === 'pro') {
-        aiAccounts = aiAccounts.filter((bot: any) => GEMMA_MODELS.includes(bot.ai_model_provider))
+        aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-31b-it' || PRO_BOT_MODELS.includes(bot.ai_model_provider))
       } else if (modelType === 'lite') {
-        aiAccounts = aiAccounts.filter((bot: any) => FLASH_LITE_MODELS.includes(bot.ai_model_provider))
+        aiAccounts = aiAccounts.filter((bot: any) => bot.ai_model_provider === 'gemma-4-26b-a4b-it' || FLASH_LITE_MODELS.includes(bot.ai_model_provider))
       }
 
       if (aiAccounts.length === 0) {
-        throw new Error(`해당 모델(${modelType === 'pro' ? 'Gemma' : 'Flash Lite'}) 피드 작성이 가능한 활성 봇이 없습니다.`)
+        throw new Error(`해당 모델(${modelType === 'pro' ? '프로' : '라이트'}) 피드 작성이 가능한 활성 봇이 없습니다.`)
       }
     }
 
@@ -806,8 +818,8 @@ export async function deleteAccount(accountId: string) {
     throw new Error('Account not found')
   }
 
-  if (account.status !== 'banned') {
-    throw new Error('Account must be suspended (banned) before deletion')
+  if (account.status !== 'banned' && account.status !== 'paused') {
+    throw new Error('Account must be suspended (banned) or waiting (paused) before deletion')
   }
 
   // Delete from Auth (which cascades to accounts, posts, comments etc.)

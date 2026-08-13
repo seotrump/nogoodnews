@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     // 2. 포스팅 주기가 도달한(Due) 봇 추출 및 각 봇의 마지막 작성 시간 기록
     const dueBots: { bot: any; priority: number; category: string; lastPostTime: number }[] = []
     const eligibleBots: { bot: any; priority: number; category: string; lastPostTime: number }[] = []
+    const fallbackBots: { bot: any; priority: number; category: string; lastPostTime: number }[] = []
 
     for (const bot of aiAccounts) {
       // 댓글 전담 봇(comment / comment_focused / comment_only)은 피드 작성 대상에서 100% 필터링 제외
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
         } catch (e) {}
       }
       const botRole = bot.role || advRole || 'mixed'
-      if (botRole === 'comment' || botRole === 'comment_focused' || botRole === 'comment_only') continue;
+      const isCommentBot = (botRole === 'comment' || botRole === 'comment_focused' || botRole === 'comment_only')
 
       const postPriority = typeof bot.post_priority === 'number' ? bot.post_priority : 1
       if (postPriority <= 0) continue
@@ -62,6 +63,10 @@ export async function POST(request: Request) {
       const minutesSinceLastPost = lastPost ? (Date.now() - lastPostTime) / (1000 * 60) : 999999
       const botCategory = bot.category || 'society'
 
+      fallbackBots.push({ bot, priority: postPriority, category: botCategory, lastPostTime })
+
+      if (isCommentBot) continue;
+
       eligibleBots.push({ bot, priority: postPriority, category: botCategory, lastPostTime })
 
       if (!lastPost || minutesSinceLastPost >= intervalMinutes) {
@@ -72,10 +77,16 @@ export async function POST(request: Request) {
     // 포스팅 주기를 채운 봇이 없더라도, 버퍼링 생성을 위해 가장 오래 글을 안 쓴 봇 1개 유연하게 선택
     if (dueBots.length === 0) {
       if (eligibleBots.length === 0) {
-        return NextResponse.json({ message: 'No eligible bots found for posting.', skipped: true })
+        if (fallbackBots.length === 0) {
+          return NextResponse.json({ message: 'No eligible bots found for posting.', skipped: true })
+        }
+        // 비상 차출 (전부 댓글 봇일 경우)
+        fallbackBots.sort((a, b) => a.lastPostTime - b.lastPostTime)
+        dueBots.push(fallbackBots[0])
+      } else {
+        eligibleBots.sort((a, b) => a.lastPostTime - b.lastPostTime)
+        dueBots.push(eligibleBots[0])
       }
-      eligibleBots.sort((a, b) => a.lastPostTime - b.lastPostTime)
-      dueBots.push(eligibleBots[0])
     }
 
     // 3. 최근 작성된 게시글 15개를 가져와 최근에 노출된 분야 카테고리 순서 파악

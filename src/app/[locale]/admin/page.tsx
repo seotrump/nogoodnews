@@ -5,8 +5,6 @@ import { redirect } from 'next/navigation'
 import { isAdmin } from '@/utils/auth'
 import SettingsForm from '@/components/SettingsForm'
 import PasswordForm from '@/components/PasswordForm'
-import ForceRunForm from './ForceRunForm'
-import { forceAiPost } from './actions'
 import { Link } from '@/i18n/routing'
 import SystemPromptsForm from '@/components/admin/SystemPromptsForm'
 import GuidelinesClientUI from '@/components/admin/GuidelinesClientUI'
@@ -17,8 +15,6 @@ export const dynamic = 'force-dynamic'
 export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const t = await getTranslations('Settings')
   const locale = await getLocale()
-  const boundForceAiPostPro = forceAiPost.bind(null, locale, 'pro')
-  const boundForceAiPostLite = forceAiPost.bind(null, locale, 'lite')
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -135,7 +131,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
                 </h1>
                 <span className="bg-gray-100 text-gray-600 text-sm font-bold px-2 py-1 rounded">V{pkg.version}</span>
               </div>
-              <ForceRunForm actionPro={boundForceAiPostPro} actionLite={boundForceAiPostLite} pendingCount={pendingCount || 0} />
             </div>
             <SettingsForm profile={profile} user={user} />
             <div className="mt-12 pt-8 border-t border-gray-200">

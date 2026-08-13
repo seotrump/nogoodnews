@@ -66,7 +66,7 @@ ${text}
 2. 무조건 100% 한국어로만 작성하세요.`
 
     const modelToUse = bot.ai_model_provider || 'gemma-4-26b-a4b-it'
-    const rawTransformed = await generateEnforcedAIContent(prompt, modelToUse, 500)
+    const rawTransformed = await generateEnforcedAIContent(prompt, modelToUse)
     const cleanedText = cleanPersonaTransformResult(rawTransformed)
 
     return NextResponse.json({

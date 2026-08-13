@@ -24,9 +24,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ status: 'skipped', reason: 'Auto bot creation is disabled in settings.' })
     }
 
-    const targetCount = siteSettings.auto_bot_target_count || 50
-
-    // 2. 현재 대기 중인 오토봇 개수 확인 (status가 'paused'인 것만 카운트)
+    // 2. 대기 중인 오토봇 개수 확인 로직 (제한용이 아니라 로그용으로만 유지)
     const { count, error: countError } = await supabaseAdmin
       .from('accounts')
       .select('*', { count: 'exact', head: true })
@@ -35,15 +33,14 @@ export async function GET(request: Request) {
 
     if (countError) throw countError
 
-    if (count !== null && count >= targetCount) {
-      return NextResponse.json({ status: 'skipped', reason: `Target count (${targetCount}) reached. Current count: ${count}` })
-    }
+    // 제한 해제: count >= targetCount 체크 삭제
 
-    // 3. 봇 종류 선택 (80% 확률로 Lite, 20% 확률로 Pro)
-    const isPro = Math.random() < 0.2;
+
+    // 3. 봇 종류 선택 (50% 확률로 Lite, 50% 확률로 Pro)
+    const isPro = Math.random() < 0.5;
     const botType = isPro ? 'pro' : 'lite';
 
-    console.log(`🤖 [AutoBot Cron] 시작... 타입: ${botType}, 현재 수: ${count}/${targetCount}`);
+    console.log(`🤖 [AutoBot Cron] 시작... 타입: ${botType}, 현재 대기 수: ${count} (제한 없음)`);
 
     // 4. 기존 봇 이름 목록 (중복 방지)
     const { data: existingBots } = await supabaseAdmin
@@ -86,7 +83,7 @@ export async function GET(request: Request) {
 3. 기본 예시: "기후본-Climatebon", "논리봇-Logicbot", "회로노마드-CircuitNomad"
 ${existingListStr}
 
-[반환해야 할 JSON 형식 - 오직 유효한 JSON만 출력하세요]
+[반환해야 할 JSON 형식 - 중요: 절대로 당신의 생각, 분석, 마크다운 코드블록 밖의 어떤 텍스트도 출력하지 마세요. 처음부터 끝까지 오직 { 로 시작해서 } 로 끝나는 유효한 JSON 객체 1개만 출력하세요!]
 {
   "displayName": "한글-영어 병행 닉네임",
   "coreIdentity": "유저의 핵심 정체성을 1~2줄로 강렬하게 요약",
@@ -104,27 +101,41 @@ ${existingListStr}
 `
     let parsed: any = null;
     let attempt = 0;
-    const MAX_RETRIES = 3;
+    const MAX_RETRIES = 1; // Vercel 60초 타임아웃 방지를 위해 1회 실패 시 즉시 폴백(Fallback) 봇 생성
 
     while (attempt < MAX_RETRIES) {
       try {
-        let jsonStr = await generateEnforcedAIContent(prompt, 'gemma-4-26b-a4b-it', 500)
+        let jsonStr = await generateEnforcedAIContent(prompt, 'gemma-4-26b-a4b-it')
         if (!jsonStr) throw new Error('AI Provider generated empty content')
 
-        // 마크다운 코드블록 제거 및 JSON 추출
-        let cleaned = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-        if (jsonMatch) cleaned = jsonMatch[0]
+        // 1. 코드블록 마크다운에서 추출 시도
+        const blockMatch = jsonStr.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i)
+        let cleaned = ''
+        if (blockMatch) {
+          cleaned = blockMatch[1]
+        } else {
+          // 2. 마크다운이 없으면 가장 바깥쪽 {...} 추출
+          const firstBrace = jsonStr.indexOf('{')
+          const lastBrace = jsonStr.lastIndexOf('}')
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            cleaned = jsonStr.substring(firstBrace, lastBrace + 1)
+          } else {
+            cleaned = jsonStr
+          }
+        }
 
-        // 트레일링 커마 제거 및 줄바꿈 보정
+        // 트레일링 콤마 제거
         cleaned = cleaned.replace(/,\s*([\}\]])/g, '$1')
 
         try {
           parsed = JSON.parse(cleaned)
         } catch (parseErr) {
-          // Regex 방어적 키 추출
-          const nameMatch = cleaned.match(/"displayName"\s*:\s*"([^"]+)"/)
-          const identityMatch = cleaned.match(/"coreIdentity"\s*:\s*"([^"]+)"/)
+          console.warn('--- FAILED TO PARSE JSON ---');
+          console.warn('RAW jsonStr:', jsonStr);
+          console.warn('CLEANED string:', cleaned);
+          // Regex 방어적 키 추출 (최후의 수단)
+          const nameMatch = cleaned.match(/"displayName"\s*:\s*"([^"]+)"/) || jsonStr.match(/"displayName"\s*:\s*"([^"]+)"/)
+          const identityMatch = cleaned.match(/"coreIdentity"\s*:\s*"([^"]+)"/) || jsonStr.match(/"coreIdentity"\s*:\s*"([^"]+)"/)
           if (nameMatch || identityMatch) {
             parsed = {
               displayName: nameMatch ? nameMatch[1] : undefined,

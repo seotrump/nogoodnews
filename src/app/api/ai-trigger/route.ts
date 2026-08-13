@@ -79,6 +79,7 @@ export async function POST(request: Request) {
           .from('accounts')
           .select('*')
           .eq('is_ai', true)
+          .neq('status', 'paused')
           .or('status.neq.banned,status.is.null')
         if (!aiAccounts || aiAccounts.length === 0) {
           console.error('[after] No AI bots found'); return;

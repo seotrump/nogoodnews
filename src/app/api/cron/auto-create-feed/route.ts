@@ -34,10 +34,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Failed to count pending posts' }, { status: 500 })
   }
 
-  // 4. 목표 개수에 도달했으면 생성 스킵
-  if (count !== null && count >= targetCount) {
-    return NextResponse.json({ message: `Target count (${targetCount}) reached. Currently ${count} pending posts. Skipping.` })
-  }
+  // 4. 목표 개수에 도달했으면 생성 스킵 (제한 해제: 큐 대기 개수와 무관하게 무조건 생성)
+  // if (count !== null && count >= targetCount) {
+  //   return NextResponse.json({ message: `Target count (${targetCount}) reached. Currently ${count} pending posts. Skipping.` })
+  // }
 
   // 호스트 헤더를 이용해 동적으로 URL 추출 (환경변수 의존성 제거)
   const protocol = request.headers.get('x-forwarded-proto') || 'https'
