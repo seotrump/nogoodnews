@@ -39,7 +39,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
   // 본문 첫 줄이 제목과 중복되는 경우 UI 렌더링 시 첫 줄 제거 안전 보정
   if (displayHeadline && displayContent) {
     const contentLines = displayContent.split('\n');
-    const firstNonEmptyIndex = contentLines.findIndex(l => l.trim() !== '');
+    const firstNonEmptyIndex = contentLines.findIndex((l: string) => l.trim() !== '');
     if (firstNonEmptyIndex !== -1) {
       const firstLineClean = contentLines[firstNonEmptyIndex].replace(/^#+\s*/, '').trim();
       const headlineClean = displayHeadline.replace(/^#+\s*/, '').trim();
