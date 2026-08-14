@@ -59,7 +59,7 @@ export async function GET(request: Request) {
 
     const CATEGORY_IDS = ['politics', 'economy', 'society', 'tech', 'world', 'entertainment', 'sports', 'culture', 'opinion']
     const EXISTENCE_TYPES = ['human', 'creature', 'mechanical', 'spiritual', 'extraterrestrial', 'conceptual', 'hybrid', 'other']
-    const GENDERS = ['male', 'female', 'non_binary', 'unknown']
+    const GENDERS = ['male', 'female', 'neutral'] // unknown 제거, 남/녀/중성만 허용
 
     const targetCategory = CATEGORY_IDS[Math.floor(Math.random() * CATEGORY_IDS.length)]
     const targetExistenceType = EXISTENCE_TYPES[Math.floor(Math.random() * EXISTENCE_TYPES.length)]
@@ -75,24 +75,31 @@ export async function GET(request: Request) {
 [필수 지정 카테고리 & 존재유형 & 성별]
 - 전문 분야 카테고리: "${targetCategory}"
 - 존재 유형(existence_category): "${targetExistenceType}"
-- 성별(gender): "${targetGender}"
+- 성별(gender): "${targetGender}" (반드시 지정된 성별을 바탕으로 말투와 성향을 명확히 할 것)
+
+[페르소나 템플릿 풀(Pool)]
+아래의 템플릿 중 하나를 무작위로 영감으로 삼아 깊이 있는 봇을 설정하세요.
+- 공시생(공시맨/걸), 요조숙녀, 취준생, 헬스창, 아이돌 악성개인팬, 밀리터리 덕후, N년차 육아맘, 영끌족, 은퇴한 꼰대 옹, 중2병 잼민이, 뷰티 인플루언서 등
 
 [닉네임(displayName) 필수 생성 규칙 - 엄격 준수!]
 1. 닉네임은 반드시 "한글명칭-EnglishName" 형태로 하이픈('-')을 사용하여 한글과 영어를 같이 표기하세요.
 2. 한글과 영문의 스펠링 짝을 정확하게 맞추세요. ('본'이면 '-bon', '봇'이면 '-bot')
-3. 기본 예시: "기후본-Climatebon", "논리봇-Logicbot", "회로노마드-CircuitNomad"
+3. 닉네임 생성 시 반드시 성향과 계급을 직관적으로 보여주는 1~2글자 접미사를 적극 활용하세요.
+   (예: ~좌, ~갓, ~신, ~러, ~충, ~덕, ~맘, ~단, ~빠, ~까, ~맨, ~걸, ~남, ~녀, ~봇, ~꾼, ~옹, ~잼, ~몬 등)
+4. 기본 예시: "팩폭좌-Factjwa", "우주덕-Spaceduck", "조신녀-Joshingirl"
 ${existingListStr}
 
 [반환해야 할 JSON 형식 - 중요: 절대로 당신의 생각, 분석, 마크다운 코드블록 밖의 어떤 텍스트도 출력하지 마세요. 처음부터 끝까지 오직 { 로 시작해서 } 로 끝나는 유효한 JSON 객체 1개만 출력하세요!]
 {
   "displayName": "한글-영어 병행 닉네임",
+  "keywords": "#요조숙녀 #열공맨 등 한눈에 캐릭터를 파악할 수 있는 핵심 정체성 해시태그 3~4개",
   "coreIdentity": "유저의 핵심 정체성을 1~2줄로 강렬하게 요약",
   "category": "${targetCategory}",
   "existence_category": "${targetExistenceType}",
   "existence_detail": "존재유형 자유 서술 (1문장)",
   "realm_category": "earth_physical|celestial|digital|extraterrestrial 중 1개 선택",
   "realm_detail": "거주지 서술",
-  "speech_style": "말투 스타일",
+  "speech_style": "성별(${targetGender})과 닉네임 성향이 강력하게 반영된 말투 스타일",
   "gender": "${targetGender}",
   "role": "${roleValue}",
   "axisTone": 5, "axisTarget": 5, "axisVocab": 5, "axisAttitude": 5, "axisAffection": 5,
@@ -193,7 +200,10 @@ ${existingListStr}
     formData.append('category', parsed.category || 'politics')
     formData.append('botTier', '1')
     formData.append('status', 'paused')
-    formData.append('personaPrompt', coreIdentity)
+    const keywords = parsed.keywords || ''
+    const finalPersonaPrompt = `[${displayName}] ${keywords}\n${coreIdentity}`
+
+    formData.append('personaPrompt', finalPersonaPrompt)
     formData.append('advancedSettings', JSON.stringify(advancedSettings))
     formData.append('postPriority', '1')
     formData.append('commentPriority', '1')

@@ -130,7 +130,9 @@ export default function AutoBotButton({
     formData.append('category', data.category || 'politics')
     formData.append('botTier', '1')
     formData.append('status', 'active')
-    formData.append('personaPrompt', coreIdentity)
+    const keywords = data.keywords || ''
+    const finalPersonaPrompt = `[${displayName}] ${keywords}\n${coreIdentity}`
+    formData.append('personaPrompt', finalPersonaPrompt)
     formData.append('advancedSettings', JSON.stringify(advancedSettings))
 
     formData.append('postPriority', '1')
