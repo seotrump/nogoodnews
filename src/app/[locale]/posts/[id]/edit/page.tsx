@@ -5,6 +5,7 @@ import { updatePost, deletePost } from '@/app/[locale]/posts/actions'
 import { isAdmin } from '@/utils/auth'
 
 import ImageUploadPreview from '@/components/ImageUploadPreview'
+import AiImageInjectButton from '@/components/admin/AiImageInjectButton'
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string, locale: string }> }) {
   const supabase = await createClient()
@@ -68,9 +69,12 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
             </div>
 
             <div className="flex-grow flex flex-col">
-              <label htmlFor="content" className="block text-sm font-medium mb-1 text-gray-700">
-                내용
-              </label>
+              <div className="flex items-center mb-1">
+                <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+                  내용
+                </label>
+                <AiImageInjectButton targetId="content" />
+              </div>
               <textarea
                 id="content"
                 name="content"

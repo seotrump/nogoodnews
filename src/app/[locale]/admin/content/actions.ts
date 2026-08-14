@@ -21,12 +21,21 @@ export async function publishSeoBlog(botId: string, keyword: string, content: st
   const h1Match = content.match(/^# (.*)$/m)
   const headline = h1Match ? h1Match[1].trim() : keyword
 
+  // Ensure the bot has the 'blogger' badge
+  const { data: botAccount } = await supabaseAdmin.from('accounts').select('badges').eq('id', botId).single()
+  const currentBadges = botAccount?.badges || []
+  if (!currentBadges.includes('blogger')) {
+    await supabaseAdmin.from('accounts').update({
+      badges: [...currentBadges, 'blogger']
+    }).eq('id', botId)
+  }
+
   const { data, error } = await supabaseAdmin.from('posts').insert({
     author_id: botId,
     headline: headline,
     link_title: keyword,
     content: content,
-    status: 'published'
+    status: 'pending_review'
   }).select().single()
 
   if (error) {

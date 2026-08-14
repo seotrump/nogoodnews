@@ -13,6 +13,16 @@ export default function SeoBlogGeneratorUI({ bots }: { bots: any[] }) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [content, setContent] = useState('')
 
+  // Suggestion State
+  const [suggestions, setSuggestions] = useState<{ keywords: string[], titles: string[] } | null>(null)
+  const [isSuggesting, setIsSuggesting] = useState(false)
+
+  // Image Search State
+  const [isImageSearchOpen, setIsImageSearchOpen] = useState(false)
+  const [imageQuery, setImageQuery] = useState('')
+  const [imageResults, setImageResults] = useState<any[]>([])
+  const [isSearchingImage, setIsSearchingImage] = useState(false)
+
   useEffect(() => {
     if (isPiloting && activeBot?.id) {
       setSelectedBotId(activeBot.id)
@@ -140,6 +150,56 @@ export default function SeoBlogGeneratorUI({ bots }: { bots: any[] }) {
     }
   }
 
+  const handleSuggest = async () => {
+    if (!keyword) return toast.error('먼저 기준 키워드를 입력해주세요.')
+    setIsSuggesting(true)
+    const toastId = toast.loading('AI가 연관 키워드와 제목을 기획 중입니다...')
+    try {
+      const res = await fetch('/api/ai-blog-suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSuggestions(data)
+        toast.success('추천 완료!', { id: toastId })
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (e: any) {
+      toast.error('추천 실패: ' + e.message, { id: toastId })
+    } finally {
+      setIsSuggesting(false)
+    }
+  }
+
+  const handleImageSearch = async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    if (!imageQuery) return toast.error('검색어를 입력해주세요.')
+    setIsSearchingImage(true)
+    try {
+      const res = await fetch(`/api/image-search?q=${encodeURIComponent(imageQuery)}`)
+      const data = await res.json()
+      if (res.ok) {
+        setImageResults(data.results)
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (e: any) {
+      toast.error('이미지 검색 실패: ' + e.message)
+    } finally {
+      setIsSearchingImage(false)
+    }
+  }
+
+  const handleInsertImage = (img: any) => {
+    const markdownImage = `\n![${keyword || '이미지'}](${img.url})\n`
+    setContent(prev => markdownImage + prev)
+    setIsImageSearchOpen(false)
+    toast.success('이미지가 삽입되었습니다.')
+  }
+
   return (
     <div className="flex flex-col md:flex-row gap-6">
       {/* 왼쪽: 에디터 및 설정 */}
@@ -162,7 +222,16 @@ export default function SeoBlogGeneratorUI({ bots }: { bots: any[] }) {
               </div>
             )}
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">SEO 타겟 키워드</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-gray-700">SEO 타겟 키워드</label>
+                <button 
+                  onClick={handleSuggest}
+                  disabled={isSuggesting}
+                  className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded font-bold hover:bg-indigo-100 disabled:opacity-50 transition"
+                >
+                  {isSuggesting ? '기획 중...' : '💡 AI 추천'}
+                </button>
+              </div>
               <input 
                 type="text" 
                 value={keyword}
@@ -170,6 +239,30 @@ export default function SeoBlogGeneratorUI({ bots }: { bots: any[] }) {
                 placeholder="예: 오사카 3박4일 코스"
                 className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
               />
+              {suggestions && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100 text-sm">
+                  <div className="mb-2">
+                    <span className="font-bold text-gray-700 text-xs block mb-1">연관 키워드 (클릭하여 교체)</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {suggestions.keywords.map((kw, i) => (
+                        <button key={i} onClick={() => setKeyword(kw)} className="bg-white border border-gray-200 px-2 py-1 rounded-md text-xs hover:border-purple-400 hover:text-purple-600 transition">
+                          {kw}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-bold text-gray-700 text-xs block mb-1">추천 제목 (클릭하여 본문에 삽입)</span>
+                    <div className="flex flex-col gap-1">
+                      {suggestions.titles.map((title, i) => (
+                        <button key={i} onClick={() => setContent(prev => `# ${title}\n\n` + prev)} className="text-left bg-white border border-gray-200 px-2 py-1 rounded-md text-xs hover:border-purple-400 hover:text-purple-600 transition truncate">
+                          {title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <button 
               onClick={handleGenerate}
@@ -183,7 +276,21 @@ export default function SeoBlogGeneratorUI({ bots }: { bots: any[] }) {
 
         {/* 에디터 (뷰어) */}
         <div className="bg-white p-4 rounded-xl border border-gray-200 min-h-[500px]">
-          <h3 className="text-sm font-bold text-gray-700 mb-2">마크다운 본문 (Preview)</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-bold text-gray-700">마크다운 본문 (Preview)</h3>
+            <button 
+              onClick={() => {
+                const query = keyword || '풍경'
+                setImageQuery(query)
+                setIsImageSearchOpen(true)
+                // Need a tiny delay for state update if we were to trigger fetch here. 
+                // Let's just let user click search in the modal to be safe, or we can fetch immediately.
+              }}
+              className="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-bold hover:bg-emerald-100 flex items-center gap-1 transition"
+            >
+              🖼️ 무료 이미지 추가
+            </button>
+          </div>
           {content ? (
             <div className="prose prose-sm max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -230,6 +337,50 @@ export default function SeoBlogGeneratorUI({ bots }: { bots: any[] }) {
           </button>
         </div>
       </div>
+
+      {/* Image Search Modal */}
+      {isImageSearchOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[80vh] flex flex-col overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-bold text-lg">무료 이미지 검색 (Pixabay)</h3>
+              <button onClick={() => setIsImageSearchOpen(false)} className="text-gray-400 hover:text-black font-bold text-xl">✕</button>
+            </div>
+            <div className="p-4 border-b bg-gray-50">
+              <form onSubmit={handleImageSearch} className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={imageQuery}
+                  onChange={(e) => setImageQuery(e.target.value)}
+                  placeholder="검색어 입력 (한국어 지원)"
+                  className="flex-1 border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-emerald-500"
+                />
+                <button type="submit" disabled={isSearchingImage} className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold text-sm disabled:opacity-50">
+                  {isSearchingImage ? '검색 중...' : '검색'}
+                </button>
+              </form>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 bg-gray-100">
+              {imageResults.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {imageResults.map(img => (
+                    <div key={img.id} onClick={() => handleInsertImage(img)} className="bg-white rounded-lg overflow-hidden shadow-sm cursor-pointer hover:ring-2 ring-emerald-500 transition group relative">
+                      <img src={img.thumbnail} alt={img.title} className="w-full h-24 object-cover" />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition flex items-center justify-center">
+                        <span className="opacity-0 group-hover:opacity-100 bg-emerald-600 text-white text-xs font-bold px-2 py-1 rounded shadow">삽입하기</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10 text-gray-400 text-sm">
+                  검색 결과가 없습니다.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

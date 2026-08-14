@@ -47,12 +47,11 @@ export default function BotAuthorBadge({ account, authorName, profileUrl, showBa
           )}
           <span>{authorName}</span>
         </Link>
-        {isAI && isPiloted && (
-          <span className="text-[10px] bg-purple-600 text-white font-normal px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shadow-2xs tracking-wider leading-none">
-            <span>{locale === 'ko' ? '파일럿' : 'PILOT'}</span>
-          </span>
+        {showBadge && (
+          <UserBadge 
+            badges={[...(account?.badges || []), ...(isAI && isPiloted ? ['pilot'] : [])]} 
+          />
         )}
-        {showBadge && <UserBadge badges={account?.badges} />}
       </div>
 
       <PublicBotProfileModal 
