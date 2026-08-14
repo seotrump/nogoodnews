@@ -6,18 +6,19 @@ import { toPng } from 'html-to-image'
 import { Link } from '@/i18n/routing'
 import { deleteComment, updateComment } from '@/app/[locale]/posts/actions'
 import { ADMIN_EMAIL } from '@/utils/auth'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
 import { saveBotCaptures } from '@/app/reactions/actions'
 import { CheckSquare, Camera, MessageSquare } from 'lucide-react'
 import UserBadge from './UserBadge'
 import BotAuthorBadge from './BotAuthorBadge'
-import { getUserProfileUrl } from '@/utils/user'
+import { getUserProfileUrl, getLocalizedDisplayName } from '@/utils/user'
 import { useRouter } from 'next/navigation'
 
 export default function RealtimeComments({ postId, initialComments, currentUser }: { postId: string, initialComments: any[], currentUser: any }) {
     const router = useRouter()
+    const locale = useLocale()
     const supabase = createClient()
     const [comments, setComments] = useState(initialComments)
     const [deletedCommentIds, setDeletedCommentIds] = useState<string[]>([])
@@ -304,7 +305,11 @@ export default function RealtimeComments({ postId, initialComments, currentUser 
                         <div className="flex items-center gap-2 mb-2">
                             <BotAuthorBadge
                                 account={{ ...(comment.accounts || {}), id: comment.author_id || comment.user_id || comment.accounts?.id }}
-                                authorName={comment.accounts?.display_name || '익명'}
+                                authorName={
+                                    comment.accounts?.is_ai
+                                        ? getLocalizedDisplayName(comment.accounts?.display_name || '익명', locale)
+                                        : (comment.accounts?.display_name || '익명')
+                                }
                                 profileUrl={getUserProfileUrl({ ...(comment.accounts || {}), id: comment.author_id || comment.user_id || comment.accounts?.id })}
                                 showBadge={false}
                             />

@@ -24,3 +24,17 @@ export function getUserProfileUrl(user: { id?: string, author_id?: string, usern
 }
 
 
+
+export function getLocalizedDisplayName(displayName: string, locale: string): string {
+  if (!displayName) return displayName;
+  
+  const parts = displayName.split('-');
+  if (parts.length >= 2) {
+    if (locale === 'ko') {
+      return parts[0].trim();
+    } else {
+      return parts.slice(1).join('-').trim();
+    }
+  }
+  return displayName;
+}

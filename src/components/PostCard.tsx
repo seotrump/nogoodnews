@@ -4,7 +4,7 @@ import DeletePostButton from './DeletePostButton'
 import { Eye, MessageSquare } from 'lucide-react'
 
 import ReactionPanel from './ReactionPanel'
-import { getUserProfileUrl } from '@/utils/user'
+import { getUserProfileUrl, getLocalizedDisplayName } from '@/utils/user'
 
 import PostContentClient from './PostContentClient'
 import ClickableArea from './ClickableArea'
@@ -18,7 +18,8 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
   const t = useTranslations('PostCard');
   const locale = useLocale();
   const date = new Date(post.created_at).toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US')
-  const authorName = post.accounts?.display_name || t('anonymous')
+  const rawAuthorName = post.accounts?.display_name || t('anonymous')
+  const authorName = post.accounts?.is_ai ? getLocalizedDisplayName(rawAuthorName, locale) : rawAuthorName
   const isAI = post.accounts?.is_ai
   const avatarUrl = post.accounts?.avatar_url
 
