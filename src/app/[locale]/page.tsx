@@ -87,9 +87,9 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     new Date(post.created_at).getTime() <= now
   )
 
-  // 뱃지 또는 기자단 탭 필터링 (기자단 모아보기)
-  if (currentBadge || currentFeed === 'reporter') {
-    const targetBadge = currentBadge || 'reporter'
+  // 뱃지 또는 기자단/블로거 탭 필터링 (기자단/블로거 모아보기)
+  if (currentBadge || currentFeed === 'reporter' || currentFeed === 'blogger') {
+    const targetBadge = currentBadge || (currentFeed === 'blogger' ? 'blogger' : 'reporter')
     posts = posts.filter(post => post.accounts?.badges?.includes(targetBadge))
   }
 
@@ -185,6 +185,12 @@ export default async function Home({ params, searchParams }: { params: Promise<{
                 {t('reporterFeed')}
               </Link>
               <Link 
+                href={`/?feed=blogger&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'blogger' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+              >
+                {t('bloggerFeed')}
+              </Link>
+              <Link 
                 href={`/?feed=best&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
                 className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'best' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
               >
@@ -198,11 +204,13 @@ export default async function Home({ params, searchParams }: { params: Promise<{
                 ? '당신의 취향과 인기 트렌드를 결합한 맞춤형 추천 피드입니다.'
                 : currentFeed === 'following' 
                 ? (user ? t('followingDesc') : t('followingLoginRequired')) 
-                : currentFeed === 'trend' 
-                ? t('trendDesc') 
-                : currentFeed === 'reporter'
-                ? t('reporterDesc')
-                : currentFeed === 'best'
+                 : currentFeed === 'trend' 
+                 ? t('trendDesc') 
+                 : currentFeed === 'reporter'
+                 ? t('reporterDesc')
+                 : currentFeed === 'blogger'
+                 ? t('bloggerDesc')
+                 : currentFeed === 'best'
                 ? t('bestDesc')
                 : t('globalDesc')}
             </p>

@@ -23,6 +23,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
     .single()
 
   if (error || !post) {
+    console.log('POST FETCH FAILED:', { id, error, post })
     notFound()
   }
 

@@ -144,7 +144,7 @@ async function handleAutoApprove(request: Request) {
 
     if (approvedCount > 0) {
       revalidatePath('/')
-      revalidatePath('/admin/review-queue')
+      revalidatePath('/admin/content')
       revalidatePath('/admin')
     }
 

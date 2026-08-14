@@ -146,7 +146,7 @@ export async function approvePost(postId: string) {
     .eq('id', postId);
 
   if (error) throw new Error(`피드 발행 승인 실패: ${error.message}`);
-  revalidatePath('/admin/review-queue');
+  revalidatePath('/admin/content');
 }
 
 export async function bulkApprovePosts(postIds: string[]) {
@@ -178,7 +178,7 @@ export async function bulkApprovePosts(postIds: string[]) {
     }
   }
 
-  revalidatePath('/admin/review-queue');
+  revalidatePath('/admin/content');
   revalidatePath('/');
 }
 
@@ -191,7 +191,7 @@ export async function deletePostPermanently(postId: string) {
     .eq('id', postId);
 
   if (error) throw new Error(`피드 삭제 실패: ${error.message}`);
-  revalidatePath('/admin/review-queue');
+  revalidatePath('/admin/content');
   revalidatePath('/');
 }
 
@@ -236,7 +236,7 @@ export async function runAutoApproveCronNow() {
     count++;
   }
 
-  revalidatePath('/admin/review-queue');
+  revalidatePath('/admin/content');
   revalidatePath('/');
   revalidatePath('/admin');
 

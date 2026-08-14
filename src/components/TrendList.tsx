@@ -38,7 +38,7 @@ export default async function TrendList() {
         <TrendingUp className="w-5 h-5 text-blue-600 flex-shrink-0" />
         <h2 className="font-bold text-gray-900">{t('title')}</h2>
       </div>
-      <div className="flex flex-nowrap gap-2 px-1 overflow-hidden h-9 w-full">
+      <div className="flex flex-wrap gap-2 px-1 w-full">
         {tags.map((tag: any) => (
           <Link 
             key={tag.id} 

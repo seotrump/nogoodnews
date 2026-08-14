@@ -80,7 +80,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
 
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
-      
       {/* Inner Tabs */}
       <div className="flex flex-row gap-2 border-b border-gray-200 pb-2 flex-wrap">
         <Link 
@@ -94,12 +93,6 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'guidelines' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
           규칙 관리
-        </Link>
-        <Link 
-          href="/admin?tab=feed" 
-          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'feed' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-        >
-          피드 설정
         </Link>
         <Link 
           href="/admin?tab=comment" 

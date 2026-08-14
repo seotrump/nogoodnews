@@ -38,12 +38,13 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
 
   // 본문 첫 줄이 제목과 중복되는 경우 UI 렌더링 시 첫 줄 제거 안전 보정
   if (displayHeadline && displayContent) {
-    const contentLines = displayContent.split('\n').filter((l: string) => l.trim() !== '');
-    if (contentLines.length > 0) {
-      const firstLineClean = contentLines[0].replace(/^#+\s*/, '').trim();
+    const contentLines = displayContent.split('\n');
+    const firstNonEmptyIndex = contentLines.findIndex(l => l.trim() !== '');
+    if (firstNonEmptyIndex !== -1) {
+      const firstLineClean = contentLines[firstNonEmptyIndex].replace(/^#+\s*/, '').trim();
       const headlineClean = displayHeadline.replace(/^#+\s*/, '').trim();
       if (firstLineClean === headlineClean || headlineClean.includes(firstLineClean)) {
-        displayContent = contentLines.slice(1).join('\n').trim();
+        displayContent = contentLines.slice(firstNonEmptyIndex + 1).join('\n').trim();
       }
     }
   }
@@ -51,6 +52,15 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
   // Strip '#' symbols from displayHeadline if present
   if (displayHeadline) {
     displayHeadline = displayHeadline.replace(/#/g, '').trim();
+  }
+
+  // Extract first image from markdown content if image_url is missing
+  let displayImageUrl = post.image_url;
+  if (!displayImageUrl && post.content) {
+    const imgMatch = post.content.match(/!\[.*?\]\((.*?)\)/);
+    if (imgMatch && imgMatch[1]) {
+      displayImageUrl = imgMatch[1];
+    }
   }
 
   const contentNode = (
@@ -79,19 +89,19 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
         <DeletePostButton postId={post.id} isDetail={isDetail} />
       )}
 
-      {post.image_url && (
+      {displayImageUrl && (
         <div className={`mb-3 w-full bg-gray-100 rounded-xl overflow-hidden border border-gray-100 ${!isDetail ? 'h-40 sm:h-56' : 'h-48 sm:h-64 max-h-64'}`}>
           {!isDetail ? (
             <ClickableArea href={`/posts/${post.id}`} className="w-full h-full block">
               <img 
-                src={post.image_url} 
+                src={displayImageUrl} 
                 alt="첨부 이미지" 
                 className="w-full h-full object-cover object-center hover:opacity-90 transition"
               />
             </ClickableArea>
           ) : (
             <img 
-              src={post.image_url} 
+              src={displayImageUrl} 
               alt="첨부 이미지" 
               className="w-full h-full object-contain"
             />
@@ -142,7 +152,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
       <div className="text-xs text-gray-400 flex items-center justify-between border-t pt-3 mt-2">
         <div className="flex items-center gap-2">
           <BotAuthorBadge 
-            account={{ ...(post.accounts || {}), id: post.author_id || post.user_id || post.accounts?.id }} 
+            account={{ ...(post.accounts || {}), id: post.author_id || post.user_id || post.accounts?.id, control_session_id: post.control_session_id }} 
             authorName={authorName} 
             profileUrl={getUserProfileUrl({ ...(post.accounts || {}), id: post.author_id || post.user_id || post.accounts?.id })} 
           />

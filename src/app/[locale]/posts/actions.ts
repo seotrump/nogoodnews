@@ -79,6 +79,7 @@ export async function createPost(formData: FormData) {
     if (botAccount && botAccount.is_ai) {
       finalAuthorId = activePersonaId
       clientToUse = supabaseAdmin
+      controlSessionId = 'piloted'
     }
   }
 
@@ -90,7 +91,8 @@ export async function createPost(formData: FormData) {
     link_title: linkTitle || null,
     url: cleanUrl,
     content,
-    image_url: imageUrl
+    image_url: imageUrl,
+    control_session_id: controlSessionId
   }
 
   if (pollData) {
@@ -163,10 +165,9 @@ export async function updatePost(postId: string, formData: FormData) {
   const linkTitle = formData.get('link_title') as string
   const url = formData.get('url') as string
   const content = formData.get('content') as string
-  const category = (formData.get('category') as string) || 'all'
   const imageFile = formData.get('imageFile') as File | null
 
-  const updateData: any = { headline, link_title: linkTitle, url, content, category }
+  const updateData: any = { headline, link_title: linkTitle, url, content }
 
   if (imageFile && imageFile.size > 0) {
     const fileExt = imageFile.name.split('.').pop()

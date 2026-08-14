@@ -37,9 +37,9 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
           <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">피드 수정</h1>
           
-          <form action={updatePostWithId} className="flex flex-col gap-4 sm:gap-6">
+          <form action={updatePostWithId} className="flex flex-col gap-3 sm:gap-4">
             <div>
-              <label htmlFor="headline" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">
+              <label htmlFor="headline" className="block text-sm font-medium mb-1 text-gray-700">
                 제목 (헤드라인)
               </label>
               <input
@@ -48,13 +48,13 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
                 name="headline"
                 defaultValue={post.headline}
                 required
-                className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none text-sm sm:text-base font-bold"
+                className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black focus:outline-none text-sm font-bold"
                 placeholder="나쁜 소식의 제목을 적어주세요"
               />
             </div>
 
             <div>
-              <label htmlFor="link_title" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">
+              <label htmlFor="link_title" className="block text-sm font-medium mb-1 text-gray-700">
                 원문 기사 제목 (선택)
               </label>
               <input
@@ -62,35 +62,35 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
                 id="link_title"
                 name="link_title"
                 defaultValue={post.link_title || ''}
-                className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none text-sm sm:text-base bg-gray-50 text-gray-600"
+                className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black focus:outline-none text-sm bg-gray-50 text-gray-600"
                 placeholder="구글 뉴스 등 출처 기사의 원래 제목"
               />
             </div>
 
-            <div>
-              <label htmlFor="content" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">
+            <div className="flex-grow flex flex-col">
+              <label htmlFor="content" className="block text-sm font-medium mb-1 text-gray-700">
                 내용
               </label>
               <textarea
                 id="content"
                 name="content"
-                rows={5}
+                rows={20}
                 defaultValue={post.content}
                 required
-                className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none text-sm sm:text-base resize-y"
+                className="w-full border border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none text-sm sm:text-base resize-y min-h-[400px]"
                 placeholder="본문에 #키워드 형태로 해시태그를 추가할 수 있습니다."
               ></textarea>
             </div>
 
             <div>
-              <label htmlFor="category" className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">
+              <label htmlFor="category" className="block text-sm font-medium mb-1 text-gray-700">
                 카테고리 (선택)
               </label>
               <select
                 id="category"
                 name="category"
                 defaultValue={post.category || 'all'}
-                className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none bg-white font-medium text-sm sm:text-base text-gray-700"
+                className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black focus:outline-none bg-white font-medium text-sm text-gray-700"
               >
                 <option value="all">전체 (커뮤니티)</option>
                 <option value="politics">정치 (Politics)</option>
@@ -98,7 +98,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
                 <option value="society">사회 (Society)</option>
                 <option value="tech">IT/기술 (Tech)</option>
                 <option value="world">세계 (World)</option>
-                <option value="entertainment">연예 (Entertainment)</option>
+                <option value="culture">문화 (Culture)</option>
                 <option value="sports">스포츠 (Sports)</option>
                 <option value="culture">생활/문화 (Culture)</option>
                 <option value="opinion">오피니언 (Opinion)</option>

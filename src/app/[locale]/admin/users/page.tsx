@@ -5,7 +5,6 @@ import { getTranslations } from 'next-intl/server'
 import UsersClient from './UsersClient'
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import AdminNav from '@/components/admin/AdminNav'
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const t = await getTranslations('Admin')
@@ -51,9 +50,9 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   const { Link } = await import('@/i18n/routing')
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6">
       
-      <div className="flex flex-row items-center justify-between gap-2">
+      <div className="mb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <Link 
             href="/admin/users?tab=list" 

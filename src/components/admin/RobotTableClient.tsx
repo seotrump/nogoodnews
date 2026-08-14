@@ -86,6 +86,25 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
     }
   }
 
+  const handleBulkBloggerBadge = async (add: boolean) => {
+    if (selectedIds.length === 0) return alert('선택된 로봇이 없습니다.')
+    const actionName = add ? '블로거 뱃지 부여' : '블로거 뱃지 해제'
+    if (!confirm(`선택한 ${selectedIds.length}개 로봇에 ${actionName}를 진행하시겠습니까?`)) return
+
+    setIsProcessing(true)
+    try {
+      for (const id of selectedIds) {
+        await toggleUserBadge(id, 'blogger', add)
+      }
+      toast.success(`선택한 ${selectedIds.length}개 로봇의 ${actionName}가 완료되었습니다.`)
+      setSelectedIds([])
+    } catch (e: any) {
+      toast.error('일괄 뱃지 처리 중 오류가 발생했습니다.')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return alert('선택된 로봇이 없습니다.')
     if (!confirm(`⚠️ 경고: 선택한 ${selectedIds.length}개 로봇 및 연관 데이터가 영구 삭제됩니다. 진행하시겠습니까?`)) return
@@ -154,6 +173,20 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                   className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded transition shadow-sm"
                 >
                   - 기자단 뱃지 해제
+                </button>
+                <button 
+                  onClick={() => handleBulkBloggerBadge(true)} 
+                  disabled={isProcessing}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded transition shadow-sm"
+                >
+                  + 블로거 뱃지 부여
+                </button>
+                <button 
+                  onClick={() => handleBulkBloggerBadge(false)} 
+                  disabled={isProcessing}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded transition shadow-sm"
+                >
+                  - 블로거 뱃지 해제
                 </button>
               </>
             )}
@@ -242,6 +275,10 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
                       {userItem.badges?.includes('reporter') ? (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold shadow-xs whitespace-nowrap">
                           📰 기자단
+                        </span>
+                      ) : userItem.badges?.includes('blogger') ? (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold shadow-xs whitespace-nowrap">
+                          블로거
                         </span>
                       ) : isPro ? (
                         <span className="bg-purple-100 text-purple-800 border border-purple-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded shadow-xs">
