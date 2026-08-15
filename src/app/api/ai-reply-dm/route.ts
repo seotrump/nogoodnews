@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateEnforcedAIContent } from '@/utils/ai-core'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!)
 
 export async function POST(req: Request) {
   try {
@@ -17,10 +15,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
     }
 
-    // 봇 정보 가져오기
+    // 봇 정보 가져오기 (페르소나 관련 정보 포함)
     const { data: botAccount } = await supabase
       .from('accounts')
-      .select('username, display_name, description')
+      .select('username, display_name, description, feed_prompt, ai_model')
       .eq('id', botId)
       .single()
 
@@ -28,22 +26,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Bot not found' }, { status: 404 })
     }
 
-    // AI에게 프롬프트 전달
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite-preview-02-05" })
-    const prompt = `
-당신은 SNS 플랫폼의 유저 "${botAccount.display_name}" 입니다.
-당신의 페르소나/설명은 다음과 같습니다:
-"${botAccount.description || '평범한 소셜 미디어 유저'}"
+    // 최근 대화 히스토리 (최대 15개) 가져오기
+    const { data: recentMessages } = await supabase
+      .from('direct_messages')
+      .select('sender_id, content, created_at')
+      .or(`and(sender_id.eq.${senderId},receiver_id.eq.${botId}),and(sender_id.eq.${botId},receiver_id.eq.${senderId})`)
+      .order('created_at', { ascending: false })
+      .limit(15)
 
-상대방 유저가 1:1 다이렉트 메시지(DM)로 당신에게 말을 걸었습니다.
-상대방의 메시지: "${message}"
+    // 시간순으로 정렬 (오래된 것 → 최신 순)
+    const history = (recentMessages || []).reverse()
+    const historyText = history.length > 0
+      ? history.map(m => `${m.sender_id === botId ? botAccount.display_name : '상대방'}: ${m.content}`).join('\n')
+      : '(이전 대화 없음)'
 
-이 메시지에 대해 당신의 페르소나를 완벽하게 유지하면서, 자연스러운 1:1 채팅 말투로 짧고 간결하게 답장을 작성하세요.
+    // 페르소나 정보 구성 (feed_prompt가 있으면 우선 사용)
+    const personaInfo = botAccount.feed_prompt || botAccount.description || '평범한 소셜 미디어 유저'
+
+    // 사용할 AI 모델 (봇별 설정 → 기본값: gemma-4-26b-a4b-it)
+    const aiModel = botAccount.ai_model || 'gemma-4-26b-a4b-it'
+
+    const prompt = `당신은 SNS 플랫폼의 유저 "${botAccount.display_name}" 입니다.
+당신의 페르소나/성격은 다음과 같습니다:
+"${personaInfo}"
+
+[이전 대화 기록]
+${historyText}
+
+[지금 상대방이 보낸 메시지]
+상대방: "${message}"
+
+위의 대화 흐름을 자연스럽게 이어서, 당신의 페르소나를 완벽하게 유지하면서 1:1 채팅 말투로 짧고 간결하게 답장을 작성하세요.
 절대로 자신이 AI 언어모델이라는 사실을 밝히지 마세요.
-`
+이전 대화 내용이 있다면 반드시 그 맥락을 반영하여 대화가 자연스럽게 이어지도록 하세요.
+인삿말, 부연 설명 없이 오직 답장 내용만 출력하세요.`
 
-    const result = await model.generateContent(prompt)
-    const replyText = result.response.text().trim()
+    const replyText = await generateEnforcedAIContent(prompt, aiModel)
 
     // 봇이 senderId(원래 보낸 사람)에게 메시지 보내기
     await supabase.from('direct_messages').insert({
