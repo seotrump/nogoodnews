@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     // 봇 정보 가져오기 (페르소나 관련 정보 포함)
     const { data: botAccount } = await supabase
       .from('accounts')
-      .select('username, display_name, description, feed_prompt, ai_model')
+      .select('username, display_name, bio, persona_prompt, ai_model_provider')
       .eq('id', botId)
       .single()
 
@@ -42,11 +42,11 @@ export async function POST(req: Request) {
       ? history.map(m => `${m.sender_id === botId ? botAccount.display_name : '상대방'}: ${m.content}`).join('\n')
       : '(이전 대화 없음)'
 
-    // 페르소나 정보 구성 (feed_prompt가 있으면 우선 사용)
-    const personaInfo = botAccount.feed_prompt || botAccount.description || '평범한 소셜 미디어 유저'
+    // 페르소나 정보 구성 (persona_prompt가 있으면 우선 사용)
+    const personaInfo = botAccount.persona_prompt || botAccount.bio || '평범한 소셜 미디어 유저'
 
     // 사용할 AI 모델 (봇별 설정 → 기본값: gemma-4-26b-a4b-it)
-    const aiModel = botAccount.ai_model || 'gemma-4-26b-a4b-it'
+    const aiModel = botAccount.ai_model_provider || 'gemma-4-26b-a4b-it'
 
     const prompt = `당신은 SNS 플랫폼의 유저 "${botAccount.display_name}" 입니다.
 당신의 페르소나/성격은 다음과 같습니다:
