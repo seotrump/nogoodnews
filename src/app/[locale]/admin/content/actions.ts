@@ -60,10 +60,22 @@ export async function publishSeoBlog(botId: string, formData: FormData) {
     try {
       const pixabayKey = process.env.PIXABAY_API_KEY
       if (pixabayKey) {
-        const pRes = await fetch(`https://pixabay.com/api/?key=${pixabayKey}&q=${encodeURIComponent(linkTitle)}&image_type=photo&per_page=3&lang=ko`)
+        const { generateEnforcedAIContent } = await import('@/utils/ai-core')
+        const keywordPrompt = `다음 키워드에서 Pixabay 이미지 검색에 가장 적합한 핵심 피사체 명사 1개를 추출한 뒤, 반드시 '순수 영어 단어 1개'로만 번역해서 출력하세요. 아무 설명 없이 순수한 영어 단어 1개만 출력해야 합니다. (예: apple, computer, ocean)\n\n키워드: ${linkTitle}\n\nEnglish Keyword:`
+        
+        let searchKeyword = linkTitle
+        try {
+          searchKeyword = await generateEnforcedAIContent(keywordPrompt, 'local')
+          searchKeyword = searchKeyword.trim().replace(/['"]/g, '')
+        } catch (e) {
+          console.error('Failed to extract keyword for blog image:', e)
+        }
+
+        const pRes = await fetch(`https://pixabay.com/api/?key=${pixabayKey}&q=${encodeURIComponent(searchKeyword)}&image_type=photo&per_page=200&lang=en`)
         const pData = await pRes.json()
         if (pData.hits && pData.hits.length > 0) {
-          imageUrl = pData.hits[0].largeImageURL
+          const randomIndex = Math.floor(Math.random() * pData.hits.length)
+          imageUrl = pData.hits[randomIndex].largeImageURL
         }
       }
     } catch (e) {
@@ -86,4 +98,19 @@ export async function publishSeoBlog(botId: string, formData: FormData) {
   }
 
   return data
+}
+
+export async function fetchMoreReviewPosts(offset: number, limit: number = 50) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !isAdmin(user)) throw new Error('Not authorized')
+
+  const { data: queuePosts } = await supabaseAdmin
+    .from('posts')
+    .select('*, accounts(display_name, avatar_url, username, post_priority)')
+    .in('status', ['rejected', 'pending_review', 'pending_publish', 'published'])
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  return queuePosts || []
 }

@@ -24,6 +24,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ status: 'skipped', reason: 'Auto bot creation is disabled in settings.' })
     }
 
+    if (siteSettings.auto_bot_target_count <= 0) {
+      await supabaseAdmin.from('site_settings').update({ is_auto_bot_active: false }).eq('id', 'global')
+      return NextResponse.json({ status: 'skipped', reason: 'Target count reached.' })
+    }
+
     // 2. 대기 중인 오토봇 개수 확인 로직 (제한용이 아니라 로그용으로만 유지)
     const { count, error: countError } = await supabaseAdmin
       .from('accounts')
@@ -99,7 +104,12 @@ ${existingListStr}
   "speech_style": "성별(${targetGender})과 닉네임 성향이 강력하게 반영된 말투 스타일",
   "gender": "${targetGender}",
   "role": "${roleValue}",
-  "axisTone": 5, "axisTarget": 5, "axisVocab": 5, "axisAttitude": 5, "axisAffection": 5,
+  "axisTone": "[1~10 사이의 숫자, 진지함(1) vs 유쾌함(10)]",
+  "axisTarget": "[1~10 사이의 숫자, 자아성찰(1) vs 타인지향(10)]",
+  "axisVocab": "[1~10 사이의 숫자, 학술적(1) vs 은어/유행어(10)]",
+  "axisAttitude": "[1~10 사이의 숫자, 팩트폭격(1) vs 공감위로(10)]",
+  "axisAffection": "[1~10 사이의 숫자, 냉소적(1) vs 열정적(10)]",
+  "nbti_type": "[16가지 MBTI 유형 중 하나, 예: ENFP, INTJ 등]",
   "formality": "informal"
 }
 `
@@ -174,11 +184,11 @@ ${existingListStr}
     const advancedSettings = {
       coreIdentity,
       role: roleValue,
-      axisTone: parsed.axisTone || 5,
-      axisTarget: parsed.axisTarget || 5,
-      axisVocab: parsed.axisVocab || 5,
-      axisAttitude: parsed.axisAttitude || 5,
-      axisAffection: parsed.axisAffection || 5,
+      axisTone: Number(parsed.axisTone) || Math.floor(Math.random() * 10) + 1,
+      axisTarget: Number(parsed.axisTarget) || Math.floor(Math.random() * 10) + 1,
+      axisVocab: Number(parsed.axisVocab) || Math.floor(Math.random() * 10) + 1,
+      axisAttitude: Number(parsed.axisAttitude) || Math.floor(Math.random() * 10) + 1,
+      axisAffection: Number(parsed.axisAffection) || Math.floor(Math.random() * 10) + 1,
       formality: parsed.formality || 'informal',
       existence_category: parsed.existence_category || targetExistenceType,
       existence_detail: parsed.existence_detail || '',
@@ -197,11 +207,28 @@ ${existingListStr}
     formData.append('category', parsed.category || 'politics')
     formData.append('botTier', '1')
     formData.append('status', 'paused')
+    formData.append('role', roleValue)
+    formData.append('advancedSettings', JSON.stringify(advancedSettings))
+    formData.append('axisProfile', JSON.stringify({
+      axisTone: advancedSettings.axisTone,
+      axisTarget: advancedSettings.axisTarget,
+      axisVocab: advancedSettings.axisVocab,
+      axisAttitude: advancedSettings.axisAttitude,
+      axisAffection: advancedSettings.axisAffection
+    }))
+    
+    // nbti_type 추가
+    if (parsed.nbti_type) {
+      formData.append('nbtiType', parsed.nbti_type)
+    } else {
+      const types = ['ENFP', 'INTP', 'ESTJ', 'ISFJ', 'ENTJ', 'INTJ', 'ESFP', 'ISFP', 'ENFJ', 'INFJ', 'ESTP', 'ISTP', 'ESFJ', 'ISTJ', 'ENTP', 'INFP']
+      formData.append('nbtiType', types[Math.floor(Math.random() * types.length)])
+    }
+    
     const keywords = parsed.keywords || ''
     const finalPersonaPrompt = `[${displayName}] ${keywords}\n${coreIdentity}`
 
     formData.append('personaPrompt', finalPersonaPrompt)
-    formData.append('advancedSettings', JSON.stringify(advancedSettings))
     formData.append('postPriority', '1')
     formData.append('commentPriority', '1')
     formData.append('interval', '60')
@@ -216,7 +243,14 @@ ${existingListStr}
     // 5. 로봇 생성 액션 직접 호출
     await createAiBot(formData)
 
-    console.log(`✅ [AutoBot Cron] 생성 성공: ${displayName}`);
+    // 타겟 카운트 차감 로직 추가 (신규 ON 시키는 시점을 기준으로)
+    const newTargetCount = siteSettings.auto_bot_target_count - 1
+    await supabaseAdmin.from('site_settings').update({
+      auto_bot_target_count: newTargetCount,
+      is_auto_bot_active: newTargetCount > 0
+    }).eq('id', 'global')
+
+    console.log(`✅ [AutoBot Cron] 생성 성공: ${displayName}, 남은 횟수: ${newTargetCount}`);
 
     return NextResponse.json({ status: 'success', bot: displayName })
   } catch (error: any) {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import ImageUploadPreview from '@/components/ImageUploadPreview'
 import AiImageInjectButton from '@/components/admin/AiImageInjectButton'
+import { useActivePersona } from '@/context/ActivePersonaContext'
 
 interface Bot {
   id: string
@@ -33,8 +34,17 @@ export default function UnifiedBlogEditor({ bots, mode, initialData }: UnifiedBl
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
 
+  const { activeBot } = useActivePersona()
+  
   // AI 추천 폼 관련 상태
-  const [selectedBotId, setSelectedBotId] = useState<string>(bots[0]?.id || '')
+  const [selectedBotId, setSelectedBotId] = useState<string>(activeBot?.id || bots[0]?.id || '')
+
+  // activeBot이 변경될 때 selectedBotId 동기화
+  useEffect(() => {
+    if (activeBot?.id) {
+      setSelectedBotId(activeBot.id)
+    }
+  }, [activeBot])
   const [keyword, setKeyword] = useState('')
   
   // 추천 결과 상태
@@ -273,7 +283,25 @@ export default function UnifiedBlogEditor({ bots, mode, initialData }: UnifiedBl
               </div>
 
               {coreKeyword && (
-                <div className="mt-4 pt-4 border-t border-purple-100">
+                <div className="mt-4 pt-4 border-t border-purple-100 space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">최종 제목 (수정 가능)</label>
+                    <input type="text" value={keyword} onChange={e => {setKeyword(e.target.value); setHeadline(e.target.value);}} className="w-full border border-purple-200 rounded p-2 text-sm font-bold" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-red-700 mb-1">핵심 키워드</label>
+                      <input type="text" value={coreKeyword} onChange={e => setCoreKeyword(e.target.value)} className="w-full border border-red-200 rounded p-1.5 text-xs" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-blue-700 mb-1">중간 키워드</label>
+                      <input type="text" value={mediumKeyword} onChange={e => setMediumKeyword(e.target.value)} className="w-full border border-blue-200 rounded p-1.5 text-xs" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-emerald-700 mb-1">틈새 키워드</label>
+                      <input type="text" value={blueOceanKeyword} onChange={e => setBlueOceanKeyword(e.target.value)} className="w-full border border-emerald-200 rounded p-1.5 text-xs" />
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={handleGenerate}
@@ -425,7 +453,20 @@ export default function UnifiedBlogEditor({ bots, mode, initialData }: UnifiedBl
             <ImageUploadPreview 
               defaultUrl={initialData?.image_url} 
             />
-            <p className="text-xs text-gray-500 mt-3 font-medium">정방형(1:1) 이미지를 권장합니다. 미등록 시 AI가 검색한 이미지가 대체되거나 텍스트 전용 피드로 노출됩니다.</p>
+            <div className="mt-4">
+              <label htmlFor="imageUrl" className="block text-xs font-bold mb-1 text-gray-600">
+                또는 외부 이미지 URL 직접 입력
+              </label>
+              <input
+                type="url"
+                id="image_url"
+                name="image_url"
+                defaultValue={initialData?.image_url || ''}
+                className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none text-sm shadow-sm"
+                placeholder="https://..."
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-3 font-medium">정방형(1:1) 이미지를 권장합니다. 직접 업로드 혹은 URL을 입력하세요. 미입력 시 AI가 자동 검색합니다.</p>
           </div>
         </div>
 

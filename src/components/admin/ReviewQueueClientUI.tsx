@@ -14,6 +14,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [currentTime, setCurrentTime] = useState(Date.now())
+  const [page, setPage] = useState(1)
 
   // 서버에서 prop으로 전달된 posts가 변경될 때마다(router.refresh) 로컬 상태 동기화
   useEffect(() => {
@@ -88,6 +89,20 @@ export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 
     }
   }
 
+  const handleApproveSingle = async (id: string) => {
+    setIsProcessing(true)
+    const toastId = toast.loading('예약 발행 처리 중...')
+    try {
+      await approvePost(id)
+      setPosts(posts.map(p => p.id === id ? { ...p, status: 'published' } : p))
+      toast.success('포스트가 예약 발행 대기열에 등록되었습니다.', { id: toastId })
+    } catch (e: any) {
+      toast.error(e.message || '처리 실패', { id: toastId })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return
     if (!confirm(`선택한 ${selectedIds.length}개 항목을 영구 삭제하시겠습니까?`)) return
@@ -136,6 +151,27 @@ export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 
     }
   }
 
+  const handleLoadMore = async () => {
+    try {
+      const { fetchMoreReviewPosts } = await import('@/app/[locale]/admin/content/actions')
+      const morePosts = await fetchMoreReviewPosts(page * 50, 50)
+      if (morePosts && morePosts.length > 0) {
+        setPosts(prev => {
+          const newPosts = [...prev]
+          morePosts.forEach((p: any) => {
+            if (!newPosts.find(existing => existing.id === p.id)) newPosts.push(p)
+          })
+          return newPosts
+        })
+        setPage(p => p + 1)
+      } else {
+        toast.success('마지막 피드입니다.')
+      }
+    } catch (e: any) {
+      toast.error('더 보기 실패: ' + e.message)
+    }
+  }
+
   const now = new Date().getTime()
 
   const filteredPosts = posts.filter(p => {
@@ -160,20 +196,6 @@ export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 
       {activeTab !== 'pending_publish' && (
         <div className="flex items-center gap-1.5 border-b border-gray-200 pb-3 flex-wrap">
         <button
-          onClick={() => { setActiveTab('pending_review'); setSelectedIds([]); }}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-            activeTab === 'pending_review'
-              ? 'bg-gray-700 text-white shadow-xs'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          <span>⏳ 피드 검토대기</span>
-          <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
-            {posts.filter(p => p.status === 'pending_review').length}
-          </span>
-        </button>
-
-        <button
           onClick={() => { setActiveTab('scheduled'); setSelectedIds([]); }}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
             activeTab === 'scheduled'
@@ -184,6 +206,20 @@ export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 
           <span>⏰ 발행예약</span>
           <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
             {posts.filter(p => p.status === 'published' && new Date(p.created_at).getTime() > Date.now()).length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('pending_review'); setSelectedIds([]); }}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+            activeTab === 'pending_review'
+              ? 'bg-gray-700 text-white shadow-xs'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          <span>⏳ 피드검토</span>
+          <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
+            {posts.filter(p => p.status === 'pending_review').length}
           </span>
         </button>
 
@@ -209,7 +245,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          <span>🚨 차단됨</span>
+          <span>🚨 차단</span>
           <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
             {posts.filter(p => p.status === 'rejected').length}
           </span>
@@ -324,9 +360,19 @@ export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 
                       )}
 
                       <div className="flex items-center gap-2 ml-1">
+                        {isPending && (
+                          <button
+                            onClick={() => handleApproveSingle(post.id)}
+                            disabled={isProcessing}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs px-2.5 py-1 rounded-full transition shadow-xs flex items-center gap-1 disabled:opacity-50"
+                          >
+                            <span>바로 예약발행</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDelete(post.id)}
-                          className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-2.5 py-1 rounded-full transition shadow-xs flex items-center gap-1"
+                          disabled={isProcessing}
+                          className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-2.5 py-1 rounded-full transition shadow-xs flex items-center gap-1 disabled:opacity-50"
                         >
                           <span>영구삭제</span>
                         </button>
@@ -388,6 +434,18 @@ export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* 더 보기 버튼 */}
+      {filteredPosts.length >= page * 50 && (
+        <div className="flex justify-center mt-6">
+          <button 
+            onClick={handleLoadMore}
+            className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition shadow-sm text-sm"
+          >
+            더 보기
+          </button>
         </div>
       )}
     </div>

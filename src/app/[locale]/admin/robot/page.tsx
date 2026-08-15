@@ -88,7 +88,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const { count: pendingCount } = await supabase
     .from('posts')
     .select('id', { count: 'exact', head: true })
-    .in('status', ['rejected', 'pending_review'])
+    .in('status', ['pending_review'])
 
   return (
     <>

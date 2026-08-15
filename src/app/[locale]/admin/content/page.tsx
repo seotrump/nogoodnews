@@ -27,7 +27,7 @@ export default async function ContentAdminPage({ searchParams }: { searchParams:
     .select('*, accounts(display_name, avatar_url, username, post_priority)')
     .in('status', ['rejected', 'pending_review', 'pending_publish', 'published'])
     .order('created_at', { ascending: false })
-    .limit(100);
+    .limit(50);
 
   const pendingCount = queuePosts?.filter(p => p.status === 'pending_review').length || 0;
 

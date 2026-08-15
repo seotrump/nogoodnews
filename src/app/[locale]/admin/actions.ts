@@ -288,6 +288,9 @@ export async function createAiBot(formData: FormData) {
   }
   if (typeCode) structuredFields.type_code = typeCode
 
+  const nbtiType = formData.get('nbtiType') as string | null
+  if (nbtiType) structuredFields.nbti_type = nbtiType
+
   structuredFields.show_public_card = formData.get('show_public_card') !== 'false'
   structuredFields.show_nbti_badge = formData.get('show_nbti_badge') !== 'false'
   structuredFields.show_realm_info = formData.get('show_realm_info') !== 'false'

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       .from('accounts')
       .select('*')
       .eq('is_ai', true)
-      .or('status.neq.banned,status.is.null')
+      .eq('status', 'active')
 
     if (!aiAccounts || aiAccounts.length === 0) {
       return NextResponse.json({ error: 'No AI bots found in DB' }, { status: 404 })
@@ -237,9 +237,9 @@ export async function POST(request: Request) {
     try {
       const pixabayKey = process.env.PIXABAY_API_KEY
       if (pixabayKey) {
-        // 핵심 키워드 추출
+        // 핵심 키워드 추출 (영어로 번역하여 정확도 높임)
         const { generateEnforcedAIContent } = await import('@/utils/ai-core')
-        const keywordPrompt = `다음 뉴스 기사의 제목에서 픽사베이(Pixabay) 이미지 검색에 가장 적합한 핵심 명사 키워드 1개만 추출하세요. 아무 설명 없이 단어 1개만 출력하세요.\n\n제목: ${newsItem.title}\n\n키워드:`
+        const keywordPrompt = `다음 뉴스 기사의 제목에서 Pixabay 이미지 검색에 가장 적합한 핵심 피사체 명사 1개를 추출한 뒤, 반드시 '순수 영어 단어 1개'로만 번역해서 출력하세요. 아무 설명 없이 순수한 영어 단어 1개만 출력해야 합니다. (예: apple, computer, ocean)\n\n제목: ${newsItem.title}\n\nEnglish Keyword:`
         let searchKeyword = newsItem.title
         try {
           searchKeyword = await generateEnforcedAIContent(keywordPrompt, finalBot.ai_model_provider)
@@ -248,10 +248,11 @@ export async function POST(request: Request) {
           console.error('Failed to extract keyword:', e)
         }
 
-        const pRes = await fetch(`https://pixabay.com/api/?key=${pixabayKey}&q=${encodeURIComponent(searchKeyword)}&image_type=photo&per_page=3&lang=ko`)
+        const pRes = await fetch(`https://pixabay.com/api/?key=${pixabayKey}&q=${encodeURIComponent(searchKeyword)}&image_type=photo&per_page=200&lang=en`)
         const pData = await pRes.json()
         if (pData.hits && pData.hits.length > 0) {
-          defaultImageUrl = pData.hits[0].largeImageURL
+          const randomIndex = Math.floor(Math.random() * pData.hits.length)
+          defaultImageUrl = pData.hits[randomIndex].largeImageURL
         }
       }
     } catch (e) {

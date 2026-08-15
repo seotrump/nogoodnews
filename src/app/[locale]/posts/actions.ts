@@ -166,8 +166,13 @@ export async function updatePost(postId: string, formData: FormData) {
   const url = formData.get('url') as string
   const content = formData.get('content') as string
   const imageFile = formData.get('imageFile') as File | null
+  const imageUrl = formData.get('image_url') as string
 
   const updateData: any = { headline, link_title: linkTitle, url, content }
+
+  if (imageUrl) {
+    updateData.image_url = imageUrl
+  }
 
   if (imageFile && imageFile.size > 0) {
     const fileExt = imageFile.name.split('.').pop()

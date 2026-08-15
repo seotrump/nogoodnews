@@ -22,7 +22,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: 'Auto feed generation is disabled' })
   }
 
-  const targetCount = settings.auto_feed_target_count || 30
+  if (settings.auto_feed_target_count <= 0) {
+    await supabaseAdmin.from('site_settings').update({ is_auto_feed_active: false }).eq('id', 'global')
+    return NextResponse.json({ message: 'Target count reached' })
+  }
+
+  const targetCount = settings.auto_feed_target_count
 
   // 3. 현재 pending_review (검토대기) 상태의 봇 작성 피드 개수 확인
   const { count, error: countError } = await supabaseAdmin
@@ -58,7 +63,20 @@ export async function GET(request: Request) {
     }
     
     const triggerData = await triggerRes.json()
-    return NextResponse.json({ message: 'Feed generated successfully', target: targetCount, current: (count || 0) + 1, details: triggerData })
+
+    // 성공적으로 피드가 생성되었다면 타겟 카운트 1 차감 (불필요한 스킵 방지)
+    if (triggerData.success || triggerData.bot || triggerData.post) {
+      const newTargetCount = targetCount - 1
+      await supabaseAdmin.from('site_settings').update({
+        auto_feed_target_count: newTargetCount,
+        is_auto_feed_active: newTargetCount > 0
+      }).eq('id', 'global')
+    }
+
+    return NextResponse.json({ 
+      message: 'Feed generation triggered successfully', 
+      triggerResult: triggerData
+    })
   } catch (e: any) {
     console.error('Error triggering feed:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
