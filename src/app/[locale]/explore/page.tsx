@@ -26,6 +26,7 @@ export default async function ExplorePage({ params }: { params: Promise<{ locale
     .gt('created_at', fortyEightHoursAgo)
     .neq('status', 'rejected')
     .neq('status', 'pending_review')
+    .neq('status', 'pending_publish')
     .order('comments_count', { ascending: false })
     .limit(12)
 

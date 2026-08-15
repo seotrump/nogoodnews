@@ -25,6 +25,9 @@ export default async function SearchPage({ params, searchParams }: { params: Pro
     .from('posts')
     .select('*, accounts(display_name, is_ai, avatar_url, username, badges)')
     .or(`headline.ilike.%${q}%,content.ilike.%${q}%`)
+    .neq('status', 'rejected')
+    .neq('status', 'pending_review')
+    .neq('status', 'pending_publish')
     .order('created_at', { ascending: false })
     .limit(50)
 

@@ -3,7 +3,7 @@ import { generateEnforcedAIContent } from '@/utils/ai-core'
 
 export async function POST(req: Request) {
   try {
-    const { content } = await req.json()
+    const { content, count = 3 } = await req.json()
     if (!content) {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 })
     }
@@ -13,16 +13,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Pixabay API key not configured' }, { status: 500 })
     }
 
-    const prompt = `당신은 블로그 포스트의 흐름을 분석하여 적절한 위치에 시각 자료를 배치하는 전문 에디터입니다.
-다음 마크다운 형식의 블로그 본문을 읽고, 문맥상 사진이 들어가면 좋은 위치 최소 2곳에서 최대 10곳을 골라주세요.
-해당 위치에 반드시 \`[IMAGE: 픽사베이 검색어]\` 형식으로 플레이스홀더를 삽입하세요.
-(검색어는 사진 검색에 용이한 핵심 명사 단어로 작성하세요. 예: \`[IMAGE: 비즈니스 미팅]\`, \`[IMAGE: 오사카 야경]\`)
+    const prompt = `당신은 포스트의 흐름을 분석하여 적절한 위치에 시각 자료를 배치하는 전문 에디터입니다.
+다음 마크다운 형식의 본문을 읽고, 글의 흐름을 파악하여 정확히 **${count}곳**의 사진 들어갈 위치를 골라주세요.
+해당 위치에 반드시 '[IMAGE: 픽사베이 검색어]' 형식으로 플레이스홀더를 삽입하세요.
+(검색어는 픽사베이(Pixabay)에서 이미지 검색이 잘 되도록 반드시 **단순한 영단어 조합(영어)**으로 작성하세요. 
+예: '[IMAGE: tonkatsu]', '[IMAGE: osaka night view]', '[IMAGE: business meeting]')
 
 [필수 지침]
 1. 원본 텍스트의 내용을 임의로 수정, 삭제, 요약하지 마세요. 원본 그대로 유지하되 중간에 플레이스홀더만 추가해야 합니다.
 2. 문단과 문단 사이, 혹은 소제목(##) 바로 아래 등 문맥이 전환되거나 강조가 필요한 곳에 배치하세요.
 3. 플레이스홀더는 반드시 새로운 줄(엔터)에 단독으로 작성하세요.
-4. 마크다운 코드블록(\`\`\`)으로 감싸지 말고 순수 텍스트만 출력하세요.
+4. 마크다운 코드블록으로 감싸지 말고 순수 텍스트만 출력하세요.
+5. 정확히 ${count}개의 플레이스홀더를 삽입하세요.
 
 [블로그 본문]
 ${content}
@@ -49,7 +51,7 @@ ${content}
         const keyword = match[1].trim()
         
         try {
-          const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(keyword)}&image_type=photo&per_page=20&lang=ko`
+          const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(keyword)}&image_type=photo&per_page=20&lang=en`
           const res = await fetch(url)
           const data = await res.json()
           

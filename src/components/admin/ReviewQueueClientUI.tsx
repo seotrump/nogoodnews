@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation'
 import { approvePost, bulkApprovePosts, deletePostPermanently, runAutoApproveCronNow } from '@/app/[locale]/admin/guidelines-actions'
 import PostCard from '@/components/PostCard'
 
-export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: any[] }) {
+export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 'pending_review' }: { posts: any[], initialTab?: string }) {
   const router = useRouter()
   const [posts, setPosts] = useState(initialPosts)
-  const [activeTab, setActiveTab] = useState<'pending' | 'published' | 'rejected' | 'all'>('pending')
+  const [activeTab, setActiveTab] = useState<string>(initialTab)
   const [isRunningCron, setIsRunningCron] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
@@ -19,6 +19,11 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
   useEffect(() => {
     setPosts(initialPosts)
   }, [initialPosts])
+
+  // initialTab이 변경되면 activeTab 동기화
+  useEffect(() => {
+    setActiveTab(initialTab)
+  }, [initialTab])
 
   // 1분마다 타이머 갱신 및 서버 데이터 재조회(자동 새로고침)
   useEffect(() => {
@@ -64,10 +69,10 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
 
   const handleBulkApprove = async () => {
     if (selectedIds.length === 0) return
-    if (!confirm(`선택한 ${selectedIds.length}개 피드를 예약 발행하시겠습니까?`)) return
+    if (!confirm(`선택한 ${selectedIds.length}개 항목을 예약 발행하시겠습니까?`)) return
     
     setIsProcessing(true)
-    const toastId = toast.loading(`피드 ${selectedIds.length}개 예약 발행 중...`)
+    const toastId = toast.loading(`항목 ${selectedIds.length}개 예약 발행 중...`)
     
     try {
       await bulkApprovePosts(selectedIds)
@@ -75,7 +80,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
       // 상태 낙관적 업데이트 (ui에서는 published로 간주)
       setPosts(posts.map(p => selectedIds.includes(p.id) ? { ...p, status: 'published' } : p))
       setSelectedIds([])
-      toast.success('선택 피드가 예약 발행 대기열에 등록되었습니다.', { id: toastId })
+      toast.success('선택 항목이 예약 발행 대기열에 등록되었습니다.', { id: toastId })
     } catch (e: any) {
       toast.error(e.message || '일괄 승인 실패', { id: toastId })
     } finally {
@@ -85,10 +90,10 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return
-    if (!confirm(`선택한 ${selectedIds.length}개 피드를 영구 삭제하시겠습니까?`)) return
+    if (!confirm(`선택한 ${selectedIds.length}개 항목을 영구 삭제하시겠습니까?`)) return
 
     setIsProcessing(true)
-    const toastId = toast.loading(`피드 ${selectedIds.length}개 삭제 중...`)
+    const toastId = toast.loading(`항목 ${selectedIds.length}개 삭제 중...`)
 
     try {
       for (const id of selectedIds) {
@@ -96,7 +101,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
       }
       setPosts(posts.filter(p => !selectedIds.includes(p.id)))
       setSelectedIds([])
-      toast.success('선택한 피드가 영구 삭제되었습니다.', { id: toastId })
+      toast.success('선택한 항목이 영구 삭제되었습니다.', { id: toastId })
     } catch (e: any) {
       toast.error(e.message || '일괄 삭제 실패', { id: toastId })
     } finally {
@@ -111,11 +116,12 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
   }
 
   const toggleAllSelection = () => {
-    const pendingIds = filteredPosts.filter(p => p.status === 'pending_review').map(p => p.id)
-    if (selectedIds.length === pendingIds.length && pendingIds.length > 0) {
+    // Select all posts in current tab
+    const tabIds = filteredPosts.map(p => p.id)
+    if (selectedIds.length === tabIds.length && tabIds.length > 0) {
       setSelectedIds([]) // 전부 해제
     } else {
-      setSelectedIds(pendingIds) // 전부 선택
+      setSelectedIds(tabIds) // 전부 선택
     }
   }
 
@@ -130,38 +136,59 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
     }
   }
 
+  const now = new Date().getTime()
+
   const filteredPosts = posts.filter(p => {
-    if (activeTab === 'pending') return p.status === 'pending_review'
-    if (activeTab === 'published') return p.status === 'published'
+    const postTime = new Date(p.created_at).getTime()
+    if (activeTab === 'pending_review') return p.status === 'pending_review'
+    if (activeTab === 'pending_publish') return p.status === 'pending_publish'
+    if (activeTab === 'scheduled') return p.status === 'published' && postTime > now
+    if (activeTab === 'published') return p.status === 'published' && postTime <= now
     if (activeTab === 'rejected') return p.status === 'rejected'
     return true
   })
 
   // 발행 대기 메시지
-  const getPendingMessage = () => {
+  const getPendingMessage = (status: string) => {
+    if (status === 'pending_publish') return '블로그 발행 대기 중'
     return '다음 자동 승인 시 일괄 발행 예정'
   }
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* 상태 필터 탭 */}
-      <div className="flex items-center gap-1.5 border-b border-gray-200 pb-3 flex-wrap">
+      {/* 상태 필터 탭 - 발행대기가 아닐 때만 표시 (발행대기는 상위 메인 탭으로 분리) */}
+      {activeTab !== 'pending_publish' && (
+        <div className="flex items-center gap-1.5 border-b border-gray-200 pb-3 flex-wrap">
         <button
-          onClick={() => setActiveTab('pending')}
+          onClick={() => { setActiveTab('pending_review'); setSelectedIds([]); }}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-            activeTab === 'pending'
+            activeTab === 'pending_review'
               ? 'bg-gray-700 text-white shadow-xs'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          <span>⏳ 대기</span>
+          <span>⏳ 피드 검토대기</span>
           <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
             {posts.filter(p => p.status === 'pending_review').length}
           </span>
         </button>
 
         <button
-          onClick={() => setActiveTab('published')}
+          onClick={() => { setActiveTab('scheduled'); setSelectedIds([]); }}
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+            activeTab === 'scheduled'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          <span>⏰ 발행예약</span>
+          <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
+            {posts.filter(p => p.status === 'published' && new Date(p.created_at).getTime() > Date.now()).length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('published'); setSelectedIds([]); }}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
             activeTab === 'published'
               ? 'bg-emerald-600 text-white shadow-xs'
@@ -175,7 +202,7 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
         </button>
 
         <button
-          onClick={() => setActiveTab('rejected')}
+          onClick={() => { setActiveTab('rejected'); setSelectedIds([]); }}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
             activeTab === 'rejected'
               ? 'bg-red-600 text-white shadow-xs'
@@ -186,17 +213,6 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
           <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
             {posts.filter(p => p.status === 'rejected').length}
           </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-            activeTab === 'all'
-              ? 'bg-gray-900 text-white shadow-xs'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          전체 ({posts.length})
         </button>
 
         <div className="ml-auto flex items-center gap-2 flex-wrap">
@@ -213,40 +229,43 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
           </button>
         </div>
       </div>
+      )}
 
-      {activeTab === 'pending' && filteredPosts.length > 0 && (
+      {(activeTab === 'pending_review' || activeTab === 'pending_publish') && filteredPosts.length > 0 && (
         <div className="flex items-center gap-3 border-b border-gray-200 pb-3 flex-wrap">
           <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition shadow-xs">
             <input 
               type="checkbox" 
-              checked={selectedIds.length > 0 && selectedIds.length === filteredPosts.filter(p => p.status === 'pending_review').length}
+              checked={selectedIds.length > 0 && selectedIds.length === filteredPosts.length}
               onChange={toggleAllSelection}
-              className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
             />
-            <span className="text-xs font-bold text-gray-700">전체 선택 ({selectedIds.length}/{filteredPosts.filter(p => p.status === 'pending_review').length})</span>
+            <span className="text-xs font-bold text-gray-700">전체 선택 ({selectedIds.length}/{filteredPosts.length})</span>
           </label>
 
-          {selectedIds.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={handleBulkApprove}
-                disabled={isProcessing}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs flex items-center gap-1 animate-in fade-in"
-              >
-                <span>✅</span>
-                <span>선택 {selectedIds.length}개 일괄 승인</span>
-              </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleBulkApprove}
+              disabled={isProcessing || selectedIds.length === 0}
+              className={`font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs flex items-center gap-1 animate-in fade-in ${
+                selectedIds.length === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              }`}
+            >
+              <span>✅</span>
+              <span>선택 {selectedIds.length}개 일괄 승인</span>
+            </button>
 
-              <button
-                onClick={handleBulkDelete}
-                disabled={isProcessing}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs flex items-center gap-1 animate-in fade-in"
-              >
-                <span>🗑️</span>
-                <span>선택 {selectedIds.length}개 삭제</span>
-              </button>
-            </div>
-          )}
+            <button
+              onClick={handleBulkDelete}
+              disabled={isProcessing || selectedIds.length === 0}
+              className={`font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-xs flex items-center gap-1 animate-in fade-in ${
+                selectedIds.length === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+            >
+              <span>🗑️</span>
+              <span>선택 {selectedIds.length}개 삭제</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -259,9 +278,11 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
           {filteredPosts.map((post) => {
             const validationResults = (post.validation_result as any[]) || []
             const failedRules = validationResults.filter(r => !r.passed)
-            const isPublished = post.status === 'published'
+            const postTime = new Date(post.created_at).getTime()
+            const isPublished = post.status === 'published' && postTime <= now
+            const isScheduled = post.status === 'published' && postTime > now
             const isRejected = post.status === 'rejected' || failedRules.length > 0
-            const isPending = post.status === 'pending_review'
+            const isPending = post.status === 'pending_review' || post.status === 'pending_publish'
 
             return (
               <div 
@@ -284,7 +305,11 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-black text-gray-700">시스템 모더레이션:</span>
 
-                      {isPublished ? (
+                      {isScheduled ? (
+                        <span className="inline-flex items-center gap-1 bg-blue-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
+                          ⏰ 예약됨 ({Math.ceil((postTime - Date.now()) / 60000)}분 후 노출)
+                        </span>
+                      ) : isPublished ? (
                         <span className="inline-flex items-center gap-1 bg-emerald-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
                           ✅ 발행 승인 (Published)
                         </span>
@@ -294,19 +319,11 @@ export default function ReviewQueueClientUI({ posts: initialPosts }: { posts: an
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 bg-gray-600 text-white font-extrabold text-xs px-2.5 py-1 rounded-full shadow-xs">
-                          ⏳ {getPendingMessage()}
+                          ⏳ {getPendingMessage(post.status)}
                         </span>
                       )}
 
                       <div className="flex items-center gap-2 ml-1">
-                        {!isPublished && (
-                          <button
-                            onClick={() => handleApprove(post.id)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-2.5 py-1 rounded-full transition shadow-xs flex items-center gap-1"
-                          >
-                            <span>즉시발행</span>
-                          </button>
-                        )}
                         <button
                           onClick={() => handleDelete(post.id)}
                           className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-2.5 py-1 rounded-full transition shadow-xs flex items-center gap-1"

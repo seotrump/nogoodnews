@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import { isAdmin } from '@/utils/auth';
 import ReviewQueueClientUI from '@/components/admin/ReviewQueueClientUI';
-import SeoBlogGeneratorUI from '@/components/admin/SeoBlogGeneratorUI';
+import UnifiedBlogEditor from '@/components/admin/UnifiedBlogEditor';
 import { Link } from '@/i18n/routing';
 
 const supabaseAdmin = createClient(
@@ -25,7 +25,7 @@ export default async function ContentAdminPage({ searchParams }: { searchParams:
   const { data: queuePosts } = await supabaseAdmin
     .from('posts')
     .select('*, accounts(display_name, avatar_url, username, post_priority)')
-    .in('status', ['rejected', 'pending_review', 'published'])
+    .in('status', ['rejected', 'pending_review', 'pending_publish', 'published'])
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -46,14 +46,12 @@ export default async function ContentAdminPage({ searchParams }: { searchParams:
   return (
     <div className="w-full max-w-4xl mx-auto p-2 sm:px-4 py-6 sm:py-8 pb-20 flex flex-col gap-4 sm:gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="mb-2">
-        <h1 className="text-xl sm:text-2xl font-black text-gray-900 mb-4">콘텐츠 관리</h1>
-        
         {/* Sub-tabs for Content Hub */}
         <div className="flex border-b border-gray-200">
           <Link
             href="/admin/content?tab=blog"
-            className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${
-              tab === 'blog'
+            className={`px-4 sm:px-6 py-3 text-base sm:text-lg font-medium border-b-2 transition-colors whitespace-nowrap ${
+              (tab === 'blog' || !tab)
                 ? 'border-purple-600 text-purple-700' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
@@ -61,24 +59,34 @@ export default async function ContentAdminPage({ searchParams }: { searchParams:
             블로그
           </Link>
           <Link
+            href="/admin/content?tab=pending_publish"
+            className={`px-4 sm:px-6 py-3 text-base sm:text-lg font-medium border-b-2 transition-colors whitespace-nowrap ${
+              tab === 'pending_publish'
+                ? 'border-indigo-600 text-indigo-700' 
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            발행대기
+          </Link>
+          <Link
             href="/admin/content?tab=feed"
-            className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${
+            className={`px-4 sm:px-6 py-3 text-base sm:text-lg font-medium border-b-2 transition-colors whitespace-nowrap ${
               tab === 'feed' 
                 ? 'border-black text-black' 
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            피드검토 {pendingCount > 0 && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">{pendingCount}</span>}
+            예약검토 {pendingCount > 0 && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">{pendingCount}</span>}
           </Link>
         </div>
       </div>
 
       {(tab === 'blog' || !tab) && (
-        <SeoBlogGeneratorUI bots={activeBots} />
+        <UnifiedBlogEditor bots={activeBots} mode="create" />
       )}
-
-      {tab === 'feed' && (
-        <ReviewQueueClientUI posts={queuePosts || []} />
+      
+      {['pending_review', 'pending_publish', 'published', 'rejected', 'feed'].includes(tab) && (
+        <ReviewQueueClientUI posts={queuePosts || []} initialTab={tab === 'feed' ? 'pending_review' : tab} />
       )}
     </div>
   );

@@ -88,6 +88,9 @@ export default async function UserProfilePage({ params, searchParams }: { params
       .from('posts')
       .select('*, accounts(display_name, is_ai, avatar_url, badges), reactions(id)')
       .eq('author_id', id)
+      .neq('status', 'rejected')
+      .neq('status', 'pending_review')
+      .neq('status', 'pending_publish')
 
     if (sortBy === 'comments') {
       postsQuery = postsQuery.order('comments_count', { ascending: false })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Link } from '@/i18n/routing'
 import { toast } from 'react-hot-toast'
 import ReactionPanel from './ReactionPanel'
@@ -84,10 +84,22 @@ export default function PostContentClient({
                 h1: ({node, ...props}) => <h1 className="text-2xl sm:text-3xl font-black mt-8 mb-4 leading-snug" {...props} />,
                 h2: ({node, ...props}) => <h2 className="text-xl sm:text-2xl font-bold mt-8 mb-4 leading-snug" {...props} />,
                 h3: ({node, ...props}) => <h3 className="text-lg sm:text-xl font-bold mt-6 mb-3" {...props} />,
-                p: ({node, ...props}) => <p className="mb-5 leading-[1.8] text-[15px] sm:text-[16px]" {...props} />,
+                p: ({node, children, ...props}) => {
+                  return <p className="mb-5 leading-[1.8] text-[15px] sm:text-[16px]" {...props}>
+                    {React.Children.map(children, child => {
+                      if (typeof child === 'string') return renderWithHashtags(child);
+                      return child;
+                    })}
+                  </p>
+                },
                 ul: ({node, ...props}) => <ul className="list-disc pl-6 mb-5 space-y-1.5" {...props} />,
                 ol: ({node, ...props}) => <ol className="list-decimal pl-6 mb-5 space-y-1.5" {...props} />,
-                li: ({node, ...props}) => <li className="leading-relaxed" {...props} />,
+                li: ({node, children, ...props}) => <li className="leading-relaxed" {...props}>
+                  {React.Children.map(children, child => {
+                    if (typeof child === 'string') return renderWithHashtags(child);
+                    return child;
+                  })}
+                </li>,
                 a: ({node, ...props}) => <a className="text-blue-600 hover:underline font-medium" {...props} />,
                 blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-5 text-gray-600" {...props} />,
                 strong: ({node, ...props}) => <strong className="font-bold text-gray-900" {...props} />
@@ -98,16 +110,15 @@ export default function PostContentClient({
           </div>
         ) : (
           <div className={`text-gray-700 text-[16px] leading-relaxed text-justify ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
-            {(isHashtagLastLine ? bodyParagraphs : contentParagraphs).map((paragraph, index) => (
-              <div key={index} className="mb-3 last:mb-0 min-h-[1em]">
-                {renderWithHashtags(paragraph)}
-              </div>
-            ))}
-          </div>
-        )}
-        {!isMarkdown && isHashtagLastLine && (
-          <div className="mt-3 text-sm flex flex-nowrap overflow-hidden text-ellipsis whitespace-nowrap gap-1">
-            {renderWithHashtags(lastParagraph, true)}
+            {!isDetail ? (
+              renderWithHashtags(content)
+            ) : (
+              <>
+                {contentParagraphs.map((p, i) => (
+                  <p key={i} className="mb-4">{renderWithHashtags(p)}</p>
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>

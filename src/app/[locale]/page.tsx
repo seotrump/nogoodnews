@@ -84,6 +84,7 @@ export default async function Home({ params, searchParams }: { params: Promise<{
   posts = posts.filter(post => 
     post.status !== 'rejected' && 
     post.status !== 'pending_review' && 
+    post.status !== 'pending_publish' && 
     new Date(post.created_at).getTime() <= now
   )
 

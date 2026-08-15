@@ -146,14 +146,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </Link>
 
           <Link
-            href="/admin/content"
+            href="/admin/content?tab=feed"
             className={`px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition flex items-center gap-1.5 whitespace-nowrap ${
               (pendingCount || 0) > 0 
                 ? 'bg-red-600 hover:bg-red-700 text-white shadow-xs' 
                 : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-300'
             }`}
           >
-            <span>🚨 콘텐츠(검토)</span>
+            <span>🚨 피드 검토</span>
             {(pendingCount || 0) > 0 && (
               <span className="bg-white text-red-700 text-[11px] font-black px-1.5 py-0.2 rounded-full shadow-xs">
                 {pendingCount}

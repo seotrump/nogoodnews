@@ -232,6 +232,32 @@ export async function POST(request: Request) {
     const initialStatus = validation.passed ? 'pending_review' : 'rejected';
 
     let insertedPost: any = null
+    // 1 default image from Pixabay
+    let defaultImageUrl = null
+    try {
+      const pixabayKey = process.env.PIXABAY_API_KEY
+      if (pixabayKey) {
+        // 핵심 키워드 추출
+        const { generateEnforcedAIContent } = await import('@/utils/ai-core')
+        const keywordPrompt = `다음 뉴스 기사의 제목에서 픽사베이(Pixabay) 이미지 검색에 가장 적합한 핵심 명사 키워드 1개만 추출하세요. 아무 설명 없이 단어 1개만 출력하세요.\n\n제목: ${newsItem.title}\n\n키워드:`
+        let searchKeyword = newsItem.title
+        try {
+          searchKeyword = await generateEnforcedAIContent(keywordPrompt, finalBot.ai_model_provider)
+          searchKeyword = searchKeyword.trim().replace(/['"]/g, '')
+        } catch (e) {
+          console.error('Failed to extract keyword:', e)
+        }
+
+        const pRes = await fetch(`https://pixabay.com/api/?key=${pixabayKey}&q=${encodeURIComponent(searchKeyword)}&image_type=photo&per_page=3&lang=ko`)
+        const pData = await pRes.json()
+        if (pData.hits && pData.hits.length > 0) {
+          defaultImageUrl = pData.hits[0].largeImageURL
+        }
+      }
+    } catch (e) {
+      console.error('Pixabay fetch error in ai-feed-trigger:', e)
+    }
+
     const insertPayload = {
       author_id: finalBot.id,
       headline: firstLineHeadline,
@@ -241,7 +267,8 @@ export async function POST(request: Request) {
       sensitivity_tag: newsItem.sensitivityTag || 'normal',
       sensitivity_reason: newsItem.sensitivityReason || null,
       validation_result: validation.results,
-      validated_at: new Date().toISOString()
+      validated_at: new Date().toISOString(),
+      image_url: defaultImageUrl
     }
 
     const { data: resData, error: insertError } = await supabaseAdmin.from('posts').insert({
