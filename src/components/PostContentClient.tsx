@@ -109,7 +109,7 @@ export default function PostContentClient({
             </ReactMarkdown>
           </div>
         ) : (
-          <div className={`text-gray-700 text-[16px] leading-relaxed text-justify break-words ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
+          <div className={`text-gray-700 text-[16px] leading-relaxed text-justify break-all ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
             {!isDetail ? (
               renderWithHashtags(content)
             ) : (
