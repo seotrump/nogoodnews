@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { sendMessage, markAsRead } from '@/app/[locale]/messages/actions'
+import { sendMessage, markAsRead, getMessages } from '@/app/[locale]/messages/actions'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 
@@ -25,12 +25,7 @@ export default function ChatWindow({
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const fetchMessages = async () => {
-    const { data } = await supabase
-      .from('direct_messages')
-      .select('*')
-      .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${otherUser.id}),and(sender_id.eq.${otherUser.id},receiver_id.eq.${currentUserId})`)
-      .order('created_at', { ascending: true })
-    
+    const data = await getMessages(otherUser.id)
     if (data) {
       setMessages(data)
       markAsRead(otherUser.id)
@@ -56,25 +51,17 @@ export default function ChatWindow({
           }
         }
       )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'direct_messages',
-          filter: `sender_id=eq.${currentUserId}`
-        },
-        (payload) => {
-          if (payload.new.receiver_id === otherUser.id) {
-            // My own messages are added via state, but if they come from DB subscription we can handle it
-            // We'll skip adding here to prevent duplicates if we optimistic UI
-          }
-        }
-      )
       .subscribe()
+
+    // 봇 탑승 상태일 경우 Realtime이 RLS에 막히므로 폴링 적용 (5초)
+    let pollInterval: NodeJS.Timeout
+    if (currentUserId !== displayUserId) {
+      pollInterval = setInterval(fetchMessages, 5000)
+    }
 
     return () => {
       supabase.removeChannel(channel)
+      if (pollInterval) clearInterval(pollInterval)
     }
   }, [currentUserId, otherUser.id])
 

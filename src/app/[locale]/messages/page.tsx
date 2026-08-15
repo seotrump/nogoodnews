@@ -34,18 +34,20 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
   let isPilotingBot = false
   let pilotBotProfile: any = null
 
-  if (pilotBotId && hasAdmin) {
+  if (pilotBotId) {
     const { data: botAccount } = await supabaseAdmin
       .from('accounts')
-      .select('id, username, display_name, avatar_url, is_ai')
+      .select('id, username, display_name, avatar_url, is_ai, claimed_by_user_id')
       .eq('id', pilotBotId)
       .eq('is_ai', true)
       .single()
 
     if (botAccount) {
-      effectiveUserId = pilotBotId
-      isPilotingBot = true
-      pilotBotProfile = botAccount
+      if (hasAdmin || botAccount.claimed_by_user_id === user.id) {
+        effectiveUserId = pilotBotId
+        isPilotingBot = true
+        pilotBotProfile = botAccount
+      }
     }
   }
 
@@ -95,11 +97,14 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
             </div>
           ) : (
             conversations.map((conv: any) => (
-              <Link 
+              <div 
                 key={conv.other_user_id} 
-                href={`/messages?u=${conv.other_user_id}`}
-                className={`flex items-center gap-3 p-4 border-b border-gray-100 hover:bg-gray-50 transition ${activeUser?.id === conv.other_user_id ? 'bg-blue-50/50' : ''}`}
+                className="relative group block border-b border-gray-100 hover:bg-gray-50 transition"
               >
+                <Link 
+                  href={`/messages?u=${conv.other_user_id}`}
+                  className={`flex items-center gap-3 p-4 w-full h-full pr-10 ${activeUser?.id === conv.other_user_id ? 'bg-blue-50/50' : ''}`}
+                >
                 {conv.profile.avatar_url ? (
                   <img src={conv.profile.avatar_url} className="w-12 h-12 rounded-full object-cover border" alt="" />
                 ) : (
@@ -114,13 +119,24 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
                   </div>
                   <div className="text-sm text-gray-500 truncate">{conv.last_message || '새로운 대화'}</div>
                 </div>
-                {conv.unread_count > 0 && (
-                  <div className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
-                    {conv.unread_count}
-                  </div>
-                )}
-              </Link>
-            ))
+                    {conv.unread_count > 0 && (
+                      <div className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+                        {conv.unread_count}
+                      </div>
+                    )}
+                  </Link>
+                  {/* 대화방 숨기기 버튼 */}
+                  <form action={async () => {
+                    'use server';
+                    const { deleteConversation } = await import('./actions');
+                    await deleteConversation(conv.other_user_id);
+                  }} className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button type="submit" className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full" title="대화방 나가기 (숨김)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                  </form>
+                </div>
+              ))
           )}
         </div>
       </div>
