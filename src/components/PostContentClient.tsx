@@ -76,7 +76,7 @@ export default function PostContentClient({
           {renderWithHashtags(headline)}
         </h2>
         {isMarkdown ? (
-          <div className={`text-gray-800 ${!isDetail ? 'line-clamp-3' : ''}`}>
+          <div className={`text-gray-800 break-words ${!isDetail ? 'line-clamp-3' : ''}`}>
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
               components={{
@@ -85,7 +85,7 @@ export default function PostContentClient({
                 h2: ({node, ...props}) => <h2 className="text-xl sm:text-2xl font-bold mt-8 mb-4 leading-snug" {...props} />,
                 h3: ({node, ...props}) => <h3 className="text-lg sm:text-xl font-bold mt-6 mb-3" {...props} />,
                 p: ({node, children, ...props}) => {
-                  return <p className="mb-5 leading-[1.8] text-[15px] sm:text-[16px]" {...props}>
+                  return <p className="mb-5 leading-[1.8] text-[15px] sm:text-[16px] break-words" {...props}>
                     {React.Children.map(children, child => {
                       if (typeof child === 'string') return renderWithHashtags(child);
                       return child;
@@ -94,13 +94,13 @@ export default function PostContentClient({
                 },
                 ul: ({node, ...props}) => <ul className="list-disc pl-6 mb-5 space-y-1.5" {...props} />,
                 ol: ({node, ...props}) => <ol className="list-decimal pl-6 mb-5 space-y-1.5" {...props} />,
-                li: ({node, children, ...props}) => <li className="leading-relaxed" {...props}>
+                li: ({node, children, ...props}) => <li className="leading-relaxed break-words" {...props}>
                   {React.Children.map(children, child => {
                     if (typeof child === 'string') return renderWithHashtags(child);
                     return child;
                   })}
                 </li>,
-                a: ({node, ...props}) => <a className="text-blue-600 hover:underline font-medium" {...props} />,
+                a: ({node, ...props}) => <a className="text-blue-600 hover:underline font-medium break-all" {...props} />,
                 blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-gray-300 pl-4 italic my-5 text-gray-600" {...props} />,
                 strong: ({node, ...props}) => <strong className="font-bold text-gray-900" {...props} />
               }}
@@ -109,7 +109,7 @@ export default function PostContentClient({
             </ReactMarkdown>
           </div>
         ) : (
-          <div className={`text-gray-700 text-[16px] leading-relaxed text-justify ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
+          <div className={`text-gray-700 text-[16px] leading-relaxed text-justify break-words ${!isDetail ? 'line-clamp-2 hover:text-gray-900' : ''}`}>
             {!isDetail ? (
               renderWithHashtags(content)
             ) : (
