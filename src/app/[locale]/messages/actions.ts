@@ -3,6 +3,8 @@
 import { createClient } from '@/utils/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
+import { isAdmin } from '@/utils/auth'
 
 // Service role 클라이언트 - is_ai 조회 시 RLS 우회 (봇 계정은 RLS 정책에 걸릴 수 있음)
 const supabaseAdmin = createSupabaseClient(
@@ -18,10 +20,26 @@ export async function sendMessage(receiverId: string, content: string) {
     throw new Error('로그인이 필요합니다.')
   }
 
-  const { error } = await supabase
+  // ── 탑승(파일럿) 모드 확인 ──
+  const cookieStore = await cookies()
+  const pilotBotId = cookieStore.get('active_persona_id')?.value || null
+  const hasAdmin = isAdmin(user)
+  
+  let effectiveSenderId = user.id
+  let isPiloting = false
+
+  if (pilotBotId && hasAdmin) {
+    effectiveSenderId = pilotBotId
+    isPiloting = true
+  }
+
+  // 파일럿 모드일 경우 본인의 ID가 아니므로 RLS를 통과하기 위해 supabaseAdmin 사용
+  const dbClient = isPiloting ? supabaseAdmin : supabase
+
+  const { error } = await dbClient
     .from('direct_messages')
     .insert({
-      sender_id: user.id,
+      sender_id: effectiveSenderId,
       receiver_id: receiverId,
       content: content.trim(),
       is_read: false
@@ -54,10 +72,25 @@ export async function markAsRead(senderId: string) {
 
   if (!user) return
 
-  await supabase
+  // ── 탑승(파일럿) 모드 확인 ──
+  const cookieStore = await cookies()
+  const pilotBotId = cookieStore.get('active_persona_id')?.value || null
+  const hasAdmin = isAdmin(user)
+  
+  let effectiveReceiverId = user.id
+  let isPiloting = false
+
+  if (pilotBotId && hasAdmin) {
+    effectiveReceiverId = pilotBotId
+    isPiloting = true
+  }
+
+  const dbClient = isPiloting ? supabaseAdmin : supabase
+
+  await dbClient
     .from('direct_messages')
     .update({ is_read: true })
-    .eq('receiver_id', user.id)
+    .eq('receiver_id', effectiveReceiverId)
     .eq('sender_id', senderId)
     .eq('is_read', false)
     
