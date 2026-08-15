@@ -72,7 +72,7 @@ export default function PostContentClient({
   return (
     <div className="mt-1">
       <div>
-        <h2 className={`text-[20px] font-bold text-gray-900 leading-tight break-keep text-justify ${!isDetail ? 'mb-2 hover:text-blue-600 transition' : 'mb-6'}`}>
+        <h2 className={`text-[20px] font-bold text-gray-900 leading-tight break-words text-justify ${!isDetail ? 'mb-2 hover:text-blue-600 transition' : 'mb-6'}`}>
           {renderWithHashtags(headline)}
         </h2>
         {isMarkdown ? (
@@ -115,7 +115,7 @@ export default function PostContentClient({
             ) : (
               <>
                 {contentParagraphs.map((p, i) => (
-                  <p key={i} className="mb-4">{renderWithHashtags(p)}</p>
+                  <p key={i} className="mb-4 break-words">{renderWithHashtags(p)}</p>
                 ))}
               </>
             )}
