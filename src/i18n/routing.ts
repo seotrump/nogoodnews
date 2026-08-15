@@ -3,12 +3,12 @@ import {createNavigation} from 'next-intl/navigation';
  
 export const routing = defineRouting({
   // A list of all locales that are supported
-  locales: ['ko', 'en'],
+  locales: ['en', 'ko'],
  
   // Used when no locale matches
-  defaultLocale: 'ko',
+  defaultLocale: 'en',
   
-  // Hide the prefix for the default locale (ko)
+  // Hide the prefix for the default locale (en)
   localePrefix: 'as-needed',
 
   // Disable automatic locale detection via cookie to prevent switching admin's language involuntarily
