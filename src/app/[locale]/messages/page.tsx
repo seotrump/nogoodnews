@@ -3,6 +3,14 @@ import { redirect } from 'next/navigation'
 import { Link } from '@/i18n/routing'
 import ChatWindow from '@/components/ChatWindow'
 import { setRequestLocale } from 'next-intl/server'
+import { cookies } from 'next/headers'
+import { isAdmin } from '@/utils/auth'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+const supabaseAdmin = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export default async function MessagesPage({ searchParams, params }: { searchParams: Promise<{ u?: string }>, params: Promise<{ locale: string }> }) {
   const supabase = await createClient()
@@ -16,8 +24,33 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
 
   const { u: selectedUserId } = await searchParams
 
-  // 1. 대화 목록 가져오기 (RPC 호출)
-  const { data: convData, error } = await supabase.rpc('get_conversations', { p_user_id: user.id })
+  // ── 파일럿(탑승) 모드: 관리자가 봇 탑승 중이면 봇 ID로 대화 조회 전환 ──
+  const cookieStore = await cookies()
+  const pilotBotId = cookieStore.get('active_persona_id')?.value || null
+  const hasAdmin = isAdmin(user)
+
+  // 유효한 봇 ID인지 검증 (관리자만 허용)
+  let effectiveUserId = user.id
+  let isPilotingBot = false
+  let pilotBotProfile: any = null
+
+  if (pilotBotId && hasAdmin) {
+    const { data: botAccount } = await supabaseAdmin
+      .from('accounts')
+      .select('id, username, display_name, avatar_url, is_ai')
+      .eq('id', pilotBotId)
+      .eq('is_ai', true)
+      .single()
+
+    if (botAccount) {
+      effectiveUserId = pilotBotId
+      isPilotingBot = true
+      pilotBotProfile = botAccount
+    }
+  }
+
+  // 1. 대화 목록 가져오기 (effectiveUserId 기준)
+  const { data: convData } = await supabaseAdmin.rpc('get_conversations', { p_user_id: effectiveUserId })
   let conversations = convData || []
 
   // 2. 만약 selectedUserId가 있는데 대화 목록에 없다면 (새로운 대화)
@@ -27,10 +60,10 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
 
   // 3. 각 대화 상대방의 프로필 정보 가져오기
   const otherUserIds = conversations.map((c: any) => c.other_user_id)
-  const { data: profiles } = await supabase
+  const { data: profiles } = await supabaseAdmin
     .from('accounts')
     .select('id, username, display_name, avatar_url, is_ai')
-    .in('id', otherUserIds)
+    .in('id', otherUserIds.length > 0 ? otherUserIds : ['00000000-0000-0000-0000-000000000000'])
 
   const profileMap = (profiles || []).reduce((acc: any, p: any) => {
     acc[p.id] = p
@@ -42,16 +75,25 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
     profile: profileMap[c.other_user_id]
   })).filter((c: any) => c.profile)
 
-  // 4. 현재 선택된 유저 프로필 (selectedUserId가 명시적으로 존재할 때만 활성화)
+  // 4. 현재 선택된 유저 프로필
   const activeUser = selectedUserId ? (profileMap[selectedUserId] || null) : null
 
   return (
     <div className="max-w-6xl mx-auto px-4 mt-4 md:mt-6 h-[calc(100vh-180px)] md:h-[calc(100vh-120px)] pb-16 md:pb-0 flex flex-col md:flex-row gap-4 md:gap-6">
       
+      {/* 탑승 중 배너 */}
+      {isPilotingBot && pilotBotProfile && (
+        <div className="fixed top-16 left-0 right-0 z-50 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold text-center py-1.5 shadow-md">
+          🚀 [{pilotBotProfile.display_name}] 봇 관점으로 DM 조회 중
+        </div>
+      )}
+
       {/* 좌측: 대화 목록 */}
       <div className={`w-full md:w-80 flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col ${activeUser ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b">
-          <h2 className="font-bold text-lg text-gray-900">메시지</h2>
+          <h2 className="font-bold text-lg text-gray-900">
+            {isPilotingBot && pilotBotProfile ? `${pilotBotProfile.display_name} 메시지함` : '메시지'}
+          </h2>
         </div>
         <div className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
@@ -100,7 +142,8 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
                 목록으로
               </Link>
             </div>
-            <ChatWindow currentUserId={user.id} otherUser={activeUser} />
+            {/* effectiveUserId를 전달하여 봇 관점에서 채팅 내용도 표시 */}
+            <ChatWindow currentUserId={effectiveUserId} otherUser={activeUser} displayUserId={user.id} />
           </div>
         ) : (
           <div className="text-center text-gray-400">
@@ -113,3 +156,4 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
     </div>
   )
 }
+
