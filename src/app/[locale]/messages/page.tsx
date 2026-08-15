@@ -7,6 +7,7 @@ import { cookies } from 'next/headers'
 import { isAdmin } from '@/utils/auth'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { deleteConversation } from './actions'
+import DeleteConversationButton from '@/components/DeleteConversationButton'
 
 const supabaseAdmin = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -127,17 +128,11 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
                     )}
                   </Link>
                   {/* 대화방 숨기기 버튼 */}
-                  <form action={deleteConversation.bind(null, conv.other_user_id)} className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
-                    <button
-                      type="submit"
-                      title="대화방 나가기 (숨김)"
-                      className="p-1.5 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      onClick={(e) => {
-                        if (!confirm('이 대화방을 목록에서 숨기시겠어요?')) e.preventDefault()
-                      }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                    </button>
+                  <form className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
+                    <DeleteConversationButton 
+                      onAction={deleteConversation.bind(null, conv.other_user_id)} 
+                      title="대화방 나가기 (숨김)" 
+                    />
                   </form>
                 </div>
               ))
