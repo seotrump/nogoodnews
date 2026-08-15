@@ -138,8 +138,17 @@ export default function ChatWindow({
         {messages.map((msg, idx) => {
           const isMine = msg.sender_id === bubbleOwnerId || (altOwnerId && msg.sender_id === altOwnerId)
           return (
-            <div key={msg.id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm ${isMine ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-bl-none shadow-sm'}`}>
+            <div key={msg.id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start gap-2'}`}>
+              {!isMine && (
+                <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden border bg-gray-100 flex items-center justify-center">
+                  {otherUser?.avatar_url ? (
+                    <img src={otherUser.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs text-gray-400">?</span>
+                  )}
+                </div>
+              )}
+              <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm ${isMine ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none shadow-sm'}`}>
                 {msg.content}
               </div>
             </div>

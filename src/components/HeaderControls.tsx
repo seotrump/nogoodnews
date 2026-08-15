@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Link } from '@/i18n/routing'
 import SearchBar from '@/components/SearchBar'
 import NotificationBell from '@/components/NotificationBell'
+import MessageBadge from '@/components/MessageBadge'
 import PilotSelectorModal from '@/components/PilotSelectorModal'
 import { useActivePersona } from '@/context/ActivePersonaContext'
 
@@ -25,6 +26,9 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
     if (cb) cb.checked = false
   }
 
+  // 알림 뱃지를 위해 파일럿 모드일 경우 봇 ID 사용
+  const effectiveUserId = isPiloting && activeBot ? activeBot.id : user?.id
+
   return (
     <>
       {!isHiddenPage ? <SearchBar /> : <div className="flex-1" />}
@@ -41,6 +45,7 @@ export default function HeaderControls({ user, profile, hasAdmin, t }: { user: a
               <rect width="20" height="16" x="2" y="4" rx="2"></rect>
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
             </svg>
+            {effectiveUserId && <MessageBadge userId={effectiveUserId} />}
           </Link>
           <NotificationBell userId={user.id} />
           
