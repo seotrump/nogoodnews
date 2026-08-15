@@ -80,13 +80,6 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
 
   return (
     <div className="max-w-6xl mx-auto px-4 mt-4 md:mt-6 h-[calc(100vh-180px)] md:h-[calc(100vh-120px)] pb-16 md:pb-0 flex flex-col md:flex-row gap-4 md:gap-6">
-      
-      {/* 탑승 중 배너 */}
-      {isPilotingBot && pilotBotProfile && (
-        <div className="fixed top-16 left-0 right-0 z-50 bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold text-center py-1.5 shadow-md">
-          🚀 [{pilotBotProfile.display_name}] 봇 관점으로 DM 조회 중
-        </div>
-      )}
 
       {/* 좌측: 대화 목록 */}
       <div className={`w-full md:w-80 flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col ${activeUser ? 'hidden md:flex' : 'flex'}`}>

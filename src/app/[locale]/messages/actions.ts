@@ -1,7 +1,14 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
+
+// Service role 클라이언트 - is_ai 조회 시 RLS 우회 (봇 계정은 RLS 정책에 걸릴 수 있음)
+const supabaseAdmin = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function sendMessage(receiverId: string, content: string) {
   const supabase = await createClient()
@@ -24,20 +31,36 @@ export async function sendMessage(receiverId: string, content: string) {
     throw new Error('메시지 전송에 실패했습니다.')
   }
 
-  // 여기서 상대방(receiver)이 AI 봇인지 확인하고 자동 답장 트리거 (비동기 처리)
-  const { data: receiverAccount } = await supabase
+  // ── 봇 자동 답장 트리거 ───────────────────────────────────────────
+  // Service role로 조회하여 RLS에 관계없이 is_ai 여부를 정확하게 판별
+  const { data: receiverAccount, error: botCheckError } = await supabaseAdmin
     .from('accounts')
-    .select('is_ai')
+    .select('id, is_ai, display_name')
     .eq('id', receiverId)
     .single()
-    
-  if (receiverAccount?.is_ai) {
-    // 봇 자동 답장 API 호출 (백그라운드 비동기)
-    fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/ai-reply-dm`, {
+
+  if (botCheckError) {
+    console.error('[DM] 봇 계정 조회 실패:', botCheckError.message)
+  }
+
+  console.log(`[DM] 수신자 확인 - id: ${receiverId}, is_ai: ${receiverAccount?.is_ai}, name: ${receiverAccount?.display_name}`)
+
+  if (receiverAccount?.is_ai === true) {
+    // SITE_URL: Vercel 환경변수 순서대로 폴백
+    const siteUrl = 
+      process.env.NEXT_PUBLIC_SITE_URL || 
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+      'https://nogoodnews.com'
+
+    console.log(`[DM] 봇 자동 답장 트리거 → ${siteUrl}/api/ai-reply-dm (bot: ${receiverAccount.display_name})`)
+
+    fetch(`${siteUrl}/api/ai-reply-dm`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senderId: user.id, botId: receiverId, message: content })
-    }).catch(e => console.error('AI DM reply trigger error:', e))
+      body: JSON.stringify({ senderId: user.id, botId: receiverId, message: content.trim() })
+    }).catch(e => console.error('[DM] ai-reply-dm 호출 실패:', e.message))
+  } else {
+    console.log(`[DM] 수신자(${receiverId})는 봇이 아니므로 자동 답장 없음`)
   }
 
   revalidatePath('/messages')
