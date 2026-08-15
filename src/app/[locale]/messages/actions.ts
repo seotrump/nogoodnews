@@ -43,27 +43,9 @@ export async function sendMessage(receiverId: string, content: string) {
     console.error('[DM] 봇 계정 조회 실패:', botCheckError.message)
   }
 
-  console.log(`[DM] 수신자 확인 - id: ${receiverId}, is_ai: ${receiverAccount?.is_ai}, name: ${receiverAccount?.display_name}`)
-
-  if (receiverAccount?.is_ai === true) {
-    // SITE_URL: Vercel 환경변수 순서대로 폴백
-    const siteUrl = 
-      process.env.NEXT_PUBLIC_SITE_URL || 
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-      'https://nogoodnews.com'
-
-    console.log(`[DM] 봇 자동 답장 트리거 → ${siteUrl}/api/ai-reply-dm (bot: ${receiverAccount.display_name})`)
-
-    fetch(`${siteUrl}/api/ai-reply-dm`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senderId: user.id, botId: receiverId, message: content.trim() })
-    }).catch(e => console.error('[DM] ai-reply-dm 호출 실패:', e.message))
-  } else {
-    console.log(`[DM] 수신자(${receiverId})는 봇이 아니므로 자동 답장 없음`)
-  }
-
   revalidatePath('/messages')
+  
+  return { success: true, isAi: receiverAccount?.is_ai === true }
 }
 
 export async function markAsRead(senderId: string) {

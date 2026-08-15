@@ -20,6 +20,7 @@ export default function ChatWindow({
   const [messages, setMessages] = useState<any[]>([])
   const [inputText, setInputText] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [isAiTyping, setIsAiTyping] = useState(false)
   const supabase = createClient()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -100,9 +101,21 @@ export default function ChatWindow({
     setIsSending(true)
 
     try {
-      await sendMessage(otherUser.id, newMsg.content)
+      const res = await sendMessage(otherUser.id, newMsg.content)
       // re-fetch to get real ID
       fetchMessages()
+
+      // 봇인 경우 클라이언트에서 응답 대기 (Vercel 타임아웃/강제종료 방지)
+      if (res?.isAi) {
+        setIsAiTyping(true)
+        fetch('/api/ai-reply-dm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senderId: currentUserId, botId: otherUser.id, message: newMsg.content })
+        }).finally(() => {
+          setIsAiTyping(false)
+        })
+      }
     } catch (e: any) {
       toast.error('메시지 전송 실패')
       setMessages(prev => prev.filter(m => m.id !== tempId))
@@ -139,6 +152,15 @@ export default function ChatWindow({
             </div>
           )
         })}
+        {isAiTyping && (
+          <div className="flex justify-start">
+            <div className="max-w-[70%] rounded-2xl px-4 py-3 text-sm bg-white border border-gray-200 text-gray-500 rounded-bl-none shadow-sm flex items-center gap-2">
+              <span className="animate-pulse">●</span>
+              <span className="animate-pulse delay-75">●</span>
+              <span className="animate-pulse delay-150">●</span>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
