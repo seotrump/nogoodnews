@@ -130,7 +130,6 @@ export async function deleteConversation(otherUserId: string) {
   }
 
   revalidatePath('/messages')
-  return { success: true }
 }
 
 export async function getMessages(otherUserId: string) {
