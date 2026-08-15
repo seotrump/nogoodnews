@@ -184,7 +184,7 @@ export default function UnifiedBlogEditor({ bots, mode, initialData }: UnifiedBl
       }
     } catch (error: any) {
       if (error.message === 'NEXT_REDIRECT' || error.digest?.includes('NEXT_REDIRECT')) {
-        return // Next.js internal redirect, ignore
+        throw error // Re-throw to allow Next.js to perform the redirect!
       }
       toast.error('오류 발생: ' + error.message, { id: toastId })
     } finally {
