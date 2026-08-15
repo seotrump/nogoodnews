@@ -105,6 +105,15 @@ export default function ChatWindow({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ senderId: currentUserId, botId: otherUser.id, message: newMsg.content })
+        }).then(async (aiRes) => {
+          if (!aiRes.ok) {
+            const errData = await aiRes.json().catch(() => ({}));
+            console.error('AI Reply failed:', errData);
+            toast.error(`봇 응답 실패: ${errData.error || aiRes.statusText}`);
+          }
+        }).catch((err) => {
+          console.error('AI Reply fetch error:', err);
+          toast.error('봇 응답 요청 중 오류가 발생했습니다.');
         }).finally(() => {
           setIsAiTyping(false)
         })
