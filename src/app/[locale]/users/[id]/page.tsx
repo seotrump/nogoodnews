@@ -226,7 +226,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
       }
       const top3Ids = Object.entries(counts)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
+        .slice(0, 9)
         .map(e => e[0])
 
       if (top3Ids.length > 0) {
@@ -542,7 +542,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
               {topBots.length > 0 && (
                 <div className="mt-4 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 p-4 rounded-2xl border border-indigo-500/30">
                   <span className="text-indigo-200 font-bold block mb-3 text-sm flex items-center gap-1">
-                    🏆 나의 최애 봇 TOP 3
+                    🏆 베스트 프렌드
                   </span>
                   <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
                     {topBots.map((bot, idx) => (
@@ -551,7 +551,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
                           {bot.avatar_url ? (
                             <img src={bot.avatar_url} className="w-12 h-12 rounded-full object-cover border-2 border-indigo-400" />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gray-700 border-2 border-indigo-400 flex items-center justify-center text-lg">🤖</div>
+                            <div className="w-12 h-12 rounded-full bg-gray-700 border-2 border-indigo-400 flex items-center justify-center text-lg">{bot.is_ai ? '🤖' : '👤'}</div>
                           )}
                           <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
                             {idx + 1}
