@@ -5,11 +5,19 @@ import Link from 'next/link'
 import ResetButton from '@/components/admin/ResetButton'
 
 export default function RankingTablesClient({ accounts, resetUserScore }: { accounts: any[], resetUserScore: any }) {
+  const [selectedNBTI, setSelectedNBTI] = useState<string>('ALL')
   const humanUsers = accounts.filter(a => !a.is_ai)
-  const aiBots = accounts.filter(a => a.is_ai)
+  const aiBots = accounts.filter(a => {
+    if (!a.is_ai) return false
+    const nbti = a.nbti_type || 'ENFP'
+    if (selectedNBTI !== 'ALL' && nbti !== selectedNBTI) return false
+    return true
+  })
 
   const [humanPage, setHumanPage] = useState(1)
   const [botPage, setBotPage] = useState(1)
+
+  const nbtiTypes = ['ALL', 'ENFJ', 'ENFP', 'ENTJ', 'ENTP', 'ESFJ', 'ESFP', 'ESTJ', 'ESTP', 'INFJ', 'INFP', 'INTJ', 'INTP', 'ISFJ', 'ISFP', 'ISTJ', 'ISTP']
 
   const pageSize = 10
 
@@ -98,7 +106,18 @@ export default function RankingTablesClient({ accounts, resetUserScore }: { acco
         <div>
           <div className="bg-gray-100 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
             <h3 className="font-bold text-gray-800 text-base">🤖 로봇 랭크</h3>
-            <span className="text-xs text-gray-500 font-semibold">총 {aiBots.length}개</span>
+            <div className="flex items-center gap-3">
+              <select 
+                value={selectedNBTI}
+                onChange={e => { setSelectedNBTI(e.target.value); setBotPage(1); }}
+                className="text-xs border-gray-300 rounded px-2 py-1 font-bold text-gray-700 outline-none"
+              >
+                {nbtiTypes.map(t => (
+                  <option key={t} value={t}>{t === 'ALL' ? '전체 NBTI' : t}</option>
+                ))}
+              </select>
+              <span className="text-xs text-gray-500 font-semibold">총 {aiBots.length}개</span>
+            </div>
           </div>
           <table className="w-full text-left border-collapse">
             <thead>
@@ -123,7 +142,10 @@ export default function RankingTablesClient({ accounts, resetUserScore }: { acco
                         ) : (
                           <div className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">Bot</div>
                         )}
-                        <span className="font-semibold text-gray-800 text-sm">{acc.display_name || '알 수 없음'}</span>
+                        <span className="font-semibold text-gray-800 text-sm">
+                          {acc.display_name || '알 수 없음'}
+                          {acc.nbti_type && <span className="ml-1.5 text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">{acc.nbti_type}</span>}
+                        </span>
                       </Link>
                     </td>
                     <td className="p-3 font-bold text-gray-700 text-sm text-center">{acc.level || 1}</td>

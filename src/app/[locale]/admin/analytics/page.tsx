@@ -11,7 +11,7 @@ import ResetButton from '@/components/admin/ResetButton'
 import RankingTablesClient from '@/components/admin/RankingTablesClient'
 
 export default async function AnalyticsDashboardPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const { tab = 'overview' } = await searchParams
+  const { tab = 'rank' } = await searchParams
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 

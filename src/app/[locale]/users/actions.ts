@@ -40,6 +40,33 @@ export async function toggleFollow(followingId: string) {
         following_id: followingId
       })
     if (error) throw error
+
+    // AI 봇 여부 확인 및 70% 확률로 맞팔로우 (Phase 4 봇 능동성)
+    const { data: targetAccount } = await supabase
+      .from('accounts')
+      .select('is_ai, gender')
+      .eq('id', followingId)
+      .single()
+      
+    const { data: userAccount } = await supabase
+      .from('accounts')
+      .select('gender')
+      .eq('id', user.id)
+      .single()
+
+    if (targetAccount?.is_ai && Math.random() < 0.7) {
+      // 성별 조건 검사: 서로 이성일 때만 가능 (중성 불가)
+      const bg = targetAccount.gender
+      const ug = userAccount?.gender
+      const isValid = bg !== 'neutral' && ((bg === 'male' && ug === 'female') || (bg === 'female' && ug === 'male'))
+      
+      if (isValid) {
+        await supabase.from('follows').insert({
+          follower_id: followingId,
+          following_id: user.id
+        })
+      }
+    }
   }
 
   // 캐시 갱신 (프로필 및 메인 피드)
@@ -67,7 +94,7 @@ export async function getRecommendedUsers(limit: number = 5) {
   // 여기서는 단순히 최신 AI 봇 중 팔로우하지 않은 계정을 20개 가져와서 랜덤으로 섞음
   let query = supabase
     .from('accounts')
-    .select('id, display_name, avatar_url, bio, is_ai, level, followers_count')
+    .select('id, username, display_name, avatar_url, bio, is_ai, level, followers_count')
     .eq('is_ai', true)
     .order('created_at', { ascending: false })
     .limit(30)
@@ -95,12 +122,16 @@ export async function completeOnboarding(categories: string[]) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('로그인이 필요합니다.')
 
+  const { data: userAcc } = await supabase.from('accounts').select('gender').eq('id', user.id).single()
+  const userGender = userAcc?.gender
+
   // 1. 선택한 카테고리의 인기 봇 찾기 (카테고리당 2~3개씩 최대 10개)
+  let recommendedBotsList: any[] = []
   let recommendedBotIds: string[] = []
   if (categories.length > 0) {
     const { data: bots } = await supabase
       .from('accounts')
-      .select('id, category')
+      .select('id, category, gender')
       .eq('is_ai', true)
       .in('category', categories)
       .order('followers_count', { ascending: false })
@@ -112,17 +143,19 @@ export async function completeOnboarding(categories: string[]) {
         const j = Math.floor(Math.random() * (i + 1));
         [bots[i], bots[j]] = [bots[j], bots[i]];
       }
-      recommendedBotIds = bots.slice(0, 10).map(b => b.id)
+      recommendedBotsList = bots.slice(0, 10)
+      recommendedBotIds = recommendedBotsList.map(b => b.id)
     }
   } else {
     // 카테고리 미선택 시 글로벌 인기 봇
     const { data: topBots } = await supabase
       .from('accounts')
-      .select('id')
+      .select('id, gender')
       .eq('is_ai', true)
       .order('followers_count', { ascending: false })
       .limit(5)
     if (topBots) {
+      recommendedBotsList = topBots
       recommendedBotIds = topBots.map(b => b.id)
     }
   }
@@ -143,6 +176,18 @@ export async function completeOnboarding(categories: string[]) {
       
     if (toInsert.length > 0) {
       await supabase.from('follows').insert(toInsert)
+    }
+
+    // Phase 4: 뉴비 환영 선팔 (1~2마리의 봇이 가입을 환영하며 유저를 선팔)
+    // 조건: 이성 봇만 선팔 가능
+    const eligibleBotsToFollowUser = recommendedBotsList.filter(b => {
+      const bg = b.gender
+      return bg !== 'neutral' && ((bg === 'male' && userGender === 'female') || (bg === 'female' && userGender === 'male'))
+    })
+    
+    const botsToFollowUser = eligibleBotsToFollowUser.slice(0, 2).map(b => ({ follower_id: b.id, following_id: user.id }))
+    if (botsToFollowUser.length > 0) {
+      await supabase.from('follows').insert(botsToFollowUser)
     }
   }
 

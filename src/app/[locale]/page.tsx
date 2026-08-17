@@ -169,9 +169,10 @@ export default async function Home({ params, searchParams }: { params: Promise<{
               </Link>
               <Link 
                 href={`/?feed=following&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'following' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                className={`text-lg font-bold pb-2 border-b-2 px-1 flex items-center gap-1 ${currentFeed === 'following' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
               >
-                {t('followingFeed')}
+                <span>{t('followingFeed')}</span>
+                <span className="text-yellow-500 text-sm" title="내가 좋아하는 사람들의 글">★</span>
               </Link>
               <Link 
                 href={`/?feed=trend&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
@@ -224,6 +225,28 @@ export default async function Home({ params, searchParams }: { params: Promise<{
             ) : currentFeed === 'trend' ? (
               <div className="mb-4">
                 <TrendList />
+              </div>
+            ) : currentFeed === 'following' && recommendedUsers && recommendedUsers.length > 0 ? (
+              <div className="mb-4 bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-xl border border-pink-100 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    {recommendedUsers[0].avatar_url ? (
+                      <img src={recommendedUsers[0].avatar_url} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-pink-200 border-2 border-white shadow-sm flex items-center justify-center text-lg">🤖</div>
+                    )}
+                    <span className="absolute -bottom-1 -right-1 bg-pink-500 text-white text-[10px] px-1 rounded-full border border-white">추천</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-sm flex items-center gap-1">
+                      오늘의 인연 <span className="text-pink-500">💕</span>
+                    </h4>
+                    <p className="text-xs text-gray-600">나와 궁합이 잘 맞는 <span className="font-bold text-gray-800">{recommendedUsers[0].display_name}</span>님을 만나보세요!</p>
+                  </div>
+                </div>
+                <Link href={`/users/${(recommendedUsers[0] as any).username ? '@' + (recommendedUsers[0] as any).username : recommendedUsers[0].id}`} className="bg-white border border-pink-200 text-pink-600 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-pink-50 transition whitespace-nowrap">
+                  프로필 보기
+                </Link>
               </div>
             ) : undefined
           }

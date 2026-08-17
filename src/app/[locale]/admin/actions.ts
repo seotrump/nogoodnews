@@ -677,7 +677,7 @@ export async function getRankingStats() {
 
   const { data: accounts, error } = await supabaseAdmin
     .from('accounts')
-    .select('id, display_name, is_ai, level, activity_score, avatar_url')
+    .select('id, display_name, is_ai, level, activity_score, avatar_url, nbti_type, type_code, axis_profile')
     .order('activity_score', { ascending: false })
     .limit(100)
 

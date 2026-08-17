@@ -39,10 +39,12 @@ export async function POST(req: Request) {
     // 시간순으로 정렬 (오래된 것 → 최신 순)
     const history = (recentMessages || []).reverse()
     
-    // 메시지 발송 시간 포맷팅 헬퍼 함수
+    // 메시지 발송 시간 포맷팅 헬퍼 함수 (한국 시간 KST 기준)
     const formatTime = (isoString: string) => {
       const d = new Date(isoString);
-      return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      const kstOffset = 9 * 60 * 60 * 1000;
+      const kstDate = new Date(d.getTime() + kstOffset);
+      return `${kstDate.getUTCMonth()+1}/${kstDate.getUTCDate()} ${String(kstDate.getUTCHours()).padStart(2, '0')}:${String(kstDate.getUTCMinutes()).padStart(2, '0')}`;
     };
 
     const historyText = history.length > 0

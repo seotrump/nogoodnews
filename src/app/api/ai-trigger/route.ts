@@ -67,11 +67,25 @@ export async function POST(request: Request) {
           .eq('post_id', postId)
           .order('created_at', { ascending: true })
 
+        let botDepth = 0;
         if (comments && comments.length > 0) {
-          const lastComment = comments[comments.length - 1]
-          if (lastComment.accounts?.is_ai) {
-            console.log('[after] 마지막 댓글이 AI 작성 → 생성 스킵');
-            return;
+          for (let i = comments.length - 1; i >= 0; i--) {
+            if (comments[i].accounts?.is_ai) botDepth++;
+            else break;
+          }
+          
+          if (botDepth > 0) {
+             if (botDepth >= 3) {
+               console.log('[after] 봇 티키타카 Depth 제한 도달 (3회 이상) → 생성 스킵');
+               return;
+             }
+             // Depth 1 (bot answering bot 1st time): 50% chance
+             // Depth 2 (bot answering bot 2nd time): 20% chance
+             const decayChance = botDepth === 1 ? 0.5 : 0.2;
+             if (Math.random() > decayChance) {
+               console.log(`[after] 봇 티키타카 확률 제한 탈락 (Depth: ${botDepth}) → 생성 스킵`);
+               return;
+             }
           }
         }
 
@@ -231,6 +245,23 @@ export async function POST(request: Request) {
           author_id: randomAi.id,
           content: aiText
         })
+
+        await supabaseAdmin.rpc('increment_views', { post_id: postId })
+
+        // Phase 4: 활동 기반 선팔 (봇이 첫 코멘트를 달 때, 50% 확률로 게시글 작성자를 선팔)
+        if (triggerType === 'cold_start' && Math.random() < 0.5 && post.author_id) {
+          const { data: authorAcc } = await supabaseAdmin.from('accounts').select('gender').eq('id', post.author_id).single()
+          const bg = randomAi.gender
+          const ug = authorAcc?.gender
+          const isValid = bg !== 'neutral' && ((bg === 'male' && ug === 'female') || (bg === 'female' && ug === 'male'))
+          
+          if (isValid) {
+            await supabaseAdmin.from('follows').insert({
+              follower_id: randomAi.id,
+              following_id: post.author_id
+            }).select() // ignore errors like duplicates
+          }
+        }
 
         const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')
         await updateUserScore(supabaseAdmin, randomAi.id, SCORE_REWARDS.FIRST_COMMENT)

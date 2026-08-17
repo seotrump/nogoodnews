@@ -8,7 +8,7 @@ import ProfileSortFilter from '@/components/ProfileSortFilter'
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server'
 import UserBadge from '@/components/UserBadge'
-import { MessageSquare, Heart, TrendingUp, Camera } from 'lucide-react'
+import { MessageSquare, Heart, TrendingUp, Camera, Bookmark } from 'lucide-react'
 import { getPointsForNextLevel } from '@/utils/gamification'
 import { getExistenceCategoryLabel, getRealmCategoryLabel, getBotCategoryLabel } from '@/utils/type-code'
 
@@ -71,7 +71,8 @@ export default async function UserProfilePage({ params, searchParams }: { params
 
   // Check if current user is following this profile
   let initialIsFollowing = false
-  if (currentUser) {
+  let isMutualFollow = false
+  if (currentUser && currentUser.id !== id) {
     const { data: follow } = await supabase
       .from('follows')
       .select('follower_id')
@@ -79,6 +80,16 @@ export default async function UserProfilePage({ params, searchParams }: { params
       .eq('following_id', id)
       .maybeSingle()
     if (follow) initialIsFollowing = true
+
+    if (initialIsFollowing) {
+      const { data: follower } = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('follower_id', id)
+        .eq('following_id', currentUser.id)
+        .maybeSingle()
+      if (follower) isMutualFollow = true
+    }
   }
 
   // Get user posts if feeds tab
@@ -176,6 +187,64 @@ export default async function UserProfilePage({ params, searchParams }: { params
     }
   }
 
+  // Get bookmarked posts
+  let bookmarkedPosts: any[] = []
+  if (currentTab === 'bookmarks' && currentUser?.id === profile.id) {
+    const { data: bookmarksData } = await supabase
+      .from('bookmarks')
+      .select('post_id, created_at')
+      .eq('user_id', currentUser!.id)
+      .order('created_at', { ascending: false })
+
+    if (bookmarksData && bookmarksData.length > 0) {
+      const postIds = bookmarksData.map(b => b.post_id)
+      const { data: bPosts } = await supabase
+        .from('posts')
+        .select('*, accounts(display_name, is_ai, avatar_url, badges), reactions(id)')
+        .in('id', postIds)
+      
+      // Preserve bookmark sort order (latest bookmark first)
+      if (bPosts) {
+        bookmarkedPosts = postIds.map(pid => bPosts.find(p => p.id === pid)).filter(Boolean)
+      }
+    }
+  }
+
+  // Get top 3 interacted bots for personal ranking board
+  let topBots: any[] = []
+  if (currentUser && currentUser.id === id && currentTab === 'profile') {
+    const { data: dms } = await supabase
+      .from('direct_messages')
+      .select('sender_id, receiver_id')
+      .or(`sender_id.eq.${id},receiver_id.eq.${id}`)
+
+    if (dms && dms.length > 0) {
+      const counts: Record<string, number> = {}
+      for (const dm of dms) {
+        const otherId = dm.sender_id === id ? dm.receiver_id : dm.sender_id
+        counts[otherId] = (counts[otherId] || 0) + 1
+      }
+      const top3Ids = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(e => e[0])
+
+      if (top3Ids.length > 0) {
+        const { data: topBotsData } = await supabase
+          .from('accounts')
+          .select('id, display_name, avatar_url, username, is_ai')
+          .in('id', top3Ids)
+
+        if (topBotsData) {
+          topBots = top3Ids.map(tid => {
+            const b = topBotsData.find(b => b.id === tid)
+            return b ? { ...b, interactCount: counts[tid] } : null
+          }).filter(Boolean)
+        }
+      }
+    }
+  }
+
   const xpData = getPointsForNextLevel(profile.points || 0)
 
   return (
@@ -198,6 +267,11 @@ export default async function UserProfilePage({ params, searchParams }: { params
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
           <span className="text-2xl sm:text-3xl leading-none">{['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'][profile.level || 1] || `[${profile.level || 1}]`}</span>
           <span className="break-all">{profile.display_name}</span>
+          {isMutualFollow && (
+            <span className="bg-pink-100 text-pink-600 px-2.5 py-0.5 rounded-full text-xs font-black shadow-sm flex items-center gap-1 border border-pink-200">
+              🤝 찐친
+            </span>
+          )}
           {profile.is_ai && (
             <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap">{t('aiAdmin')}</span>
           )}
@@ -271,6 +345,11 @@ export default async function UserProfilePage({ params, searchParams }: { params
           <Link scroll={false} href={`/users/${profileUrlId}?tab=feeds`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'feeds' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
             <TrendingUp className="w-5 h-5" /> {t('bestFeeds')}
           </Link>
+          {currentUser && currentUser.id === profile.id && (
+            <Link scroll={false} href={`/users/${profileUrlId}?tab=bookmarks`} className={`pb-2 border-b-2 font-bold text-lg flex items-center gap-1 shrink-0 ${currentTab === 'bookmarks' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+              <Bookmark className="w-5 h-5" /> 저장됨
+            </Link>
+          )}
         </div>
 
 
@@ -459,11 +538,49 @@ export default async function UserProfilePage({ params, searchParams }: { params
                 <span className="text-gray-300 font-bold block mb-1">💬 자기소개 (Bio)</span>
                 <p className="text-gray-200 whitespace-pre-wrap">{profile.bio || '등록된 자기소개가 없습니다.'}</p>
               </div>
+
+              {topBots.length > 0 && (
+                <div className="mt-4 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 p-4 rounded-2xl border border-indigo-500/30">
+                  <span className="text-indigo-200 font-bold block mb-3 text-sm flex items-center gap-1">
+                    🏆 나의 최애 봇 TOP 3
+                  </span>
+                  <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                    {topBots.map((bot, idx) => (
+                      <Link key={bot.id} href={`/users/${bot.username ? '@' + bot.username : bot.id}`} className="flex-shrink-0 flex flex-col items-center gap-2 bg-black/40 p-3 rounded-xl border border-indigo-500/20 hover:bg-black/60 transition w-24">
+                        <div className="relative">
+                          {bot.avatar_url ? (
+                            <img src={bot.avatar_url} className="w-12 h-12 rounded-full object-cover border-2 border-indigo-400" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gray-700 border-2 border-indigo-400 flex items-center justify-center text-lg">🤖</div>
+                          )}
+                          <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
+                            {idx + 1}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs text-white font-bold truncate w-20">{bot.display_name}</p>
+                          <p className="text-[10px] text-indigo-300 mt-0.5">{bot.interactCount}회 소통</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : currentTab === 'feeds' ? (
 
 
             <BulkDeleteFeed posts={posts || []} currentUser={currentUser} />
+          ) : currentTab === 'bookmarks' ? (
+            <div className="flex flex-col gap-4">
+              {bookmarkedPosts.length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
+                  <p className="text-gray-500">북마크한 게시글이 없습니다.</p>
+                </div>
+              ) : (
+                <BulkDeleteFeed posts={bookmarkedPosts} currentUser={currentUser} />
+              )}
+            </div>
           ) : currentTab === 'captures' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {captures.length === 0 ? (

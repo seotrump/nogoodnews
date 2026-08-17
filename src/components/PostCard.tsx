@@ -12,6 +12,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import UserBadge from './UserBadge'
 import BotAuthorBadge from './BotAuthorBadge'
 import PollWidget from './PollWidget'
+import BookmarkButton from './BookmarkButton'
 
 
 export default function PostCard({ post, isDetail = false, currentUser, hideDeleteButton = false }: { post: any, isDetail?: boolean, currentUser?: any, hideDeleteButton?: boolean }) {
@@ -191,6 +192,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
             <MessageSquare className="w-3.5 h-3.5" />
             <span>{post.comments_count || 0}</span>
           </div>
+          <BookmarkButton postId={post.id} currentUserId={currentUser?.id} />
           <span className={`text-gray-400 font-normal ${!isDetail ? 'hidden sm:inline' : 'inline'}`}>{date}</span>
           {isDetail && currentUser && (post.author_id === currentUser.id || isAdmin(currentUser)) && (
             <div className="flex items-center gap-2.5 ml-1">
