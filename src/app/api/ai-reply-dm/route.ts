@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     // 봇 정보 가져오기 (페르소나 관련 정보 포함)
     const { data: botAccount } = await supabase
       .from('accounts')
-      .select('username, display_name, bio, persona_prompt, ai_model_provider, gender, nbti_type, type_code, axis_profile, speech_style')
+      .select('username, display_name, bio, persona_prompt, ai_model_provider, gender, nbti_type, type_code, axis_profile, speech_style, category')
       .eq('id', botId)
       .single()
 
@@ -80,8 +80,35 @@ export async function POST(req: Request) {
     // 현재 시간 계산
     const nowStr = formatTime(new Date().toISOString());
 
+    // Load custom DM prompts
+    let customDmPrompt = ''
+    try {
+      const { data: siteSettings } = await supabase.from('site_settings').select('dm_prompt, counseling_prompt_adult').eq('id', 'global').single()
+      let extraPrompts: any = {}
+      try {
+        const fs = require('fs')
+        const path = require('path')
+        const filePath = path.join(process.cwd(), 'public', 'extra_prompts.json')
+        if (fs.existsSync(filePath)) {
+          extraPrompts = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+        }
+      } catch (e) {}
+      
+      const isCounselingBot = botAccount.category === '심리상담' || botAccount.category === '연애상담'
+      const loadedDmPrompt = isCounselingBot
+        ? (extraPrompts.counseling_prompt_adult || siteSettings?.counseling_prompt_adult)
+        : (extraPrompts.dm_prompt || siteSettings?.dm_prompt)
+
+      if (loadedDmPrompt) {
+        customDmPrompt = `\n[관리자 특별 지침 (최우선 적용)]\n${loadedDmPrompt}\n`
+      }
+    } catch (e) {
+      // ignore
+    }
+
     const prompt = `당신은 SNS 플랫폼의 유저 "${botAccount.display_name}" 입니다.
 당신은 지금 상대방과 **1:1 비밀 디엠(DM)**을 나누고 있습니다. 공개적인 댓글창이 아니므로 훨씬 더 사적이고 감정적으로 교류해야 합니다.
+${customDmPrompt}
 
 [현재 시간 및 컨텍스트]
 - 지금 시간: ${nowStr} (대화 기록의 시간과 비교하여 아침/저녁, 오랜만의 대화인지 파악하세요)

@@ -677,7 +677,7 @@ export async function getRankingStats() {
 
   const { data: accounts, error } = await supabaseAdmin
     .from('accounts')
-    .select('id, display_name, is_ai, level, activity_score, avatar_url, nbti_type, type_code, axis_profile')
+    .select('id, display_name, is_ai, level, activity_score, avatar_url, type_code, axis_profile')
     .order('activity_score', { ascending: false })
     .limit(100)
 
@@ -744,6 +744,23 @@ export async function updateSystemPrompts(formData: FormData) {
     } catch (fsErr) {
       console.error('Failed to write local moderation rules backup file:', fsErr)
     }
+  }
+
+  // Extra prompts save
+  const dmPrompt = formData.get('dmPrompt') as string
+  const counselingPromptAdult = formData.get('counselingPromptAdult') as string
+  try {
+    const fs = require('fs')
+    const path = require('path')
+    const filePath = path.join(process.cwd(), 'public', 'extra_prompts.json')
+    const extraData = {
+      dm_prompt: dmPrompt || null,
+      counseling_prompt_adult: counselingPromptAdult || null,
+      feed_prompt_reporter: feedPromptReporter || null
+    }
+    fs.writeFileSync(filePath, JSON.stringify(extraData, null, 2), 'utf8')
+  } catch (fsErr) {
+    console.error('Failed to write extra prompts file:', fsErr)
   }
 
   const payload = { id: 'global', ...updateData }

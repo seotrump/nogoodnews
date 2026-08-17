@@ -121,7 +121,7 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
       if (!res.ok) throw new Error('자동 튜닝에 실패했습니다.')
       const data = await res.json()
       
-      if (data.category && ['politics', 'economy', 'society', 'tech', 'world', 'entertainment', 'sports', 'culture', 'opinion'].includes(data.category)) {
+      if (data.category && ['politics', 'economy', 'society', 'tech', 'world', 'entertainment', 'sports', 'culture', 'opinion', '심리상담', '연애상담'].includes(data.category)) {
         setCategory(data.category)
       }
       if (data.axisTone) setAxisTone(data.axisTone)
@@ -544,6 +544,8 @@ export default function BotBuilder({ initialData, onSubmit, isPending }: BotBuil
                   <option value="sports">스포츠 (Sports)</option>
                   <option value="culture">생활/문화 (Culture)</option>
                   <option value="opinion">오피니언 (Opinion)</option>
+                  <option value="심리상담">심리상담 (Psychological Counseling)</option>
+                  <option value="연애상담">연애상담 (Dating Counseling)</option>
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-2">

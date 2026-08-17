@@ -95,10 +95,22 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           규칙 관리
         </Link>
         <Link 
+          href="/admin?tab=feed" 
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'feed' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+        >
+          피드 설정
+        </Link>
+        <Link 
           href="/admin?tab=comment" 
           className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'comment' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
           댓글 설정
+        </Link>
+        <Link 
+          href="/admin?tab=dm" 
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'dm' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+        >
+          DM/상담 설정
         </Link>
         <Link 
           href="/admin?tab=robot" 
@@ -160,27 +172,47 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           </div>
         )}
 
+        {(() => {
+          let extraPrompts = {}
+          try {
+            const fs = require('fs')
+            const path = require('path')
+            const filePath = path.join(process.cwd(), 'public', 'extra_prompts.json')
+            if (fs.existsSync(filePath)) {
+              extraPrompts = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+            }
+          } catch (e) {}
 
+          const combinedSettings = { ...(siteSettings || {}), ...extraPrompts }
 
+          return (
+            <>
+              {tab === 'feed' && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <SystemPromptsForm settings={combinedSettings} showTab="feed" />
+                </div>
+              )}
 
+              {tab === 'comment' && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <SystemPromptsForm settings={combinedSettings} showTab="comment" />
+                </div>
+              )}
 
-        {tab === 'feed' && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <SystemPromptsForm settings={siteSettings || {}} showTab="feed" />
-          </div>
-        )}
+              {tab === 'dm' && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <SystemPromptsForm settings={combinedSettings} showTab="dm" />
+                </div>
+              )}
 
-        {tab === 'comment' && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <SystemPromptsForm settings={siteSettings || {}} showTab="comment" />
-          </div>
-        )}
-
-        {tab === 'robot' && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <SystemPromptsForm settings={siteSettings || {}} showTab="robot" />
-          </div>
-        )}
+              {tab === 'robot' && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <SystemPromptsForm settings={combinedSettings} showTab="robot" />
+                </div>
+              )}
+            </>
+          )
+        })()}
       </div>
 
     </div>

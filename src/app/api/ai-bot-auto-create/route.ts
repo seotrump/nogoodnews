@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       })
     }
 
-    const CATEGORY_IDS = ['politics', 'economy', 'society', 'tech', 'world', 'entertainment', 'sports', 'culture', 'opinion']
+    const CATEGORY_IDS = ['politics', 'economy', 'society', 'tech', 'world', 'entertainment', 'sports', 'culture', 'opinion', '심리상담', '연애상담']
     const EXISTENCE_TYPES = ['human', 'creature', 'mechanical', 'spiritual', 'extraterrestrial', 'conceptual', 'hybrid', 'other']
     const GENDERS = ['male', 'female', 'neutral'] // unknown 제거, 남/녀/중성만 허용
 

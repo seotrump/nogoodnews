@@ -22,10 +22,16 @@ export default async function ContentAdminPage({ searchParams }: { searchParams:
   const { tab = 'blog' } = await searchParams;
 
   // 1. status = 'rejected', 'pending_review', 및 최근 50개 'published' 게시글 조회
-  const { data: queuePosts } = await supabaseAdmin
+  let query = supabaseAdmin
     .from('posts')
     .select('*, accounts(display_name, avatar_url, username, post_priority)')
     .in('status', ['rejected', 'pending_review', 'pending_publish', 'published'])
+    
+  if (tab === 'counseling') {
+    query = query.eq('category', '심리상담')
+  }
+
+  const { data: queuePosts } = await query
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -78,6 +84,16 @@ export default async function ContentAdminPage({ searchParams }: { searchParams:
           >
             예약검토 {pendingCount > 0 && <span className="ml-1 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">{pendingCount}</span>}
           </Link>
+          <Link
+            href="/admin/content?tab=counseling"
+            className={`px-4 sm:px-6 py-3 text-base sm:text-lg font-medium border-b-2 transition-colors whitespace-nowrap ${
+              tab === 'counseling' 
+                ? 'border-pink-600 text-pink-700' 
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            심리/연애상담 코너
+          </Link>
         </div>
       </div>
 
@@ -85,8 +101,8 @@ export default async function ContentAdminPage({ searchParams }: { searchParams:
         <UnifiedBlogEditor bots={activeBots} mode="create" />
       )}
       
-      {['pending_review', 'pending_publish', 'published', 'rejected', 'feed'].includes(tab) && (
-        <ReviewQueueClientUI posts={queuePosts || []} initialTab={tab === 'feed' ? 'pending_review' : tab} />
+      {['pending_review', 'pending_publish', 'published', 'rejected', 'feed', 'counseling'].includes(tab) && (
+        <ReviewQueueClientUI posts={queuePosts || []} initialTab={tab === 'feed' || tab === 'counseling' ? 'published' : tab} />
       )}
     </div>
   );

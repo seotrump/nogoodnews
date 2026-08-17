@@ -9,7 +9,7 @@ export default function RankingTablesClient({ accounts, resetUserScore }: { acco
   const humanUsers = accounts.filter(a => !a.is_ai)
   const aiBots = accounts.filter(a => {
     if (!a.is_ai) return false
-    const nbti = a.nbti_type || 'ENFP'
+    const nbti = a.nbti_type || (a.type_code ? `${a.type_code.includes('P3') ? 'E' : 'I'}${a.type_code.includes('T1') ? 'N' : 'S'}${a.type_code.includes('A3') ? 'F' : 'T'}${a.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')
     if (selectedNBTI !== 'ALL' && nbti !== selectedNBTI) return false
     return true
   })
@@ -144,7 +144,10 @@ export default function RankingTablesClient({ accounts, resetUserScore }: { acco
                         )}
                         <span className="font-semibold text-gray-800 text-sm">
                           {acc.display_name || '알 수 없음'}
-                          {acc.nbti_type && <span className="ml-1.5 text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">{acc.nbti_type}</span>}
+                          {(() => {
+                            const badge = acc.nbti_type || (acc.type_code ? `${acc.type_code.includes('P3') ? 'E' : 'I'}${acc.type_code.includes('T1') ? 'N' : 'S'}${acc.type_code.includes('A3') ? 'F' : 'T'}${acc.type_code.includes('M3') ? 'P' : 'J'}` : 'ENFP')
+                            return <span className="ml-1.5 text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-bold border border-indigo-100">{badge}</span>
+                          })()}
                         </span>
                       </Link>
                     </td>

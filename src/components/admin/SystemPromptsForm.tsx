@@ -42,8 +42,10 @@ interface Props {
     feed_prompt_lite?: string | null
     feed_prompt_pro?: string | null
     feed_prompt_reporter?: string | null
+    dm_prompt?: string | null
+    counseling_prompt_adult?: string | null
   }
-  showTab?: 'robot' | 'feed' | 'comment'
+  showTab?: 'robot' | 'feed' | 'comment' | 'dm'
 }
 
 const DEFAULT_FEED_PROMPT_LITE = `당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.
@@ -66,6 +68,15 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
   const [feedPromptLite, setFeedPromptLite] = useState((!isOldReporterInLite && rawLiteFromDb) ? rawLiteFromDb : DEFAULT_FEED_PROMPT_LITE)
   const [feedPromptReporter, setFeedPromptReporter] = useState(settings?.feed_prompt_reporter || (isOldReporterInLite ? rawLiteFromDb : DEFAULT_FEED_PROMPT_REPORTER))
   const [commentPrompt, setCommentPrompt] = useState(settings?.auto_bot_profile_prompt || DEFAULT_COMMENT_PROMPT)
+  
+  const DEFAULT_DM_PROMPT = `당신은 1:1 대화(DM)를 나누는 봇입니다. 
+상대방의 이야기에 경청하고, 짧고 자연스러운 구어체로 대화하세요.`
+  const DEFAULT_COUNSELING_PROMPT = `당신은 성인을 대상으로 한 부부관계 및 심리/연애 상담사입니다.
+상대방의 고민에 깊이 공감하며, 따뜻하고 전문적인 조언을 제공하세요. 지나치게 노골적이거나 선정적인 표현은 피하고, 정서적 유대감과 건강한 관계 회복에 초점을 맞추세요.`
+
+  const [dmPrompt, setDmPrompt] = useState(settings?.dm_prompt || DEFAULT_DM_PROMPT)
+  const [counselingPrompt, setCounselingPrompt] = useState(settings?.counseling_prompt_adult || DEFAULT_COUNSELING_PROMPT)
+  const [dmTab, setDmTab] = useState<'dm' | 'counseling'>('dm')
   const [feedTab, setFeedTab] = useState<'lite' | 'pro' | 'reporter'>('lite')
 
 
@@ -90,6 +101,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
         <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
           {showTab === 'feed' && <span>📰 피드 프롬프트 설정</span>}
           {showTab === 'comment' && <span>💬 댓글 프롬프트 설정</span>}
+          {showTab === 'dm' && <span>💌 DM / 상담 프롬프트 설정</span>}
           {showTab === 'robot' && <span>🤖 오토봇 기획 설정</span>}
         </h2>
         
@@ -107,7 +119,10 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       <input type="hidden" name="autoBotPrompt" value={autoBotPrompt} />
       <input type="hidden" name="feedPromptPro" value={feedPromptPro} />
       <input type="hidden" name="feedPromptLite" value={feedPromptLite} />
+      <input type="hidden" name="feedPromptReporter" value={feedPromptReporter} />
       <input type="hidden" name="autoBotProfilePrompt" value={commentPrompt} />
+      <input type="hidden" name="dmPrompt" value={dmPrompt} />
+      <input type="hidden" name="counselingPromptAdult" value={counselingPrompt} />
 
       <div>
         {showTab === 'feed' && (
@@ -181,6 +196,57 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             {feedTab !== 'lite' && <input type="hidden" name="feedPromptLite" value={feedPromptLite} />}
             {feedTab !== 'pro' && <input type="hidden" name="feedPromptPro" value={feedPromptPro} />}
             {feedTab !== 'reporter' && <input type="hidden" name="feedPromptReporter" value={feedPromptReporter} />}
+          </div>
+        )}
+
+        {showTab === 'dm' && (
+          <div className="space-y-3">
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setDmTab('dm')}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
+                  dmTab === 'dm'
+                    ? 'bg-pink-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                💌 일반 DM 대화
+              </button>
+              <button
+                type="button"
+                onClick={() => setDmTab('counseling')}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
+                  dmTab === 'counseling'
+                    ? 'bg-rose-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                🩺 심리/연애 상담
+              </button>
+            </div>
+
+            {dmTab === 'dm' && (
+              <textarea
+                name="dmPrompt"
+                value={dmPrompt}
+                onChange={e => setDmPrompt(e.target.value)}
+                className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-pink-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
+                placeholder="일반 DM 소통 프롬프트를 작성하세요."
+              />
+            )}
+            {dmTab === 'counseling' && (
+              <textarea
+                name="counselingPromptAdult"
+                value={counselingPrompt}
+                onChange={e => setCounselingPrompt(e.target.value)}
+                className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-rose-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
+                placeholder="성인 대상 부부관계 및 심리 상담 프롬프트를 작성하세요."
+              />
+            )}
+            
+            {dmTab !== 'dm' && <input type="hidden" name="dmPrompt" value={dmPrompt} />}
+            {dmTab !== 'counseling' && <input type="hidden" name="counselingPromptAdult" value={counselingPrompt} />}
           </div>
         )}
 
