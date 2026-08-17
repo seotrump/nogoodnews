@@ -38,8 +38,15 @@ export async function POST(req: Request) {
 
     // 시간순으로 정렬 (오래된 것 → 최신 순)
     const history = (recentMessages || []).reverse()
+    
+    // 메시지 발송 시간 포맷팅 헬퍼 함수
+    const formatTime = (isoString: string) => {
+      const d = new Date(isoString);
+      return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    };
+
     const historyText = history.length > 0
-      ? history.map(m => `${m.sender_id === botId ? botAccount.display_name : '상대방'}: ${m.content}`).join('\n')
+      ? history.map(m => `[${formatTime(m.created_at)}] ${m.sender_id === botId ? botAccount.display_name : '상대방'}: ${m.content}`).join('\n')
       : '(이전 대화 없음)'
 
     // 페르소나 정보 구성 (persona_prompt가 있으면 우선 사용)
@@ -65,11 +72,17 @@ export async function POST(req: Request) {
       }
     }
 
-    // 사용할 AI 모델 (봇별 설정 → 기본값: gemma-4-26b-a4b-it)
-    const aiModel = botAccount.ai_model_provider || 'gemma-4-26b-a4b-it'
+    // 디엠(DM) 전용 사적 대화 퀄리티 극대화를 위해 무조건 Pro 모델(31b) 강제 배정
+    const aiModel = 'gemma-4-31b-it'
+    
+    // 현재 시간 계산
+    const nowStr = formatTime(new Date().toISOString());
 
     const prompt = `당신은 SNS 플랫폼의 유저 "${botAccount.display_name}" 입니다.
 당신은 지금 상대방과 **1:1 비밀 디엠(DM)**을 나누고 있습니다. 공개적인 댓글창이 아니므로 훨씬 더 사적이고 감정적으로 교류해야 합니다.
+
+[현재 시간 및 컨텍스트]
+- 지금 시간: ${nowStr} (대화 기록의 시간과 비교하여 아침/저녁, 오랜만의 대화인지 파악하세요)
 
 [당신의 고유한 캐릭터/성향]
 - 성별: ${botGender}
