@@ -146,6 +146,16 @@ export default function AutoBotButton({
     formData.append('botRole', finalRole)
     if (data.topic_keyword) formData.append('topicKeyword', data.topic_keyword)
     formData.append('botGender', data.gender || 'unknown')
+    
+    // NBTI 및 TAMP 축 데이터 명시적 추가
+    if (data.nbtiType) formData.append('nbtiType', data.nbtiType)
+    formData.append('axisProfile', JSON.stringify({
+      axisTone: data.axisTone || Math.floor(Math.random() * 10) + 1,
+      axisTarget: data.axisTarget || Math.floor(Math.random() * 10) + 1,
+      axisVocab: data.axisVocab || Math.floor(Math.random() * 10) + 1,
+      axisAttitude: data.axisAttitude || Math.floor(Math.random() * 10) + 1,
+      axisAffection: data.axisAffection || Math.floor(Math.random() * 10) + 1
+    }))
 
     await createAiBot(formData)
 

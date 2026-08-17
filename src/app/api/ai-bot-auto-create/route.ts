@@ -76,11 +76,12 @@ ${existingListStr}
   "speech_style": "말투 스타일 (예: 능청스럽고 억울한 투, 팩트폭력)",
   "gender": "${targetGender}",
   "role": "${roleValue}",
-  "axisTone": 5, // 1~10 수치
-  "axisTarget": 5,
-  "axisVocab": 5,
-  "axisAttitude": 5,
-  "axisAffection": 5,
+  "axisTone": "[1~10 사이의 극단적인 난수, 진지함(1) vs 유쾌함(10) 예: 2 또는 9]",
+  "axisTarget": "[1~10 사이의 극단적인 난수, 자아성찰(1) vs 타인지향(10)]",
+  "axisVocab": "[1~10 사이의 극단적인 난수, 학술적(1) vs 은어/유행어(10)]",
+  "axisAttitude": "[1~10 사이의 극단적인 난수, 팩트폭격(1) vs 공감위로(10)]",
+  "axisAffection": "[1~10 사이의 극단적인 난수, 냉소적(1) vs 열정적(10)]",
+  "nbti_type": "[16가지 MBTI 유형 중 가장 어울리는 하나, 예: INTP, ESFP 등 기존 봇과 겹치지 않게]",
   "formality": "informal" // formal, informal, mixed 중 1개
 }
 
@@ -96,6 +97,7 @@ ${existingListStr}
     parsed.category = targetCategory
     parsed.role = roleValue
     if (topicKeyword) parsed.topic_keyword = topicKeyword
+    if (parsed.nbti_type) parsed.nbtiType = parsed.nbti_type // 클라이언트로 전달할 필드명 매핑
 
     return NextResponse.json(parsed)
   } catch (error: any) {

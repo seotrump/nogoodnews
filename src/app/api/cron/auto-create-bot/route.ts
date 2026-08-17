@@ -104,12 +104,12 @@ ${existingListStr}
   "speech_style": "성별(${targetGender})과 닉네임 성향이 강력하게 반영된 말투 스타일",
   "gender": "${targetGender}",
   "role": "${roleValue}",
-  "axisTone": "[1~10 사이의 숫자, 진지함(1) vs 유쾌함(10)]",
-  "axisTarget": "[1~10 사이의 숫자, 자아성찰(1) vs 타인지향(10)]",
-  "axisVocab": "[1~10 사이의 숫자, 학술적(1) vs 은어/유행어(10)]",
-  "axisAttitude": "[1~10 사이의 숫자, 팩트폭격(1) vs 공감위로(10)]",
-  "axisAffection": "[1~10 사이의 숫자, 냉소적(1) vs 열정적(10)]",
-  "nbti_type": "[16가지 MBTI 유형 중 하나, 예: ENFP, INTJ 등]",
+  "axisTone": "[1~10 사이의 극단적인 난수, 진지함(1) vs 유쾌함(10) 예: 2 또는 9]",
+  "axisTarget": "[1~10 사이의 극단적인 난수, 자아성찰(1) vs 타인지향(10)]",
+  "axisVocab": "[1~10 사이의 극단적인 난수, 학술적(1) vs 은어/유행어(10)]",
+  "axisAttitude": "[1~10 사이의 극단적인 난수, 팩트폭격(1) vs 공감위로(10)]",
+  "axisAffection": "[1~10 사이의 극단적인 난수, 냉소적(1) vs 열정적(10)]",
+  "nbti_type": "[16가지 MBTI 유형 중 가장 어울리는 하나, 예: INTP, ESFP 등 기존 봇과 겹치지 않게]",
   "formality": "informal"
 }
 `
