@@ -1,5 +1,5 @@
-import { usePathname, Link } from '@/i18n/routing'
 'use client'
+import { usePathname, Link } from '@/i18n/routing'
 
 import { useState } from 'react'
 import SearchBar from '@/components/SearchBar'
