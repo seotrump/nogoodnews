@@ -58,7 +58,7 @@ ${content}
           if (data.hits && data.hits.length > 0) {
             // Pick a random image instead of always the first one
             const randomIndex = Math.floor(Math.random() * data.hits.length)
-            const imgUrl = data.hits[randomIndex].largeImageURL
+            const imgUrl = data.hits[randomIndex].webformatURL
             return { fullMatch, keyword, imgUrl }
           }
         } catch (e) {

@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     // Map to a common format
     const results = data.hits.map((hit: any) => ({
       id: hit.id,
-      url: hit.largeImageURL,
+      url: hit.webformatURL,
       thumbnail: hit.webformatURL,
       title: hit.tags,
       author: hit.user,
