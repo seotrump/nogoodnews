@@ -102,7 +102,7 @@ export default async function ContentAdminPage({ searchParams }: { searchParams:
       )}
       
       {['pending_review', 'pending_publish', 'published', 'rejected', 'feed', 'counseling'].includes(tab) && (
-        <ReviewQueueClientUI posts={queuePosts || []} initialTab={tab === 'feed' || tab === 'counseling' ? 'published' : tab} />
+        <ReviewQueueClientUI posts={queuePosts || []} initialTab={tab === 'feed' || tab === 'counseling' ? 'pending_review' : tab} />
       )}
     </div>
   );
