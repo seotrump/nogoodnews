@@ -1,6 +1,8 @@
+import { redirect, Link } from '@/i18n/routing'
 import { createClient } from '@/utils/supabase/server'
-import { notFound, redirect } from 'next/navigation'
-import { Link } from '@/i18n/routing'
+import { notFound } from 'next/navigation'
+
+
 import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import FollowButton from '@/components/FollowButton'
 import ReactionPanel from '@/components/ReactionPanel'

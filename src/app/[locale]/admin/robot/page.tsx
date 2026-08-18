@@ -1,8 +1,9 @@
+import { redirect, Link } from '@/i18n/routing'
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+
 import { createAiBot } from '../actions'
 import { isAdmin } from '@/utils/auth'
-import { Link } from '@/i18n/routing'
+
 import BotBuilder from '@/components/admin/BotBuilder'
 import AdminFilter from '@/components/admin/AdminFilter'
 import AutoBotButton from '@/components/admin/AutoBotButton'

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'react-hot-toast'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/routing'
 import { updateSystemPrompts } from '@/app/[locale]/admin/actions'
 
 interface GuidelineRule {

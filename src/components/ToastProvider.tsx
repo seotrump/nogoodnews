@@ -2,7 +2,8 @@
 
 import { Toaster, toast } from 'react-hot-toast'
 import { useEffect } from 'react'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { usePathname } from '@/i18n/routing'
 
 export default function ToastProvider() {
   const pathname = usePathname()

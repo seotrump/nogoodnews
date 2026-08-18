@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useLocale } from 'next-intl'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/routing'
 
 export default function AiTrigger({ postId, commentCount, lastCommentIsAi }: { postId: string, commentCount: number, lastCommentIsAi?: boolean }) {
   const locale = useLocale()

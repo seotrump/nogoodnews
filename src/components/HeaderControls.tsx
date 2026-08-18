@@ -1,8 +1,7 @@
+import { usePathname, Link } from '@/i18n/routing'
 'use client'
 
 import { useState } from 'react'
-import { usePathname } from 'next/navigation'
-import { Link } from '@/i18n/routing'
 import SearchBar from '@/components/SearchBar'
 import NotificationBell from '@/components/NotificationBell'
 import MessageBadge from '@/components/MessageBadge'

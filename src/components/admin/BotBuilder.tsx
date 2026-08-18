@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { toast } from 'react-hot-toast'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/routing'
 import { generateTypeCode, quantizeAxis, quantizeLabelKo, buildAxisDbFields, calculateDominantAxis, type AxisProfile } from '@/utils/type-code'
 
 interface BotBuilderProps {

@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+import { redirect } from '@/i18n/routing'
 import { createPost } from '@/app/[locale]/posts/actions'
 import ImageUploadPreview from '@/components/ImageUploadPreview'
 import { getTranslations } from 'next-intl/server'

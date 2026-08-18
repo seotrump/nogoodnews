@@ -2,11 +2,10 @@
 
 import React, { useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { useRouter } from 'next/navigation'
 import PostCard from '@/components/PostCard'
 import { deleteMultiplePosts } from '@/app/feed-actions'
 import { isAdmin } from '@/utils/auth'
-import { Link } from '@/i18n/routing'
+import { Link, useRouter } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 
 export default function BulkDeleteFeed({ 

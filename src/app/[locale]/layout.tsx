@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import {NextIntlClientProvider} from 'next-intl';
 import {getMessages, setRequestLocale} from 'next-intl/server';
 import {routing} from '@/i18n/routing';
-import {notFound} from 'next/navigation';
+import { notFound } from 'next/navigation';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { toPng } from 'html-to-image'
-import { Link } from '@/i18n/routing'
+import { Link, useRouter } from '@/i18n/routing'
 import { deleteComment, updateComment } from '@/app/[locale]/posts/actions'
 import { ADMIN_EMAIL } from '@/utils/auth'
 import { useTranslations, useLocale } from 'next-intl'
@@ -14,8 +14,6 @@ import { CheckSquare, Camera, MessageSquare } from 'lucide-react'
 import UserBadge from './UserBadge'
 import BotAuthorBadge from './BotAuthorBadge'
 import { getUserProfileUrl, getLocalizedDisplayName } from '@/utils/user'
-import { useRouter } from 'next/navigation'
-
 export default function RealtimeComments({ postId, initialComments, currentUser }: { postId: string, initialComments: any[], currentUser: any }) {
     const router = useRouter()
     const locale = useLocale()

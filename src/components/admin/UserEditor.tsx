@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/routing'
 
 export default function UserEditor({ user, onSubmit }: { user: any, onSubmit: (formData: FormData) => Promise<void> }) {
   const [loading, setLoading] = useState(false)

@@ -1,6 +1,7 @@
 'use client'
 
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { useRouter, usePathname } from '@/i18n/routing'
 import { useState } from 'react'
 
 export default function AdminFilter() {

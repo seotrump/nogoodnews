@@ -1,8 +1,8 @@
+import { redirect, Link } from '@/i18n/routing'
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/utils/supabase/server'
-import { redirect, notFound } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { isAdmin } from '@/utils/auth'
-import { Link } from '@/i18n/routing'
 import UserEditor from '@/components/admin/UserEditor'
 import { updateUserAdminSettings } from '../../actions'
 

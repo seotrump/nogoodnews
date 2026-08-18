@@ -5,7 +5,7 @@ import FollowRecommendationWidget from '@/components/FollowRecommendationWidget'
 import { getRecommendedUsers } from '@/app/[locale]/users/actions'
 import PostCard from '@/components/PostCard'
 import SearchBar from '@/components/SearchBar'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import { Compass, TrendingUp, Sparkles, Hash } from 'lucide-react'
 
 export default async function ExplorePage({ params }: { params: Promise<{ locale: string }> }) {

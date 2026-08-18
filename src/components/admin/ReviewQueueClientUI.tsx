@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/routing'
 import { approvePost, bulkApprovePosts, deletePostPermanently, runAutoApproveCronNow } from '@/app/[locale]/admin/guidelines-actions'
 import PostCard from '@/components/PostCard'
 

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/routing'
 import { toast } from 'react-hot-toast'
 import ImageUploadPreview from '@/components/ImageUploadPreview'
 import AiImageInjectButton from '@/components/admin/AiImageInjectButton'

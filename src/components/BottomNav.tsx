@@ -1,7 +1,7 @@
+import { usePathname, Link } from '@/i18n/routing'
 'use client'
 
-import { usePathname, useSearchParams } from 'next/navigation'
-import { Link } from '@/i18n/routing'
+import { useSearchParams } from 'next/navigation'
 import { Home, Compass, PlusSquare, MessageSquare, User } from 'lucide-react'
 
 export default function BottomNav({ currentUserId }: { currentUserId?: string }) {

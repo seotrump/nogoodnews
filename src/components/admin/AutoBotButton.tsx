@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { Link } from '@/i18n/routing'
+import { Link, useRouter } from '@/i18n/routing'
 import PilotSelectorModal from '@/components/PilotSelectorModal'
 import { useActivePersona } from '@/context/ActivePersonaContext'
 import { createAiBot, toggleAutoBotSettings, toggleAutoFeedSettings } from '@/app/[locale]/admin/actions'

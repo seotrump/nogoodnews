@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { sendMessage, markAsRead, getMessages } from '@/app/[locale]/messages/actions'
 import { toast } from 'react-hot-toast'
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 
 export default function ChatWindow({ 
   currentUserId, 

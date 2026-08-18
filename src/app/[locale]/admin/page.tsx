@@ -1,11 +1,12 @@
+import { redirect, Link } from '@/i18n/routing'
 import React from 'react'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+
 import { isAdmin } from '@/utils/auth'
 import SettingsForm from '@/components/SettingsForm'
 import PasswordForm from '@/components/PasswordForm'
-import { Link } from '@/i18n/routing'
+
 import SystemPromptsForm from '@/components/admin/SystemPromptsForm'
 import GuidelinesClientUI from '@/components/admin/GuidelinesClientUI'
 import pkg from '../../../../package.json'
