@@ -31,7 +31,7 @@ export default function ChatWindow({
   const supabase = createClient()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const handlePlayTTS = async (msgId: string, text: string) => {
+  const handlePlayTTS = async (msgId: string, text: string, senderId: string, receiverId: string) => {
     if (playingMsgId === msgId) return
     setPlayingMsgId(msgId)
     const toastId = toast.loading('음성 준비 중...')
@@ -39,7 +39,7 @@ export default function ChatWindow({
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ text, senderId, receiverId })
       })
       if (!res.ok) throw new Error('API 실패')
       const data = await res.json()
@@ -201,7 +201,7 @@ export default function ChatWindow({
                 
                 {/* TTS 버튼 (호버 시 표시) */}
                 <button
-                  onClick={() => handlePlayTTS(msg.id || idx.toString(), msg.content)}
+                  onClick={() => handlePlayTTS(msg.id || idx.toString(), msg.content, msg.sender_id, msg.receiver_id)}
                   disabled={playingMsgId !== null && playingMsgId !== (msg.id || idx.toString())}
                   className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-full shadow-sm transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0 ${
                     isMine ? '-left-9 bg-white text-blue-600' : '-right-9 bg-gray-800 text-white'

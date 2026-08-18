@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(req: Request) {
   try {
-    const { text, voice = 'default' } = await req.json()
+    const { text, senderId, receiverId, voice = 'default' } = await req.json()
 
     if (!text) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 })
@@ -13,8 +19,48 @@ export async function POST(req: Request) {
       throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not configured')
     }
 
+    let finalPrompt = text
+
+    // 발신자와 수신자 정보가 있다면 컨텍스트 분석 후 프롬프트 생성
+    if (senderId && receiverId) {
+      try {
+        const { data: sender } = await supabase.from('accounts').select('gender, category, display_name').eq('id', senderId).single()
+        const { data: receiver } = await supabase.from('accounts').select('gender, display_name').eq('id', receiverId).single()
+
+        let extraPrompts: any = {}
+        try {
+          const fs = require('fs')
+          const path = require('path')
+          const filePath = path.join(process.cwd(), 'public', 'extra_prompts.json')
+          if (fs.existsSync(filePath)) {
+            extraPrompts = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+          }
+        } catch (e) {}
+
+        const { data: siteSettings } = await supabase.from('site_settings').select('tts_prompt').eq('id', 'global').maybeSingle()
+        const ttsInstruction = extraPrompts.tts_prompt || siteSettings?.tts_prompt || ''
+
+        if (ttsInstruction && sender && receiver) {
+          const senderGender = sender.gender === 'male' ? '남성' : sender.gender === 'female' ? '여성' : '미상'
+          const receiverGender = receiver.gender === 'male' ? '남성' : receiver.gender === 'female' ? '여성' : '미상'
+          
+          finalPrompt = `[TTS 시스템 지시문]
+${ttsInstruction}
+
+[현재 대화 상황]
+- 말하는 사람(당신) 성별: ${senderGender}
+- 듣는 사람(상대방) 성별: ${receiverGender}
+- 봇 카테고리: ${sender.category || '일반'}
+
+[대사]
+"${text}"`
+        }
+      } catch (e) {
+        console.error('TTS Context Error:', e)
+      }
+    }
+
     // Google AI Studio - Gemini 3.1 Flash TTS 호출 (실제 지원 API 스펙에 맞춰 수정 가능)
-    // 현재 공식적으로 문서화된 엔드포인트 구조를 추정하여 작성
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
@@ -23,7 +69,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         contents: [
           {
-            parts: [{ text }]
+            parts: [{ text: finalPrompt }]
           }
         ],
         // 오디오 출력을 명시하는 파라미터 (향후 스펙에 따라 변경 가능)

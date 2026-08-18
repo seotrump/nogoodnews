@@ -749,6 +749,7 @@ export async function updateSystemPrompts(formData: FormData) {
   // Extra prompts save
   const dmPrompt = formData.get('dmPrompt') as string
   const counselingPromptAdult = formData.get('counselingPromptAdult') as string
+  const ttsPrompt = formData.get('ttsPrompt') as string
   try {
     const fs = require('fs')
     const path = require('path')
@@ -756,6 +757,7 @@ export async function updateSystemPrompts(formData: FormData) {
     const extraData = {
       dm_prompt: dmPrompt || null,
       counseling_prompt_adult: counselingPromptAdult || null,
+      tts_prompt: ttsPrompt || null,
       feed_prompt_reporter: feedPromptReporter || null
     }
     fs.writeFileSync(filePath, JSON.stringify(extraData, null, 2), 'utf8')

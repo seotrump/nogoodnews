@@ -44,8 +44,9 @@ interface Props {
     feed_prompt_reporter?: string | null
     dm_prompt?: string | null
     counseling_prompt_adult?: string | null
+    tts_prompt?: string | null
   }
-  showTab?: 'robot' | 'feed' | 'comment' | 'dm'
+  showTab?: 'robot' | 'feed' | 'comment' | 'dm' | 'voice'
 }
 
 const DEFAULT_FEED_PROMPT_LITE = `당신은 커뮤니티에서 활동하며 어그로를 끌고 사람들의 관심을 유도하는 인플루언서 봇입니다.
@@ -73,9 +74,14 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
 상대방의 이야기에 경청하고, 짧고 자연스러운 구어체로 대화하세요.`
   const DEFAULT_COUNSELING_PROMPT = `당신은 성인을 대상으로 한 부부관계 및 심리/연애 상담사입니다.
 상대방의 고민에 깊이 공감하며, 따뜻하고 전문적인 조언을 제공하세요. 지나치게 노골적이거나 선정적인 표현은 피하고, 정서적 유대감과 건강한 관계 회복에 초점을 맞추세요.`
+  const DEFAULT_TTS_PROMPT = `당신은 주어진 텍스트를 감정을 담아 실감나게 연기하는 성우입니다.
+- 상대방(사용자)이 남성일 경우: 당신은 매력적이고 나긋나긋한 여성의 톤으로 섹시하고 애교있게 읽어주세요.
+- 상대방(사용자)이 여성일 경우: 당신은 듬직하고 신뢰감 있는 남성의 톤으로 강인하게 읽어주세요.
+상황에 맞게 가장 자연스러운 목소리 톤을 연기하세요.`
 
   const [dmPrompt, setDmPrompt] = useState(settings?.dm_prompt || DEFAULT_DM_PROMPT)
   const [counselingPrompt, setCounselingPrompt] = useState(settings?.counseling_prompt_adult || DEFAULT_COUNSELING_PROMPT)
+  const [ttsPrompt, setTtsPrompt] = useState(settings?.tts_prompt || DEFAULT_TTS_PROMPT)
   const [dmTab, setDmTab] = useState<'dm' | 'counseling'>('dm')
   const [feedTab, setFeedTab] = useState<'lite' | 'pro' | 'reporter'>('lite')
 
@@ -102,6 +108,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
           {showTab === 'feed' && <span>📰 피드 프롬프트 설정</span>}
           {showTab === 'comment' && <span>💬 댓글 프롬프트 설정</span>}
           {showTab === 'dm' && <span>💌 DM / 상담 프롬프트 설정</span>}
+          {showTab === 'voice' && <span>🎙️ 음성(TTS) 지시문 설정</span>}
           {showTab === 'robot' && <span>🤖 오토봇 기획 설정</span>}
         </h2>
         
@@ -123,6 +130,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       <input type="hidden" name="autoBotProfilePrompt" value={commentPrompt} />
       <input type="hidden" name="dmPrompt" value={dmPrompt} />
       <input type="hidden" name="counselingPromptAdult" value={counselingPrompt} />
+      <input type="hidden" name="ttsPrompt" value={ttsPrompt} />
 
       <div>
         {showTab === 'feed' && (
@@ -258,6 +266,22 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
             className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
             placeholder="댓글 소통 반응 프롬프트를 작성하세요."
           />
+        )}
+
+        {showTab === 'voice' && (
+          <div className="space-y-4">
+            <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 text-sm text-purple-900 leading-relaxed">
+              <strong className="block mb-1">🎙️ 감성 연기 TTS 프롬프트</strong>
+              이곳에 작성된 지시문은 AI 봇이 메시지를 음성으로 변환(TTS)할 때 <strong>숨겨진 시스템 지시문</strong>으로 전송되어 봇의 목소리 톤과 뉘앙스를 결정합니다.
+            </div>
+            <textarea
+              name="ttsPrompt"
+              value={ttsPrompt}
+              onChange={e => setTtsPrompt(e.target.value)}
+              className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
+              placeholder="음성 합성 시 AI에게 내릴 연기/톤 지시문을 작성하세요."
+            />
+          </div>
         )}
 
         {showTab === 'robot' && (

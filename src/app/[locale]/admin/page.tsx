@@ -113,6 +113,12 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           DM/상담 설정
         </Link>
         <Link 
+          href="/admin?tab=voice" 
+          className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'voice' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+        >
+          음성(TTS) 설정
+        </Link>
+        <Link 
           href="/admin?tab=robot" 
           className={`px-4 py-2 text-sm font-bold rounded-t-lg ${tab === 'robot' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
         >
@@ -202,6 +208,12 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
               {tab === 'dm' && (
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <SystemPromptsForm settings={combinedSettings} showTab="dm" />
+                </div>
+              )}
+
+              {tab === 'voice' && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <SystemPromptsForm settings={combinedSettings} showTab="voice" />
                 </div>
               )}
 
