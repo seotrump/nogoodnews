@@ -11,7 +11,7 @@ export default async function FollowingPage({ params, searchParams }: { params: 
   const { id , locale} = await params
   
   setRequestLocale(locale);const { page = '1' } = await searchParams
-
+  
   const currentPage = parseInt(page, 10) || 1
   const limit = 15
   const offset = (currentPage - 1) * limit
@@ -24,25 +24,49 @@ export default async function FollowingPage({ params, searchParams }: { params: 
     if (follows) currentUserFollowingIds = follows.map(f => f.following_id)
   }
 
-  // Get target profile
-  const { data: profile } = await supabase.from('accounts').select('display_name, following_count').eq('id', id).single()
+  // Get target profile with fallback (username or UUID)
+  const rawId = decodeURIComponent(id);
+  const cleanId = rawId.startsWith('@') ? rawId.substring(1) : rawId
+
+  let profile = null
+
+  const { data: byUsername } = await supabase
+    .from('accounts')
+    .select('id, display_name, following_count, username')
+    .eq('username', cleanId)
+    .maybeSingle()
+
+  profile = byUsername
+
+  if (!profile) {
+    const { data: byId } = await supabase
+      .from('accounts')
+      .select('id, display_name, following_count, username')
+      .eq('id', cleanId)
+      .maybeSingle()
+    profile = byId
+  }
+
   if (!profile) notFound()
 
-  // Get following: join follows with accounts
+  const targetId = profile.id
+  const profileUrlId = profile.username ? `@${profile.username}` : profile.id
+
+  // Get followings: join follows with accounts
   const { data: followingRecords, count } = await supabase
     .from('follows')
     .select('created_at, accounts!follows_following_id_fkey(id, display_name, avatar_url, bio, is_ai, level, username)', { count: 'exact' })
-    .eq('follower_id', id)
+    .eq('follower_id', targetId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
-  const following = followingRecords?.map(r => r.accounts).filter(Boolean) as any[] || []
+  const followings = followingRecords?.map(r => r.accounts).filter(Boolean) as any[] || []
   const totalPages = Math.ceil((count || 0) / limit)
 
   return (
     <div className="max-w-4xl mx-auto px-4 mt-8 pb-20">
       <div className="mb-6 flex items-center gap-4">
-        <Link href={`/users/${id}`} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+        <Link href={`/users/${profileUrlId}`} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
           <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         </Link>
         <div>
@@ -51,8 +75,8 @@ export default async function FollowingPage({ params, searchParams }: { params: 
         </div>
       </div>
 
-      <UserList users={following} currentUserId={user?.id} currentUserFollowingIds={currentUserFollowingIds} />
-
+      <UserList users={followings} currentUserId={user?.id} currentUserFollowingIds={currentUserFollowingIds} />
+      
       <Pagination totalPages={totalPages} currentPage={currentPage} />
     </div>
   )

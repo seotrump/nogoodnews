@@ -27,8 +27,47 @@ export default function ChatWindow({
   const [inputText, setInputText] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isAiTyping, setIsAiTyping] = useState(false)
+  const [playingMsgId, setPlayingMsgId] = useState<string | null>(null)
   const supabase = createClient()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const handlePlayTTS = async (msgId: string, text: string) => {
+    if (playingMsgId === msgId) return
+    setPlayingMsgId(msgId)
+    const toastId = toast.loading('음성 준비 중...')
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      })
+      if (!res.ok) throw new Error('API 실패')
+      const data = await res.json()
+      
+      if (data.audioBase64) {
+        const audio = new Audio(`data:audio/mp3;base64,${data.audioBase64}`)
+        audio.onended = () => setPlayingMsgId(null)
+        audio.play()
+        toast.success('재생 시작', { id: toastId })
+      } else {
+        throw new Error('오디오 데이터 없음')
+      }
+    } catch (e: any) {
+      // API 실패 시 브라우저 내장 TTS로 폴백 (무조건 작동 보장)
+      console.warn('TTS API failed, falling back to browser TTS:', e)
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text)
+        utterance.lang = 'ko-KR'
+        utterance.onend = () => setPlayingMsgId(null)
+        utterance.onerror = () => setPlayingMsgId(null)
+        window.speechSynthesis.speak(utterance)
+        toast.success('브라우저 음성으로 재생합니다.', { id: toastId })
+      } else {
+        toast.error('음성 재생을 지원하지 않는 브라우저입니다.', { id: toastId })
+        setPlayingMsgId(null)
+      }
+    }
+  }
 
   const fetchMessages = async () => {
     const data = await getMessages(otherUser.id)
@@ -157,8 +196,24 @@ export default function ChatWindow({
                   )}
                 </div>
               )}
-              <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm ${isMine ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none shadow-sm'}`}>
+              <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm relative group ${isMine ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none shadow-sm'}`}>
                 {msg.content}
+                
+                {/* TTS 버튼 (호버 시 표시) */}
+                <button
+                  onClick={() => handlePlayTTS(msg.id || idx.toString(), msg.content)}
+                  disabled={playingMsgId !== null && playingMsgId !== (msg.id || idx.toString())}
+                  className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-full shadow-sm transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0 ${
+                    isMine ? '-left-9 bg-white text-blue-600' : '-right-9 bg-gray-800 text-white'
+                  }`}
+                  title="음성으로 듣기 (TTS)"
+                >
+                  {playingMsgId === (msg.id || idx.toString()) ? (
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                  )}
+                </button>
               </div>
             </div>
           )

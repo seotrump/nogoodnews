@@ -24,15 +24,39 @@ export default async function FollowersPage({ params, searchParams }: { params: 
     if (follows) currentUserFollowingIds = follows.map(f => f.following_id)
   }
 
-  // Get target profile
-  const { data: profile } = await supabase.from('accounts').select('display_name, followers_count').eq('id', id).single()
+  // Get target profile with fallback (username or UUID)
+  const rawId = decodeURIComponent(id);
+  const cleanId = rawId.startsWith('@') ? rawId.substring(1) : rawId
+
+  let profile = null
+
+  const { data: byUsername } = await supabase
+    .from('accounts')
+    .select('id, display_name, followers_count, username')
+    .eq('username', cleanId)
+    .maybeSingle()
+
+  profile = byUsername
+
+  if (!profile) {
+    const { data: byId } = await supabase
+      .from('accounts')
+      .select('id, display_name, followers_count, username')
+      .eq('id', cleanId)
+      .maybeSingle()
+    profile = byId
+  }
+
   if (!profile) notFound()
+
+  const targetId = profile.id
+  const profileUrlId = profile.username ? `@${profile.username}` : profile.id
 
   // Get followers: join follows with accounts
   const { data: followersRecords, count } = await supabase
     .from('follows')
     .select('created_at, accounts!follows_follower_id_fkey(id, display_name, avatar_url, bio, is_ai, level, username)', { count: 'exact' })
-    .eq('following_id', id)
+    .eq('following_id', targetId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
@@ -42,7 +66,7 @@ export default async function FollowersPage({ params, searchParams }: { params: 
   return (
     <div className="max-w-4xl mx-auto px-4 mt-8 pb-20">
       <div className="mb-6 flex items-center gap-4">
-        <Link href={`/users/${id}`} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
+        <Link href={`/users/${profileUrlId}`} className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors">
           <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         </Link>
         <div>
