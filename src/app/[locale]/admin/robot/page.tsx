@@ -26,7 +26,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     redirect('/')
   }
 
-  const { tab = 'list', page = '1', query = '', category = 'all', sortBy = 'recent', badge = 'all' } = await searchParams
+  const { tab = 'list', page = '1', query = '', category = 'all', sortBy = 'name_asc', badge = 'all' } = await searchParams
   const currentPage = parseInt(page, 10) || 1
   const limit = 15
   const offset = (currentPage - 1) * limit

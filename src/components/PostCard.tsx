@@ -13,7 +13,7 @@ import UserBadge from './UserBadge'
 import BotAuthorBadge from './BotAuthorBadge'
 import PollWidget from './PollWidget'
 import BookmarkButton from './BookmarkButton'
-
+import PostTTSButton from './PostTTSButton'
 
 export default function PostCard({ post, isDetail = false, currentUser, hideDeleteButton = false }: { post: any, isDetail?: boolean, currentUser?: any, hideDeleteButton?: boolean }) {
   const t = useTranslations('PostCard');
@@ -157,6 +157,10 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
             authorName={authorName} 
             profileUrl={getUserProfileUrl({ ...(post.accounts || {}), id: post.author_id || post.user_id || post.accounts?.id })} 
           />
+
+          {isAI && post.content && (
+            <PostTTSButton text={post.content} senderId={post.author_id || post.user_id || post.accounts?.id} />
+          )}
 
           {isDetail && (post.category || post.accounts?.category) && (
             (() => {

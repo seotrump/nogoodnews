@@ -10,7 +10,7 @@ export default function AdminFilter() {
 
   const [query, setQuery] = useState(searchParams.get('query') || '')
   const [category, setCategory] = useState(searchParams.get('category') || 'all')
-  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'recent')
+  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'name_asc')
   const [badge, setBadge] = useState(searchParams.get('badge') || 'all')
 
   const handleSearch = (e: React.FormEvent) => {
@@ -22,7 +22,7 @@ export default function AdminFilter() {
     if (category !== 'all') params.set('category', category)
     else params.delete('category')
 
-    if (sortBy !== 'recent') params.set('sortBy', sortBy)
+    if (sortBy !== 'name_asc') params.set('sortBy', sortBy)
     else params.delete('sortBy')
 
     if (badge !== 'all') params.set('badge', badge)
