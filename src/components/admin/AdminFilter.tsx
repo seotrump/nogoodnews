@@ -76,7 +76,7 @@ export default function AdminFilter() {
           onChange={(e) => {
             setSortBy(e.target.value)
             const params = new URLSearchParams(searchParams.toString())
-            if (e.target.value !== 'recent') params.set('sortBy', e.target.value)
+            if (e.target.value !== 'name_asc') params.set('sortBy', e.target.value)
             else params.delete('sortBy')
             params.set('page', '1')
             router.push(`${pathname}?${params.toString()}`)
@@ -105,6 +105,7 @@ export default function AdminFilter() {
           <option value="reporter">기자단</option>
           <option value="blogger">블로거</option>
           <option value="pro">Pro</option>
+          <option value="lite">Lite</option>
         </select>
       </div>
       <button type="submit" className="bg-black text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-gray-800 transition">
