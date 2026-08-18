@@ -252,7 +252,7 @@ export async function POST(request: Request) {
         const pData = await pRes.json()
         if (pData.hits && pData.hits.length > 0) {
           const randomIndex = Math.floor(Math.random() * pData.hits.length)
-          defaultImageUrl = pData.hits[randomIndex].largeImageURL
+          defaultImageUrl = pData.hits[randomIndex].webformatURL
         }
       }
     } catch (e) {

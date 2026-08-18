@@ -75,7 +75,7 @@ export async function publishSeoBlog(botId: string, formData: FormData) {
         const pData = await pRes.json()
         if (pData.hits && pData.hits.length > 0) {
           const randomIndex = Math.floor(Math.random() * pData.hits.length)
-          imageUrl = pData.hits[randomIndex].largeImageURL
+          imageUrl = pData.hits[randomIndex].webformatURL
         }
       }
     } catch (e) {

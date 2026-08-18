@@ -55,8 +55,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       .from('accounts')
       .select('*', { count: 'exact' })
       .eq('is_ai', true)
-      .order('ai_model_provider', { ascending: false, nullsFirst: false })
-      .order('username', { ascending: true })
 
     if (tab === 'suspended') {
       dbQuery = dbQuery.eq('status', 'banned')
@@ -85,6 +83,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       // recent
       dbQuery = dbQuery.order('created_at', { ascending: false, nullsFirst: false })
     }
+    // secondary sort
+    dbQuery = dbQuery.order('ai_model_provider', { ascending: false, nullsFirst: false }).order('username', { ascending: true })
 
     const { data, count: dbCount } = await dbQuery.range(offset, offset + limit - 1)
     aiBots = data || []
@@ -157,7 +157,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </Link>
 
           <Link
-            href="/admin/content?tab=feed"
+            href="/admin/content?tab=pending_review"
             className={`px-3.5 h-9 text-xs sm:text-sm font-bold rounded-lg transition flex items-center gap-1.5 whitespace-nowrap ${
               (pendingCount || 0) > 0 
                 ? 'bg-red-600 hover:bg-red-700 text-white shadow-xs' 
