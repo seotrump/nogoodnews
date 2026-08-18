@@ -312,7 +312,15 @@ export default function ReviewQueueClientUI({ posts: initialPosts, initialTab = 
       ) : (
         <div className="flex flex-col gap-5 w-full">
           {filteredPosts.map((post) => {
-            const validationResults = (post.validation_result as any[]) || []
+            let validationResults: any[] = []
+            if (Array.isArray(post.validation_result)) {
+              validationResults = post.validation_result
+            } else if (typeof post.validation_result === 'string') {
+              try {
+                const parsed = JSON.parse(post.validation_result)
+                if (Array.isArray(parsed)) validationResults = parsed
+              } catch(e) {}
+            }
             const failedRules = validationResults.filter(r => !r.passed)
             const postTime = new Date(post.created_at).getTime()
             const isPublished = post.status === 'published' && postTime <= now

@@ -119,6 +119,19 @@ async function handleAutoApprove(request: Request) {
         if (validationPassed) {
           approvedCount++
           console.log(`✅ [auto-approve-posts] 피드 자동 승인 발행 완료 (ID: ${post.id})`)
+
+          // 비동기로 AI 댓글 봇 트리거 호출 (최초 댓글 생성)
+          try {
+            const baseUrl = request.url ? new URL(request.url).origin : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000')
+            fetch(`${baseUrl}/api/ai-trigger`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ postId: post.id })
+            }).catch(e => console.error('ai-trigger call failed:', e))
+          } catch (fetchErr) {
+            console.error('Failed to trigger AI comments:', fetchErr)
+          }
+
         } else {
           rejectedCount++
           console.log(`❌ [auto-approve-posts] 피드 안전 가이드 위배로 거절 처리 (ID: ${post.id})`)

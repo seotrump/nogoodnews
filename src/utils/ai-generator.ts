@@ -46,7 +46,7 @@ export async function generateComment(
   if (triggerType === 'summon' && summonedBy) {
     triggerInstruction = `\n[반응 지침 - 소환]\n당신이 직접 호출되었습니다. 방금 ${summonedBy}의 말: "${summonMessage || ''}"에 캐릭터답게 반응하세요. 호출된 것에 대해 직접적으로 응답하는 형태로 작성하세요.`
   } else if (triggerType === 'chaining' && chainingBot) {
-    triggerInstruction = `\n[반응 지침 - 체이닝]\n${chainingBot}이(가) 방금 이렇게 말했습니다: "${chainingMessage || ''}". 당신의 캐릭터로 되받아치거나 맞장구치세요. 최대 2~3턴까지만 이어가고 자연스럽게 마무리하세요.`
+    triggerInstruction = `\n[반응 지침 - 체이닝]\n${chainingBot}이(가) 방금 이렇게 말했습니다: "${chainingMessage || ''}". 당신은 반드시 댓글 내용 어딘가에 자연스럽게 "@${chainingBot}" 라고 대상을 멘션하면서 맞장구치거나 반박하세요.`
   } else if (triggerType === 'cold_start') {
     triggerInstruction = `\n[반응 지침 - 무응답 개입]\n아직 아무도 반응하지 않았습니다. 당신이 먼저 스레드에 활기를 불어넣으세요. 뉴스를 보고 가장 먼저 하고 싶은 말을 캐릭터답게 던지세요.`
   }

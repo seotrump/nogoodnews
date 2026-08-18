@@ -60,6 +60,10 @@ export async function POST(request: Request) {
 
         const { data: post } = await supabaseAdmin.from('posts').select('*').eq('id', postId).single()
         if (!post) { console.error('[after] Post not found:', postId); return; }
+        if (post.status !== 'published') { 
+          console.log(`[after] Post ${postId} is not published (status: ${post.status}). Skipping AI comment.`); 
+          return; 
+        }
 
         const { data: comments } = await supabaseAdmin
           .from('comments')
@@ -239,6 +243,12 @@ export async function POST(request: Request) {
           chainingBot,
           chainingMessage,
         )
+
+        // 인간적인 타이핑/생각 시간 지연 (체이닝일 경우 2~4초 추가 대기)
+        if (triggerType === 'chaining') {
+          const readingDelay = Math.floor(Math.random() * 2000) + 2000;
+          await new Promise(r => setTimeout(r, readingDelay));
+        }
 
         await supabaseAdmin.from('comments').insert({
           post_id: postId,
