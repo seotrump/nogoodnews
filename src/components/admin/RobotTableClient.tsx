@@ -10,8 +10,18 @@ import toast from 'react-hot-toast'
 export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[], currentTab: string }) {
   const locale = useLocale()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-
   const [isProcessing, setIsProcessing] = useState(false)
+  const [sortBy, setSortBy] = useState('recent')
+
+  const sortedBots = [...aiBots].sort((a, b) => {
+    if (sortBy === 'name') {
+      return (a.display_name || '').localeCompare(b.display_name || '', 'ko')
+    }
+    if (sortBy === 'category') {
+      return (a.category || '').localeCompare(b.category || '', 'ko')
+    }
+    return 0 // Keep original server order for 'recent'
+  })
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -137,6 +147,19 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
 
   return (
     <div className="flex flex-col gap-3">
+      {/* 정렬 및 필터 툴바 */}
+      <div className="flex justify-end mb-1">
+        <select 
+          value={sortBy} 
+          onChange={(e) => setSortBy(e.target.value)}
+          className="text-sm border border-gray-300 rounded px-3 py-1.5 focus:ring-black focus:border-black"
+        >
+          <option value="recent">최신순</option>
+          <option value="name">이름 가나다순</option>
+          <option value="category">카테고리순</option>
+        </select>
+      </div>
+
       {/* 일괄 처리 툴바 */}
       <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs font-bold flex-wrap gap-2">
         <div className="flex items-center gap-2">
@@ -246,7 +269,7 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {aiBots.map(userItem => {
+            {sortedBots.map(userItem => {
               const isSelected = selectedIds.includes(userItem.id);
               const categoryText = userItem.is_ai ? (userItem.category ? (catMap[userItem.category] || userItem.category) : '-') : '일반 유저';
               const isPro = userItem.badges?.includes('pro') || ['gemma-4-31b-it', 'gemini-3.6-flash', 'gemini-3.5-flash'].includes(userItem.ai_model_provider);

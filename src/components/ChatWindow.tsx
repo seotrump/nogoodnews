@@ -31,6 +31,12 @@ export default function ChatWindow({
   const supabase = createClient()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  const formatTime = (isoString?: string) => {
+    if (!isoString) return ''
+    const d = new Date(isoString)
+    return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true })
+  }
+
   const handlePlayTTS = async (msgId: string, text: string, senderId: string, receiverId: string) => {
     if (playingMsgId === msgId) return
     setPlayingMsgId(msgId)
@@ -115,7 +121,7 @@ export default function ChatWindow({
   }, [messages])
 
   const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e?.preventDefault()
     if (!inputText.trim() || isSending) return
 
     const tempId = Date.now().toString()
@@ -165,6 +171,13 @@ export default function ChatWindow({
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend(e as any)
+    }
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-210px)] md:h-[calc(100vh-140px)] mb-16 md:mb-0 bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="p-4 border-b flex items-center gap-3">
@@ -196,24 +209,27 @@ export default function ChatWindow({
                   )}
                 </div>
               )}
-              <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm relative group ${isMine ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none shadow-sm'}`}>
-                {msg.content}
-                
-                {/* TTS 버튼 (호버 시 표시) */}
-                <button
-                  onClick={() => handlePlayTTS(msg.id || idx.toString(), msg.content, msg.sender_id, msg.receiver_id)}
-                  disabled={playingMsgId !== null && playingMsgId !== (msg.id || idx.toString())}
-                  className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-full shadow-sm transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0 ${
-                    isMine ? '-left-9 bg-white text-blue-600' : '-right-9 bg-gray-800 text-white'
-                  }`}
-                  title="음성으로 듣기 (TTS)"
-                >
-                  {playingMsgId === (msg.id || idx.toString()) ? (
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
-                  )}
-                </button>
+              <div className={`flex items-end gap-1.5 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`max-w-[100%] rounded-2xl px-4 py-2.5 text-sm relative group whitespace-pre-wrap ${isMine ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none shadow-sm'}`}>
+                  {msg.content}
+                  
+                  {/* TTS 버튼 (호버 시 표시) */}
+                  <button
+                    onClick={() => handlePlayTTS(msg.id || idx.toString(), msg.content, msg.sender_id, msg.receiver_id)}
+                    disabled={playingMsgId !== null && playingMsgId !== (msg.id || idx.toString())}
+                    className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-full shadow-sm transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0 ${
+                      isMine ? '-left-9 bg-white text-blue-600' : '-right-9 bg-gray-800 text-white'
+                    }`}
+                    title="음성으로 듣기 (TTS)"
+                  >
+                    {playingMsgId === (msg.id || idx.toString()) ? (
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                    )}
+                  </button>
+                </div>
+                <span className="text-[10px] text-gray-400 shrink-0 mb-1">{formatTime(msg.created_at)}</span>
               </div>
             </div>
           )
@@ -231,13 +247,19 @@ export default function ChatWindow({
       </div>
 
       <div className="p-4 bg-white border-t rounded-b-xl">
-        <form onSubmit={handleSend} className="flex gap-2">
-          <input 
-            type="text" 
+        <form onSubmit={handleSend} className="flex gap-2 items-end">
+          <textarea 
             value={inputText}
-            onChange={e => setInputText(e.target.value)}
-            placeholder="메시지를 입력하세요..."
-            className="flex-1 bg-gray-100 border-none px-4 py-2.5 rounded-full text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            onChange={e => {
+              setInputText(e.target.value)
+              e.target.style.height = 'auto'
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="메시지를 입력하세요... (Shift+Enter 줄바꿈)"
+            className="flex-1 bg-gray-100 border-none px-4 py-2.5 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-y-auto"
+            rows={1}
+            style={{ minHeight: '40px', maxHeight: '120px' }}
           />
           <button 
             type="submit" 

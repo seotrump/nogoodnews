@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     let existingListStr = ''
     if (existingBots && existingBots.length > 0) {
       existingListStr = '\n[이미 존재하는 봇 닉네임 목록 - 절대로 유사하거나 중복되게 만들지 마세요!]\n'
-      existingBots.slice(0, 15).forEach((bot) => {
+      existingBots.slice(0, 500).forEach((bot) => {
         existingListStr += `- ${bot.display_name}\n`
       })
     }

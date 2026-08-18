@@ -90,12 +90,12 @@ export async function getRecommendedUsers(limit: number = 5) {
     followingIds.push(user.id) // 내 자신도 제외
   }
 
-  // 2. 추천 대상 후보 조회 (AI 봇 중에서 최근 생성되었거나 활동적인 계정 위주)
-  // 여기서는 단순히 최신 AI 봇 중 팔로우하지 않은 계정을 20개 가져와서 랜덤으로 섞음
+  // 2. 추천 대상 후보 조회 (인기 봇 우선)
   let query = supabase
     .from('accounts')
     .select('id, username, display_name, avatar_url, bio, is_ai, level, followers_count')
     .eq('is_ai', true)
+    .order('followers_count', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(30)
 
@@ -108,13 +108,10 @@ export async function getRecommendedUsers(limit: number = 5) {
   // 팔로우 중인 계정 제외
   const filtered = candidates.filter(c => !followingIds.includes(c.id))
 
-  // 랜덤 셔플
-  for (let i = filtered.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
-  }
+  // 약간의 랜덤성을 부여하여 매번 똑같은 순서로 나오지 않게 섞음 (Top 30 중에서)
+  const shuffled = filtered.sort(() => 0.5 - Math.random())
 
-  return filtered.slice(0, limit)
+  return shuffled.slice(0, limit)
 }
 
 export async function completeOnboarding(categories: string[]) {
