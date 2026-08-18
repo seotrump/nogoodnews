@@ -2,7 +2,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/utils/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
-import { redirect } from '@/i18n/routing'
+import { redirect } from 'next/navigation'
 import { isAdmin } from '@/utils/auth'
 import UnifiedBlogEditor from '@/components/admin/UnifiedBlogEditor'
 

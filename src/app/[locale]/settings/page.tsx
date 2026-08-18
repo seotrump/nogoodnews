@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from '@/i18n/routing'
+import { redirect } from 'next/navigation'
 import SettingsForm from '@/components/SettingsForm'
 import PasswordForm from '@/components/PasswordForm'
 import DeleteAccountForm from '@/components/DeleteAccountForm'

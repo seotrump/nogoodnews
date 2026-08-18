@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { redirect } from '@/i18n/routing'
+import { redirect } from 'next/navigation'
 import { isAdmin } from '@/utils/auth'
 import { getTranslations } from 'next-intl/server'
 import UsersClient from './UsersClient'

@@ -1,4 +1,5 @@
-import { redirect, Link } from '@/i18n/routing'
+import { Link } from '@/i18n/routing'
+import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/utils/supabase/server'
 import PremiumAnalyticsCharts from '@/components/PremiumAnalyticsCharts'

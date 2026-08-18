@@ -1,4 +1,5 @@
-import { redirect, Link } from '@/i18n/routing'
+import { Link } from '@/i18n/routing'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import ChatWindow from '@/components/ChatWindow'
 import { setRequestLocale } from 'next-intl/server'

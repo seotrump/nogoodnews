@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Link, usePathname } from '@/i18n/routing'
+import { Link } from '@/i18n/routing'
+import { usePathname } from 'next/navigation'
 
 export default function AdminNav() {
   const pathname = usePathname()

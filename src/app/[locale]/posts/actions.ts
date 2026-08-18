@@ -2,7 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { redirect } from '@/i18n/routing'
+import { redirect } from 'next/navigation'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { ADMIN_EMAIL } from '@/utils/auth'
 

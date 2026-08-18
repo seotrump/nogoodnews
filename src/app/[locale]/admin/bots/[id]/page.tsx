@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { Link, redirect } from '@/i18n/routing'
+import { Link } from '@/i18n/routing'
+import { redirect } from 'next/navigation'
 import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server'
 import BotBuilder from '@/components/admin/BotBuilder'
@@ -23,7 +24,7 @@ export default async function BotSettingsPage({ params }: { params: Promise<{ id
     .single()
 
   if (!bot || !bot.is_ai) {
-    redirect({ href: '/admin', locale })
+    redirect(`/${locale}/admin`)
   }
 
   return (

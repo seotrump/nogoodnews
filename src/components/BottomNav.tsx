@@ -1,5 +1,6 @@
 'use client'
-import { usePathname, Link } from '@/i18n/routing'
+import { Link } from '@/i18n/routing'
+import { usePathname } from 'next/navigation'
 
 import { useSearchParams } from 'next/navigation'
 import { Home, Compass, PlusSquare, MessageSquare, User } from 'lucide-react'

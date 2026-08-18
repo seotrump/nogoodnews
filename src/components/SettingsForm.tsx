@@ -5,7 +5,8 @@ import { toast } from 'react-hot-toast'
 import { updateProfile, updateLocaleCookie } from '@/app/[locale]/settings/actions'
 import AvatarUpload from './AvatarUpload'
 import { useTranslations, useLocale } from 'next-intl'
-import { useRouter, usePathname } from '@/i18n/routing'
+import { useRouter } from '@/i18n/routing'
+import { usePathname } from 'next/navigation'
 
 import { isAdmin } from '@/utils/auth'
 
