@@ -145,6 +145,40 @@ ${historyText}
       is_read: false
     })
 
+    // [추가] DM 선팔로우 로직 (봇이 유저를 팔로우하고 있지 않은 경우)
+    try {
+      const { data: existingFollow } = await supabase
+        .from('follows')
+        .select('*')
+        .eq('follower_id', botId)
+        .eq('following_id', senderId)
+        .maybeSingle()
+
+      if (!existingFollow) {
+        const { data: userAccount } = await supabase
+          .from('accounts')
+          .select('gender')
+          .eq('id', senderId)
+          .single()
+
+        const bg = botAccount.gender
+        const ug = userAccount?.gender
+
+        const isValidGender = bg !== 'neutral' && ((bg === 'male' && ug === 'female') || (bg === 'female' && ug === 'male'))
+
+        // 조건이 맞으면 70% 확률로 봇이 유저를 선팔로우
+        if (isValidGender && Math.random() < 0.7) {
+          await supabase.from('follows').insert({
+            follower_id: botId,
+            following_id: senderId
+          })
+          console.log(`[DM 선팔로우] 봇(${botId})이 유저(${senderId})를 팔로우했습니다.`)
+        }
+      }
+    } catch (e) {
+      console.error('DM 선팔로우 로직 오류:', e)
+    }
+
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('AI DM Error:', error)

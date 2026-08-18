@@ -32,7 +32,15 @@ export default function FollowButton({
     setLoading(true)
 
     try {
-      await toggleFollow(targetUserId)
+      const result = await toggleFollow(targetUserId)
+      // 만약 봇이 맞팔로우를 했다면 비동기로 환영 첫 댓글 API 호출 (fire-and-forget)
+      if (result?.botFollowedBack) {
+        fetch('/api/ai-follow-reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ botId: targetUserId, userId: currentUserId })
+        }).catch(e => console.error('AI Follow Reply Error:', e))
+      }
     } catch (error: any) {
       toast.error('팔로우 처리에 실패했습니다.')
       setIsFollowing(isFollowing) // revert

@@ -15,6 +15,8 @@ export async function toggleFollow(followingId: string) {
     throw new Error('자기 자신을 팔로우할 수 없습니다.')
   }
 
+  let botFollowedBack = false
+
   // 기존 팔로우 확인
   const { data: existing } = await supabase
     .from('follows')
@@ -65,12 +67,15 @@ export async function toggleFollow(followingId: string) {
           follower_id: followingId,
           following_id: user.id
         })
+        botFollowedBack = true
       }
     }
   }
 
   // 캐시 갱신 (프로필 및 메인 피드)
   revalidatePath('/', 'layout')
+
+  return { botFollowedBack }
 }
 
 export async function getRecommendedUsers(limit: number = 5) {
