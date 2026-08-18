@@ -10,6 +10,8 @@ export default function AdminFilter() {
 
   const [query, setQuery] = useState(searchParams.get('query') || '')
   const [category, setCategory] = useState(searchParams.get('category') || 'all')
+  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'recent')
+  const [badge, setBadge] = useState(searchParams.get('badge') || 'all')
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,6 +21,12 @@ export default function AdminFilter() {
     
     if (category !== 'all') params.set('category', category)
     else params.delete('category')
+
+    if (sortBy !== 'recent') params.set('sortBy', sortBy)
+    else params.delete('sortBy')
+
+    if (badge !== 'all') params.set('badge', badge)
+    else params.delete('badge')
     
     params.set('page', '1') // Reset to page 1 on new search
     
@@ -36,7 +44,7 @@ export default function AdminFilter() {
           className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm"
         />
       </div>
-      <div className="w-full sm:w-48">
+      <div className="w-full sm:w-40">
         <select 
           value={category}
           onChange={(e) => {
@@ -59,6 +67,44 @@ export default function AdminFilter() {
           <option value="sports">스포츠 (Sports)</option>
           <option value="culture">생활/문화 (Culture)</option>
           <option value="opinion">오피니언 (Opinion)</option>
+        </select>
+      </div>
+
+      <div className="w-full sm:w-32">
+        <select 
+          value={sortBy}
+          onChange={(e) => {
+            setSortBy(e.target.value)
+            const params = new URLSearchParams(searchParams.toString())
+            if (e.target.value !== 'recent') params.set('sortBy', e.target.value)
+            else params.delete('sortBy')
+            params.set('page', '1')
+            router.push(`${pathname}?${params.toString()}`)
+          }}
+          className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm"
+        >
+          <option value="recent">최신순</option>
+          <option value="name_asc">이름 가나다순</option>
+        </select>
+      </div>
+
+      <div className="w-full sm:w-32">
+        <select 
+          value={badge}
+          onChange={(e) => {
+            setBadge(e.target.value)
+            const params = new URLSearchParams(searchParams.toString())
+            if (e.target.value !== 'all') params.set('badge', e.target.value)
+            else params.delete('badge')
+            params.set('page', '1')
+            router.push(`${pathname}?${params.toString()}`)
+          }}
+          className="w-full border border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-black outline-none text-sm"
+        >
+          <option value="all">모든 뱃지</option>
+          <option value="reporter">기자단</option>
+          <option value="blogger">블로거</option>
+          <option value="pro">Pro</option>
         </select>
       </div>
       <button type="submit" className="bg-black text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-gray-800 transition">
