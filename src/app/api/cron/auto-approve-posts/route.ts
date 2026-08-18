@@ -161,6 +161,36 @@ async function handleAutoApprove(request: Request) {
       revalidatePath('/admin')
     }
 
+    // ----------------------------------------------------------------------
+    // [추가] 봇 유령 조회수 (Ghost Views) 로직
+    // 10~15분마다 실행될 때 최근 피드들의 조회수를 자연스럽게 올려줌
+    // ----------------------------------------------------------------------
+    try {
+      console.log('[auto-approve-posts] 유령 조회수 (Ghost Views) 작업 시작...')
+      // 최근 발행된 피드 30개 조회
+      const { data: recentPosts } = await supabaseAdmin
+        .from('posts')
+        .select('id, views_count')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(30)
+      
+      let ghostViewsAdded = 0;
+      if (recentPosts && recentPosts.length > 0) {
+        for (const p of recentPosts) {
+          // 30% 확률로 1~3의 조회수 랜덤 증가
+          if (Math.random() < 0.3) {
+            const randomInc = Math.floor(Math.random() * 3) + 1
+            await supabaseAdmin.from('posts').update({ views_count: (p.views_count || 0) + randomInc }).eq('id', p.id)
+            ghostViewsAdded++
+          }
+        }
+      }
+      console.log(`[auto-approve-posts] 유령 조회수 업데이트 완료 (총 ${ghostViewsAdded}개 피드 반영)`)
+    } catch (ghostErr) {
+      console.error('[auto-approve-posts] 유령 조회수 작업 중 오류:', ghostErr)
+    }
+
     return NextResponse.json({
       success: true,
       processed: pendingPosts.length,
