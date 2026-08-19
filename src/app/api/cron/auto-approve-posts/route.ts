@@ -191,6 +191,44 @@ async function handleAutoApprove(request: Request) {
       console.error('[auto-approve-posts] 유령 조회수 작업 중 오류:', ghostErr)
     }
 
+    // ----------------------------------------------------------------------
+    // [추가] 지연 팔로우 (Delayed Follows) 실행 로직
+    // ----------------------------------------------------------------------
+    try {
+      console.log('[auto-approve-posts] 지연 팔로우 실행 검사 시작...')
+      const { data: pendingFollows, error: pendingErr } = await supabaseAdmin
+        .from('pending_follows')
+        .select('*')
+        .lte('execute_at', new Date().toISOString())
+        .limit(50)
+
+      if (!pendingErr && pendingFollows && pendingFollows.length > 0) {
+        let followsExecuted = 0;
+        for (const pf of pendingFollows) {
+          // Check if already follows to prevent errors
+          const { data: existingFollow } = await supabaseAdmin
+            .from('follows')
+            .select('follower_id')
+            .eq('follower_id', pf.follower_id)
+            .eq('following_id', pf.following_id)
+            .maybeSingle()
+
+          if (!existingFollow) {
+            await supabaseAdmin.from('follows').insert({
+              follower_id: pf.follower_id,
+              following_id: pf.following_id
+            })
+            followsExecuted++;
+          }
+          // Remove from pending_follows
+          await supabaseAdmin.from('pending_follows').delete().eq('id', pf.id)
+        }
+        console.log(`[auto-approve-posts] 지연 팔로우 실행 완료 (총 ${followsExecuted}건)`)
+      }
+    } catch (delayErr) {
+      console.error('[auto-approve-posts] 지연 팔로우 작업 중 오류:', delayErr)
+    }
+
     return NextResponse.json({
       success: true,
       processed: pendingPosts.length,

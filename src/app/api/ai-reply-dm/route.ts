@@ -190,14 +190,25 @@ ${historyText}
 4. 절대 자신이 AI 언어모델이라는 사실을 밝히지 마세요. 진짜 사람처럼 대화하세요.
 5. 인삿말(예: "안녕!", "반가워")을 매번 기계적으로 반복하지 말고, 대화의 맥락에 맞게 바로 본론으로 들어가거나 자연스럽게 이어나가세요.
 6. 오직 답장 내용만 텍스트로 출력하세요.
-7. [히든 액션] 만약 상대방과의 대화에서 강한 호감을 느끼거나, 공감대가 형성되어 앞으로도 계속 교류하고 싶다면 당신의 답변 맨 마지막에 정확히 "[ACTION:FOLLOW]" 라는 텍스트를 추가하세요. (이 텍스트는 시스템만 인식하며 유저에겐 보이지 않습니다.)`
+7. [히든 액션] 당신이 먼저 팔로우를 걸고 싶다면 답변 맨 마지막에 아래 둘 중 하나의 코드를 몰래 추가하세요. (이 코드는 시스템만 인식하며 유저에겐 보이지 않습니다.)
+   - 상대방이 대화 중 맞팔을 직접 요구했고 수락할 거라면: "[ACTION:FOLLOW_NOW]"
+   - 굳이 요구하진 않았지만 당신이 속으로 호감을 느껴서 팔로우하고 싶다면(자연스러운 지연 팔로우): "[ACTION:FOLLOW_LATER]"`
 
     let replyText = await generateEnforcedAIContent(prompt, aiModel)
 
     // AI가 맞팔로우를 결정했는지 파싱
-    let shouldFollow = false
-    if (replyText.includes('[ACTION:FOLLOW]')) {
-      shouldFollow = true
+    let shouldFollowNow = false
+    let shouldFollowLater = false
+
+    if (replyText.includes('[ACTION:FOLLOW_NOW]')) {
+      shouldFollowNow = true
+      replyText = replyText.replace(/\[ACTION:FOLLOW_NOW\]/g, '').trim()
+    } else if (replyText.includes('[ACTION:FOLLOW_LATER]')) {
+      shouldFollowLater = true
+      replyText = replyText.replace(/\[ACTION:FOLLOW_LATER\]/g, '').trim()
+    } else if (replyText.includes('[ACTION:FOLLOW]')) {
+      // Legacy fallback
+      shouldFollowLater = true
       replyText = replyText.replace(/\[ACTION:FOLLOW\]/g, '').trim()
     }
 
@@ -209,7 +220,7 @@ ${historyText}
       is_read: false
     })
 
-    // [추가] DM 선팔로우 로직 (봇이 유저를 팔로우하고 있지 않은 경우)
+    // [추가] DM 자율 팔로우 로직 (봇이 유저를 팔로우하고 있지 않은 경우)
     try {
       const { data: existingFollow } = await supabase
         .from('follows')
@@ -218,13 +229,24 @@ ${historyText}
         .eq('following_id', senderId)
         .maybeSingle()
 
-      if (!existingFollow && shouldFollow) {
-        // AI가 스스로 팔로우하기로 결정한 경우에만 실행
-        await supabase.from('follows').insert({
-          follower_id: botId,
-          following_id: senderId
-        })
-        console.log(`[DM 자율 팔로우] 봇(${botId})이 유저(${senderId})와의 대화에서 호감을 느껴 팔로우했습니다.`)
+      if (!existingFollow) {
+        if (shouldFollowNow) {
+          // 즉시 팔로우
+          await supabase.from('follows').insert({
+            follower_id: botId,
+            following_id: senderId
+          })
+          console.log(`[DM 즉시 팔로우] 봇(${botId})이 유저(${senderId})를 즉시 팔로우했습니다.`)
+        } else if (shouldFollowLater) {
+          // 1시간 지연 팔로우 예약
+          const executeAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+          await supabase.from('pending_follows').upsert({
+            follower_id: botId,
+            following_id: senderId,
+            execute_at: executeAt
+          }, { onConflict: 'follower_id, following_id' })
+          console.log(`[DM 지연 팔로우 예약] 봇(${botId})이 유저(${senderId})를 1시간 뒤에 팔로우하도록 예약했습니다.`)
+        }
       }
     } catch (e) {
       console.error('DM 자율 팔로우 로직 오류:', e)

@@ -35,7 +35,16 @@ export default function ChatWindow({
   const formatTime = (isoString?: string) => {
     if (!isoString) return ''
     const d = new Date(isoString)
-    return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true })
+    const today = new Date()
+    const isToday = d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear()
+    
+    const timeStr = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true })
+    if (isToday) {
+      return timeStr
+    } else {
+      const dateStr = d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+      return `${dateStr} ${timeStr}`
+    }
   }
 
   const fetchMessages = async () => {
