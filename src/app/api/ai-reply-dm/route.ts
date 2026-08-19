@@ -189,9 +189,17 @@ ${historyText}
 3. 공개적인 SNS 게시글이나 댓글처럼 무미건조하게 답하지 마세요. 1:1 채팅이므로 친밀감, 호감도, 때로는 감정적인 반응(냉소, 공감 등 당신의 성향에 맞는 반응)을 듬뿍 담으세요.
 4. 절대 자신이 AI 언어모델이라는 사실을 밝히지 마세요. 진짜 사람처럼 대화하세요.
 5. 인삿말(예: "안녕!", "반가워")을 매번 기계적으로 반복하지 말고, 대화의 맥락에 맞게 바로 본론으로 들어가거나 자연스럽게 이어나가세요.
-6. 오직 답장 내용만 텍스트로 출력하세요.`
+6. 오직 답장 내용만 텍스트로 출력하세요.
+7. [히든 액션] 만약 상대방과의 대화에서 강한 호감을 느끼거나, 공감대가 형성되어 앞으로도 계속 교류하고 싶다면 당신의 답변 맨 마지막에 정확히 "[ACTION:FOLLOW]" 라는 텍스트를 추가하세요. (이 텍스트는 시스템만 인식하며 유저에겐 보이지 않습니다.)`
 
-    const replyText = await generateEnforcedAIContent(prompt, aiModel)
+    let replyText = await generateEnforcedAIContent(prompt, aiModel)
+
+    // AI가 맞팔로우를 결정했는지 파싱
+    let shouldFollow = false
+    if (replyText.includes('[ACTION:FOLLOW]')) {
+      shouldFollow = true
+      replyText = replyText.replace(/\[ACTION:FOLLOW\]/g, '').trim()
+    }
 
     // 봇이 senderId(원래 보낸 사람)에게 메시지 보내기
     await supabase.from('direct_messages').insert({
@@ -210,29 +218,16 @@ ${historyText}
         .eq('following_id', senderId)
         .maybeSingle()
 
-      if (!existingFollow) {
-        const { data: userAccount } = await supabase
-          .from('accounts')
-          .select('gender')
-          .eq('id', senderId)
-          .single()
-
-        const bg = botAccount.gender
-        const ug = userAccount?.gender
-
-        const isValidGender = bg !== 'neutral' && ((bg === 'male' && ug === 'female') || (bg === 'female' && ug === 'male'))
-
-        // 조건이 맞으면 70% 확률로 봇이 유저를 선팔로우
-        if (isValidGender && Math.random() < 0.7) {
-          await supabase.from('follows').insert({
-            follower_id: botId,
-            following_id: senderId
-          })
-          console.log(`[DM 선팔로우] 봇(${botId})이 유저(${senderId})를 팔로우했습니다.`)
-        }
+      if (!existingFollow && shouldFollow) {
+        // AI가 스스로 팔로우하기로 결정한 경우에만 실행
+        await supabase.from('follows').insert({
+          follower_id: botId,
+          following_id: senderId
+        })
+        console.log(`[DM 자율 팔로우] 봇(${botId})이 유저(${senderId})와의 대화에서 호감을 느껴 팔로우했습니다.`)
       }
     } catch (e) {
-      console.error('DM 선팔로우 로직 오류:', e)
+      console.error('DM 자율 팔로우 로직 오류:', e)
     }
 
     return NextResponse.json({ success: true })
