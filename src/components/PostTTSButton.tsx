@@ -2,25 +2,21 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
-import { Volume2 } from 'lucide-react'
+import { Volume2, Square } from 'lucide-react'
 
-// TTS 감정 & 호흡 강제 주입 함수
+// TTS 감정 & 호흡 강제 주입 함수 (Gemini 3.1 Flash TTS Preview 오디오 태그 활용)
 function applyTTSTuning(text: string) {
   if (!text) return "";
 
-  // 1. 거친 감탄사 랜덤 추가 (문장 첫머리)
-  const sighs = ["하아...", "읏,", "큭...", "쉿,"];
-  const randomSigh = sighs[Math.floor(Math.random() * sighs.length)];
+  // 1. 공식 오디오 태그 랜덤 추가 (문장 첫머리)
+  const prefixes = ["[sighs]", "[laughs]", "[whispers]", ""];
+  const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
 
-  // 2. 마침표와 쉼표를 활용한 호흡 지연 (기계식 정박자 부수기)
-  let tunedText = text.replace(/\./g, "..."); // 평범한 마침표를 여운으로 변경
-  tunedText = tunedText.replace(/!/g, "!, "); // 느낌표 뒤에 한 박자 쉬기
+  // 2. 마침표와 느낌표를 활용한 오디오 태그 지연 및 감정 주입
+  let tunedText = text.replace(/\./g, " [short pause] ");
+  tunedText = tunedText.replace(/!/g, " [anger]! ");
   
-  // 3. 특정 텍스트에 강세 주기
-  const emphasisWords = /(당장|빨리|지금|완벽해)/g;
-  tunedText = tunedText.replace(emphasisWords, match => match.split('').join('.'));
-
-  return `${randomSigh} ${tunedText}`;
+  return `${randomPrefix} ${tunedText}`.trim();
 }
 
 let currentAudio: HTMLAudioElement | null = null;
@@ -35,20 +31,23 @@ export default function PostTTSButton({ text, senderId, receiverId = 'all', vari
   }, [])
 
   const handlePlayTTS = async () => {
-    if (isPlaying || !text) {
-      // 만약 이미 재생 중인 자기 자신을 누르면 중지하는 로직 추가
-      if (isPlaying) {
-        window.dispatchEvent(new Event('stop-all-tts'))
-        if (currentAudio) {
-          currentAudio.pause()
-          currentAudio = null
-        }
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel()
-        }
+    if (isPlaying) {
+      // 멈춤 기능 구현
+      window.dispatchEvent(new Event('stop-all-tts'))
+      if (currentAudio) {
+        currentAudio.pause()
+        currentAudio.currentTime = 0
+        currentAudio = null
       }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+      setIsPlaying(false)
+      toast.success('재생 중지됨')
       return
     }
+
+    if (!text) return
 
     // 다른 모든 TTS 중지
     window.dispatchEvent(new Event('stop-all-tts'))
@@ -91,7 +90,7 @@ export default function PostTTSButton({ text, senderId, receiverId = 'all', vari
       console.warn('TTS API failed, falling back to browser TTS:', e)
       if ('speechSynthesis' in window) {
         const textWithoutHashtags = text.replace(/#[\w가-힣]+/g, '').trim()
-        const utterance = new SpeechSynthesisUtterance(textWithoutHashtags) // 폴백은 원본(해시태그 제거) 텍스트 사용
+        const utterance = new SpeechSynthesisUtterance(textWithoutHashtags) // 폴백은 원본 텍스트 사용
         utterance.lang = 'ko-KR'
         utterance.onend = () => setIsPlaying(false)
         utterance.onerror = () => setIsPlaying(false)
@@ -111,20 +110,19 @@ export default function PostTTSButton({ text, senderId, receiverId = 'all', vari
         e.stopPropagation();
         handlePlayTTS();
       }}
-      disabled={isPlaying}
       className={
         variant === 'icon' 
-          ? `flex items-center justify-center w-6 h-6 rounded-full transition ${isPlaying ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`
-          : `flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition ${isPlaying ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
+          ? `flex items-center justify-center w-6 h-6 rounded-full transition ${isPlaying ? 'bg-red-100 text-red-600' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`
+          : `flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition ${isPlaying ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
       }
-      title="음성으로 듣기 (TTS)"
+      title={isPlaying ? "중지" : "음성으로 듣기 (TTS)"}
     >
       {isPlaying ? (
-        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+        <Square size={variant === 'icon' ? 12 : 14} fill="currentColor" />
       ) : (
         <Volume2 size={variant === 'icon' ? 12 : 14} />
       )}
-      {variant !== 'icon' && (isPlaying ? '재생 중...' : '듣기')}
+      {variant !== 'icon' && (isPlaying ? '중지' : '듣기')}
     </button>
   )
 }

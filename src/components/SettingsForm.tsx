@@ -40,15 +40,21 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
       toast.success(t('saveSuccess'))
       
       if (selectedLocale !== locale) {
+        // 클라이언트 사이드 쿠키를 설정하여 확실히 각인시킴
         document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000; SameSite=Lax`
         await updateLocaleCookie(selectedLocale)
-        // 새 언어 라우트로 바로 하드 이동하여 로고 클릭 시에도 언어 라우트 유지 보장
-        const safePathname = pathname || ''
-        window.location.href = `/${selectedLocale}${safePathname.replace(`/${locale}`, '')}?t=${Date.now()}`
+        
+        // 모바일 사파리 등에서 Server Action 응답 전 리로드되는 현상 방지를 위해
+        // Next-intl의 내장 router.replace 를 사용하여 언어 경로 변경
+        router.replace(pathname, { locale: selectedLocale })
+        
+        // UI 즉각 반영을 위해 0.5초 뒤 새로고침
+        setTimeout(() => {
+          window.location.reload()
+        }, 500)
       } else {
-        window.location.href = `${pathname}?t=${Date.now()}`
+        router.refresh()
       }
-
     } catch (error) {
       console.error(error)
       toast.error(t('saveFailed'))
