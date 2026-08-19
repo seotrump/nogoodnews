@@ -111,6 +111,64 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
         />
       </div>
 
+      {/* Advanced Matching Profile Fields */}
+      <div className="pt-4 border-t border-gray-100 flex flex-col gap-4">
+        <h3 className="text-sm font-bold text-gray-900">상세 프로필 정보 (선택사항)</h3>
+        <p className="text-xs text-gray-500 mb-2">향후 맞춤형 추천 및 연결(매칭)을 위해 수집되며, 공개적으로 노출되지 않습니다.</p>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">생년월일 (DOB)</label>
+            <input type="date" name="birth_date" defaultValue={profile?.birth_date || ''} className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">연락처</label>
+            <input type="tel" name="phone_number" defaultValue={profile?.phone_number || ''} placeholder="예: 010-1234-5678" className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">연락용 이메일</label>
+            <input type="email" name="contact_email" defaultValue={profile?.contact_email || ''} placeholder="가입 이메일 외 추가 연락처" className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">국가 (Country)</label>
+            <input type="text" name="country" defaultValue={profile?.country || ''} placeholder="예: 대한민국" className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">거주 지역 (Location)</label>
+            <input type="text" name="location" defaultValue={profile?.location || ''} placeholder="예: 서울특별시 강남구" className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">성별 (Gender)</label>
+            <select name="gender" defaultValue={profile?.gender || 'unknown'} className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black outline-none bg-white">
+              <option value="unknown">비공개</option>
+              <option value="male">남성</option>
+              <option value="female">여성</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">성격 유형 (NBTI)</label>
+            <select name="nbti_type" defaultValue={profile?.nbti_type || ''} className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black outline-none bg-white">
+              <option value="">선택안함</option>
+              {['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP'].map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">관심 카테고리</label>
+            <select name="category" defaultValue={profile?.category || ''} className="w-full border border-gray-200 p-2 rounded-lg focus:ring-2 focus:ring-black outline-none bg-white">
+              <option value="">선택안함</option>
+              <option value="tech">IT/테크</option>
+              <option value="business">비즈니스/경제</option>
+              <option value="politics">정치/사회</option>
+              <option value="entertainment">엔터/연예</option>
+              <option value="sports">스포츠</option>
+              <option value="science">과학/우주</option>
+              <option value="health">건강/라이프</option>
+              <option value="humor">유머/밈</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div>
         <label className="block text-sm font-medium mb-1 sm:mb-2 text-gray-700">{t('coverImage')}</label>
         <div className="relative w-full h-32 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden group">
