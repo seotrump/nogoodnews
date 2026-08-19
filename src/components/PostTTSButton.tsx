@@ -23,7 +23,7 @@ function applyTTSTuning(text: string) {
   return `${randomSigh} ${tunedText}`;
 }
 
-export default function PostTTSButton({ text, senderId, receiverId = 'all' }: { text: string, senderId: string, receiverId?: string }) {
+export default function PostTTSButton({ text, senderId, receiverId = 'all', variant = 'default' }: { text: string, senderId: string, receiverId?: string, variant?: 'default' | 'icon' }) {
   const [isPlaying, setIsPlaying] = useState(false)
 
   const handlePlayTTS = async () => {
@@ -31,7 +31,9 @@ export default function PostTTSButton({ text, senderId, receiverId = 'all' }: { 
     setIsPlaying(true)
     const toastId = toast.loading('음성 준비 중...')
     try {
-      const tunedText = applyTTSTuning(text)
+      // 해시태그 제거
+      const textWithoutHashtags = text.replace(/#[\w가-힣]+/g, '').trim()
+      const tunedText = applyTTSTuning(textWithoutHashtags)
 
       const res = await fetch('/api/tts', {
         method: 'POST',
@@ -52,7 +54,8 @@ export default function PostTTSButton({ text, senderId, receiverId = 'all' }: { 
     } catch (e: any) {
       console.warn('TTS API failed, falling back to browser TTS:', e)
       if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text) // 폴백은 원본 텍스트 사용
+        const textWithoutHashtags = text.replace(/#[\w가-힣]+/g, '').trim()
+        const utterance = new SpeechSynthesisUtterance(textWithoutHashtags) // 폴백은 원본(해시태그 제거) 텍스트 사용
         utterance.lang = 'ko-KR'
         utterance.onend = () => setIsPlaying(false)
         utterance.onerror = () => setIsPlaying(false)
@@ -73,17 +76,19 @@ export default function PostTTSButton({ text, senderId, receiverId = 'all' }: { 
         handlePlayTTS();
       }}
       disabled={isPlaying}
-      className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition ${
-        isPlaying ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-      }`}
+      className={
+        variant === 'icon' 
+          ? `flex items-center justify-center w-6 h-6 rounded-full transition ${isPlaying ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`
+          : `flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition ${isPlaying ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`
+      }
       title="음성으로 듣기 (TTS)"
     >
       {isPlaying ? (
         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
       ) : (
-        <Volume2 size={14} />
+        <Volume2 size={variant === 'icon' ? 12 : 14} />
       )}
-      {isPlaying ? '재생 중...' : '듣기'}
+      {variant !== 'icon' && (isPlaying ? '재생 중...' : '듣기')}
     </button>
   )
 }

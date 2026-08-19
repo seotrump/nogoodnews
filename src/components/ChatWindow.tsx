@@ -5,6 +5,8 @@ import { createClient } from '@/utils/supabase/client'
 import { sendMessage, markAsRead, getMessages } from '@/app/[locale]/messages/actions'
 import { toast } from 'react-hot-toast'
 import { Link } from '@/i18n/routing'
+import { Loader2, Send } from 'lucide-react'
+import PostTTSButton from './PostTTSButton'
 
 export default function ChatWindow({ 
   currentUserId, 
@@ -174,7 +176,10 @@ export default function ChatWindow({
                 <div className={`max-w-[100%] rounded-2xl px-4 py-2.5 text-sm relative group whitespace-pre-wrap ${isMine ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none shadow-sm'}`}>
                   {msg.content}
                 </div>
-                <span className="text-[10px] text-gray-400 shrink-0 mb-1">{formatTime(msg.created_at)}</span>
+                <div className="flex flex-col gap-1 items-end shrink-0">
+                  <span className="text-[10px] text-gray-400 mb-1">{formatTime(msg.created_at)}</span>
+                  <PostTTSButton text={msg.content} senderId={msg.sender_id} variant="icon" />
+                </div>
               </div>
             </div>
           )
