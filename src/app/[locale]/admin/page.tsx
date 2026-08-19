@@ -24,6 +24,10 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     redirect('/')
   }
 
+  if (locale !== 'ko') {
+    redirect('/ko/admin')
+  }
+
   const { tab = 'main' } = await searchParams
 
   const { data: profile } = await supabase

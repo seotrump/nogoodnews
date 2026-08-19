@@ -16,7 +16,8 @@ export default function PostContentClient({
   currentUserId,
   locale,
   category,
-  accountCategory
+  accountCategory,
+  postType
 }: { 
   initialHeadline: string, 
   initialContent: string,

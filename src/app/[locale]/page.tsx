@@ -19,6 +19,12 @@ export default async function Home({ params, searchParams }: { params: Promise<{
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
+  const { isAdmin } = await import('@/utils/auth')
+  if (user && isAdmin(user) && locale !== 'ko') {
+    const { redirect } = await import('next/navigation')
+    redirect('/ko')
+  }
+  
   const { sort, feed, category, badge } = await searchParams
   const sortBy = sort || 'latest'
   const currentFeed = feed || 'foryou'
