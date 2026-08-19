@@ -115,40 +115,6 @@ export async function POST(req: Request) {
       console.warn('⚠️ [TTS] 맵 그라운딩 예외:', e);
     }
 
-    // 2-B. 2순위: gemini-3.1-flash-tts-preview 일반 호출
-    //      → '멀티모달 생성' 카테고리 쿼터 소모 (RPD 10회, 긴급 백업)
-    if (!audioBase64) {
-      try {
-        console.log(`[TTS] 2차: 멀티모달(10/일) voice=${selectedVoice}`);
-        const res2 = await fetch(ttsModelUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: finalPrompt }] }],
-            generationConfig: {
-              responseModalities: ['AUDIO'],
-              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: selectedVoice } } }
-            }
-          })
-        });
-        if (res2.ok) {
-          const d2 = await res2.json();
-          const p2 = d2.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-          if (p2?.data) {
-            const pcm = Buffer.from(p2.data, 'base64');
-            const sr = parseInt(p2.mimeType?.match(/rate=(\d+)/)?.[1] || '24000');
-            const ch = parseInt(p2.mimeType?.match(/channels=(\d+)/)?.[1] || '1');
-            audioBase64 = buildWavBuffer(pcm, sr, ch, 16).toString('base64');
-            audioMimeType = 'audio/wav';
-            console.log(`✅ [TTS] 멀티모달 성공`);
-          }
-        } else {
-          console.warn(`⚠️ [TTS] 멀티모달 실패 ${res2.status}`);
-        }
-      } catch (e) {
-        console.warn('⚠️ [TTS] 멀티모달 예외:', e);
-      }
-    }
 
     // 3. Gemini TTS 실패 시 Google Translate TTS Fallback
     if (!audioBase64) {
