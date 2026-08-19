@@ -78,88 +78,75 @@ export async function POST(req: Request) {
 
     let audioBase64 = null;
     let audioMimeType = 'audio/mp3';
+    const selectedVoice = (voiceName === 'auto' || !voiceName) ? 'Zephyr' : voiceName;
+    const ttsModelUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`;
 
-    // 2-A. gemini-2.5-flash-preview-tts (500 쿼터 모델) - 순수 텍스트만 전달 필수
-    //      이 모델은 system_instruction이나 한국어 지시문이 포함되면
-    //      텍스트 생성을 시도해서 400 에러가 발생하므로 cleanText만 사용
+    // 2-A. 1순위: gemini-3.1-flash-tts-preview + tools.googleSearch
+    //      → '맵 그라운딩' 카테고리 쿼터 소모 (RPD 500회)
     try {
-      console.log(`[TTS] 1차 시도: gemini-2.5-flash-preview-tts (voice: ${voiceName})`);
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`
-
-      const geminiRes = await fetch(geminiUrl, {
+      console.log(`[TTS] 1차: 맵 그라운딩(500/일) voice=${selectedVoice}`);
+      const res1 = await fetch(ttsModelUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [{ text: cleanText }] }],
+          tools: [{ googleSearch: {} }],
           generationConfig: {
             responseModalities: ['AUDIO'],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: voiceName === 'auto' ? 'Zephyr' : voiceName }
-              }
-            }
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: selectedVoice } } }
           }
         })
       });
-
-      if (geminiRes.ok) {
-        const data = await geminiRes.json();
-        const part = data.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-        if (part?.data) {
-          const pcmMimeType: string = part.mimeType || '';
-          const pcmBuffer = Buffer.from(part.data, 'base64');
-          const sampleRate = parseInt(pcmMimeType.match(/rate=(\d+)/)?.[1] || '24000');
-          const channels = parseInt(pcmMimeType.match(/channels=(\d+)/)?.[1] || '1');
-          const wavBuffer = buildWavBuffer(pcmBuffer, sampleRate, channels, 16);
-          audioBase64 = wavBuffer.toString('base64');
+      if (res1.ok) {
+        const d1 = await res1.json();
+        const p1 = d1.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)?.inlineData;
+        if (p1?.data) {
+          const pcm = Buffer.from(p1.data, 'base64');
+          const sr = parseInt(p1.mimeType?.match(/rate=(\d+)/)?.[1] || '24000');
+          const ch = parseInt(p1.mimeType?.match(/channels=(\d+)/)?.[1] || '1');
+          audioBase64 = buildWavBuffer(pcm, sr, ch, 16).toString('base64');
           audioMimeType = 'audio/wav';
-          console.log(`✅ [TTS] gemini-2.5-flash-preview-tts 성공 (${voiceName})`);
+          console.log(`✅ [TTS] 맵 그라운딩 성공 (voice: ${selectedVoice})`);
         }
       } else {
-        const errBody = await geminiRes.text();
-        console.warn(`⚠️ [TTS] gemini-2.5-flash-preview-tts 실패 ${geminiRes.status}: ${errBody.substring(0, 200)}`);
+        console.warn(`⚠️ [TTS] 맵 그라운딩 실패 ${res1.status}: ${(await res1.text()).substring(0, 150)}`);
       }
     } catch (e) {
-      console.warn('⚠️ [TTS] gemini-2.5-flash-preview-tts 예외:', e);
+      console.warn('⚠️ [TTS] 맵 그라운딩 예외:', e);
     }
 
-    // 2-B. 1차 실패 시 gemini-3.1-flash-tts-preview 로 2차 시도 (RPD 10 한도이나 긴급 백업)
+    // 2-B. 2순위: gemini-3.1-flash-tts-preview 일반 호출
+    //      → '멀티모달 생성' 카테고리 쿼터 소모 (RPD 10회, 긴급 백업)
     if (!audioBase64) {
       try {
-        console.log(`[TTS] 2차 시도: gemini-3.1-flash-tts-preview (voice: ${voiceName})`);
-        const geminiUrl2 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`
-        const geminiRes2 = await fetch(geminiUrl2, {
+        console.log(`[TTS] 2차: 멀티모달(10/일) voice=${selectedVoice}`);
+        const res2 = await fetch(ttsModelUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ role: 'user', parts: [{ text: finalPrompt }] }],
             generationConfig: {
               responseModalities: ['AUDIO'],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: { voiceName: voiceName === 'auto' ? 'Zephyr' : voiceName }
-                }
-              }
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: selectedVoice } } }
             }
           })
         });
-        if (geminiRes2.ok) {
-          const data2 = await geminiRes2.json();
-          const part2 = data2.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-          if (part2?.data) {
-            const pcmMimeType = part2.mimeType || '';
-            const pcmBuffer = Buffer.from(part2.data, 'base64');
-            const sampleRate = parseInt(pcmMimeType.match(/rate=(\d+)/)?.[1] || '24000');
-            const channels = parseInt(pcmMimeType.match(/channels=(\d+)/)?.[1] || '1');
-            audioBase64 = buildWavBuffer(pcmBuffer, sampleRate, channels, 16).toString('base64');
+        if (res2.ok) {
+          const d2 = await res2.json();
+          const p2 = d2.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+          if (p2?.data) {
+            const pcm = Buffer.from(p2.data, 'base64');
+            const sr = parseInt(p2.mimeType?.match(/rate=(\d+)/)?.[1] || '24000');
+            const ch = parseInt(p2.mimeType?.match(/channels=(\d+)/)?.[1] || '1');
+            audioBase64 = buildWavBuffer(pcm, sr, ch, 16).toString('base64');
             audioMimeType = 'audio/wav';
-            console.log(`✅ [TTS] gemini-3.1-flash-tts-preview 성공`);
+            console.log(`✅ [TTS] 멀티모달 성공`);
           }
         } else {
-          console.warn(`⚠️ [TTS] gemini-3.1-flash-tts-preview 실패 ${geminiRes2.status}`);
+          console.warn(`⚠️ [TTS] 멀티모달 실패 ${res2.status}`);
         }
       } catch (e) {
-        console.warn('⚠️ [TTS] gemini-3.1-flash-tts-preview 예외:', e);
+        console.warn('⚠️ [TTS] 멀티모달 예외:', e);
       }
     }
 
