@@ -19,11 +19,11 @@ export async function POST(req: Request) {
       throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is not configured')
     }
 
-    // 1. 마크다운, 특수기호, URL, HTML 태그 정제 (읽기 편하게)
+    // 1. 마크다운, 특수기호, URL, HTML 태그 정제 (감정 태그 [whispers] 등은 살리기 위해 대괄호 제외)
     let cleanText = text
       .replace(/https?:\/\/[^\s]+/g, '') // URL 제거
       .replace(/<[^>]*>?/gm, '') // HTML 제거
-      .replace(/[*_#\[\]()`~>]/g, '') // 마크다운 기호 제거
+      .replace(/[*_#()`~>]/g, '') // 마크다운 기호 제거 (대괄호 제외)
       .replace(/\n/g, ' ') // 줄바꿈 제거
       .trim();
 
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
           const receiverGender = receiver.gender === 'male' ? '남성' : receiver.gender === 'female' ? '여성' : '미상'
           
           finalPrompt = `[지시사항]
-다음 대사를 자연스러운 사람의 목소리로 연기하듯 읽어주세요.
+다음 대사를 자연스러운 사람의 목소리로 연기하듯 읽어주세요. [whispers], [laughs], [sighs] 등의 오디오 태그를 활용하여 감정을 표현하세요.
 - 화자 성별: ${senderGender}
 - 청자 성별: ${receiverGender}
 - 화자 카테고리: ${sender.category || '일반'}
@@ -73,9 +73,9 @@ export async function POST(req: Request) {
 
     // 2. Gemini 3.1 Flash TTS 우선 시도
     try {
-      console.log('Attempting Gemini 3.1 Flash TTS...');
-      // 가상의 Gemini TTS 오디오 생성 API 엔드포인트 형태
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts:generateContent?key=${apiKey}`
+      console.log('Attempting Gemini 3.1 Flash TTS Preview...');
+      // 정확한 정식 프리뷰 모델 ID 반영
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`
       
       const geminiRes = await fetch(geminiUrl, {
         method: 'POST',
