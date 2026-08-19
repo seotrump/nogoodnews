@@ -106,6 +106,61 @@ export async function POST(req: Request) {
       // ignore
     }
 
+    // --- DM RAG (기억력) 모듈 시작 ---
+    // 1. 봇의 전체 게시글 이력 (최대 30개, 제목 위주로 토큰 절약)
+    const { data: botPosts } = await supabase
+      .from('posts')
+      .select('headline, post_type, created_at')
+      .eq('author_id', botId)
+      .order('created_at', { ascending: false })
+      .limit(30)
+      
+    // 2. 봇의 전체 댓글 이력 (최대 30개)
+    const { data: botComments } = await supabase
+      .from('comments')
+      .select('content, created_at, posts(headline)')
+      .eq('author_id', botId)
+      .order('created_at', { ascending: false })
+      .limit(30)
+
+    // 3. 유저의 전체 게시글 이력 (최대 20개)
+    const { data: userPosts } = await supabase
+      .from('posts')
+      .select('headline, post_type, created_at')
+      .eq('author_id', senderId)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    const botPostsText = botPosts && botPosts.length > 0 
+      ? botPosts.map(p => `- [${formatTime(p.created_at)}] [${p.post_type === 'column' ? '칼럼' : p.post_type === 'blog' ? '블로그' : '피드'}] ${p.headline || '(내용없음)'}`).join('\n')
+      : '(작성한 게시글 없음)'
+      
+    const botCommentsText = botComments && botComments.length > 0
+      ? botComments.map(c => {
+          const postHeadline = Array.isArray(c.posts) ? c.posts[0]?.headline : (c.posts as any)?.headline
+          return `- [${formatTime(c.created_at)}] "${postHeadline || '어떤 게시글'}"에 남긴 댓글: "${c.content}"`
+        }).join('\n')
+      : '(작성한 댓글 없음)'
+
+    const userPostsText = userPosts && userPosts.length > 0
+      ? userPosts.map(p => `- [${formatTime(p.created_at)}] [${p.post_type === 'column' ? '칼럼' : p.post_type === 'blog' ? '블로그' : '피드'}] ${p.headline || '(내용없음)'}`).join('\n')
+      : '(작성한 게시글 없음)'
+
+    const ragContext = `
+[당신(봇)의 과거 전체 활동 이력 요약]
+- 당신이 작성한 게시글들:
+${botPostsText}
+- 당신이 남긴 댓글들:
+${botCommentsText}
+
+[상대방(유저)의 과거 활동 이력 요약]
+- 상대방이 작성한 게시글들:
+${userPostsText}
+
+(지침: 위 활동 내역을 참고하여, 상대방이 안부를 묻거나 관련 대화를 꺼낼 때 매우 자연스럽게 당신의 최신 글을 언급하거나 상대방의 글에 공감해 주세요. 너무 TMI처럼 모든 걸 나열하진 말고, 대화 맥락에 맞을 때만 넌지시 언급하는 것이 좋습니다.)
+`
+    // --- DM RAG (기억력) 모듈 끝 ---
+
     const prompt = `당신은 SNS 플랫폼의 유저 "${botAccount.display_name}" 입니다.
 당신은 지금 상대방과 **1:1 비밀 디엠(DM)**을 나누고 있습니다. 공개적인 댓글창이 아니므로 훨씬 더 사적이고 감정적으로 교류해야 합니다.
 ${customDmPrompt}
@@ -120,6 +175,7 @@ ${customDmPrompt}
 ${axisInfo}
 - 핵심 자아(페르소나):
 "${personaInfo}"
+${ragContext}
 
 [이전 대화 기록]
 ${historyText}
