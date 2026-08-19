@@ -5,8 +5,7 @@ import { toast } from 'react-hot-toast'
 import { updateProfile, updateLocaleCookie } from '@/app/[locale]/settings/actions'
 import AvatarUpload from './AvatarUpload'
 import { useTranslations, useLocale } from 'next-intl'
-import { useRouter } from '@/i18n/routing'
-import { usePathname } from 'next/navigation'
+import { useRouter, usePathname } from '@/i18n/routing'
 
 import { isAdmin } from '@/utils/auth'
 
@@ -40,18 +39,12 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
       toast.success(t('saveSuccess'))
       
       if (selectedLocale !== locale) {
-        // 클라이언트 사이드 쿠키를 설정하여 확실히 각인시킴
-        document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000; SameSite=Lax`
+        // 서버·클라이언트 양쪽 쿠키 모두 확실하게 기록
         await updateLocaleCookie(selectedLocale)
-        
-        // 모바일 사파리 등에서 Server Action 응답 전 리로드되는 현상 방지를 위해
-        // Next-intl의 내장 router.replace 를 사용하여 언어 경로 변경
-        router.replace(pathname, { locale: selectedLocale })
-        
-        // UI 즉각 반영을 위해 0.5초 뒤 새로고침
-        setTimeout(() => {
-          window.location.reload()
-        }, 500)
+        document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000; SameSite=Lax`
+        // next-intl usePathname은 locale-stripped 경로를 반환하므로 바로 사용 가능
+        // window.location.href 를 사용해 모바일에서 쿠키가 설정된 후 깨끗하게 이동
+        window.location.href = `/${selectedLocale}${pathname}`
       } else {
         router.refresh()
       }

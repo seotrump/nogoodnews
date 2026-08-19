@@ -758,6 +758,7 @@ export async function updateSystemPrompts(formData: FormData) {
       dm_prompt: dmPrompt || null,
       counseling_prompt_adult: counselingPromptAdult || null,
       tts_prompt: ttsPrompt || null,
+      tts_voice_name: (formData.get('ttsVoiceName') as string) || 'Zephyr',
       feed_prompt_reporter: feedPromptReporter || null
     }
     fs.writeFileSync(filePath, JSON.stringify(extraData, null, 2), 'utf8')

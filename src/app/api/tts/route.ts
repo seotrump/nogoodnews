@@ -33,7 +33,8 @@ export async function POST(req: Request) {
 
     let finalPrompt = cleanText
 
-    // 발신자와 수신자 정보가 있다면 컨텍스트 분석 후 프롬프트 생성
+    // 발신자와 수신자 정보, DB에서 voiceName 조회
+    let voiceName = 'Zephyr' // 기본 목소리
     if (senderId && receiverId) {
       try {
         const { data: sender } = await supabase.from('accounts').select('gender, category, display_name').eq('id', senderId).single()
@@ -49,20 +50,26 @@ export async function POST(req: Request) {
           }
         } catch (e) {}
 
+        // DB에서 관리자가 설정한 목소리 이름 조회
+        if (extraPrompts.tts_voice_name) {
+          voiceName = extraPrompts.tts_voice_name
+        } else if (sender?.gender === 'female') {
+          // 여성 봇 → 여성 목소리 (Zephyr), 남성 봇 → 남성 목소리 (Puck)
+          voiceName = 'Zephyr'
+        } else if (sender?.gender === 'male') {
+          voiceName = 'Puck'
+        }
+
         const { data: siteSettings } = await supabase.from('site_settings').select('tts_prompt').eq('id', 'global').maybeSingle()
         const ttsInstruction = extraPrompts.tts_prompt || siteSettings?.tts_prompt || ''
 
-        if (ttsInstruction && sender && receiver) {
+        if (sender) {
           const senderGender = sender.gender === 'male' ? '남성' : sender.gender === 'female' ? '여성' : '미상'
-          const receiverGender = receiver.gender === 'male' ? '남성' : receiver.gender === 'female' ? '여성' : '미상'
-          
-          finalPrompt = `[지시사항]
-다음 대사를 자연스러운 사람의 목소리로 연기하듯 읽어주세요. [whispers], [laughs], [sighs] 등의 오디오 태그를 활용하여 감정을 표현하세요.
-- 화자 성별: ${senderGender}
-- 청자 성별: ${receiverGender}
-- 화자 카테고리: ${sender.category || '일반'}
+          const receiverGender = receiver?.gender === 'male' ? '남성' : receiver?.gender === 'female' ? '여성' : '미상'
 
-대사: "${cleanText}"`
+          if (ttsInstruction) {
+            finalPrompt = `[지시사항]\n${ttsInstruction}\n- 화자 성별: ${senderGender}\n- 청자 성별: ${receiverGender}\n- 화자 카테고리: ${sender.category || '일반'}\n\n대사: "${cleanText}"`
+          }
         }
       } catch (e) {
         console.error('TTS Context Error:', e)
@@ -70,49 +77,60 @@ export async function POST(req: Request) {
     }
 
     let audioBase64 = null;
+    let audioMimeType = 'audio/mp3';
 
-    // 2. Gemini 3.1 Flash TTS 우선 시도
+    // 2. Gemini 3.1 Flash TTS Preview 시도 (speechConfig 포함 - 필수)
     try {
-      console.log('Attempting Gemini 3.1 Flash TTS Preview...');
-      // 정확한 정식 프리뷰 모델 ID 반영
+      console.log(`Attempting Gemini 3.1 Flash TTS Preview (voice: ${voiceName})...`);
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent?key=${apiKey}`
-      
+
       const geminiRes = await fetch(geminiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
+          contents: [{ role: 'user', parts: [{ text: finalPrompt }] }],
           generationConfig: {
-            responseModalities: ["AUDIO"]
+            responseModalities: ['AUDIO'],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName }
+              }
+            }
           }
         })
       });
-      
+
       if (geminiRes.ok) {
         const data = await geminiRes.json();
-        // Base64 오디오 데이터 추출
-        if (data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data) {
-          audioBase64 = data.candidates[0].content.parts[0].inlineData.data;
-          console.log('✅ Successfully generated audio with Gemini 3.1 Flash TTS');
+        const part = data.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+        if (part?.data) {
+          const pcmMimeType: string = part.mimeType || ''; // e.g. 'audio/l16; rate=24000; channels=1'
+          const pcmBuffer = Buffer.from(part.data, 'base64');
+
+          // L16 PCM → WAV 헤더 붙이기 (브라우저 Audio 태그가 PCM 직접 재생 불가)
+          const sampleRate = parseInt(pcmMimeType.match(/rate=(\d+)/)?.[1] || '24000');
+          const channels = parseInt(pcmMimeType.match(/channels=(\d+)/)?.[1] || '1');
+          const bitsPerSample = 16;
+          const wavBuffer = buildWavBuffer(pcmBuffer, sampleRate, channels, bitsPerSample);
+          audioBase64 = wavBuffer.toString('base64');
+          audioMimeType = 'audio/wav';
+          console.log(`✅ Gemini TTS OK (voice: ${voiceName}, mime: ${pcmMimeType})`);
         }
       } else {
-        console.warn(`⚠️ Gemini TTS API Error (Quota or Model not found): ${geminiRes.status}`);
+        const errBody = await geminiRes.text();
+        console.warn(`⚠️ Gemini TTS Error ${geminiRes.status}: ${errBody}`);
       }
     } catch (e) {
       console.warn('⚠️ Gemini 3.1 Flash TTS fetch failed:', e);
     }
 
-    // 3. Gemini TTS 실패 시 Google Translate 기본 모델로 Fallback (안전장치)
+    // 3. Gemini TTS 실패 시 Google Translate TTS Fallback
     if (!audioBase64) {
-      console.log('🔄 Falling back to basic Google Translate TTS...');
-      // 번역기 TTS에는 프롬프트 없이 순수 텍스트(cleanText)만 전달해야 함
-      // (프롬프트를 넣으면 "[지시사항]..." 까지 전부 로봇이 읽어버림)
+      console.log('🔄 Falling back to Google Translate TTS...');
       const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ko-KR&client=tw-ob&q=${encodeURIComponent(cleanText)}`
-      
+
       const response = await fetch(ttsUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-        }
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
       })
 
       if (!response.ok) {
@@ -120,11 +138,11 @@ export async function POST(req: Request) {
       }
 
       const arrayBuffer = await response.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
-      audioBase64 = buffer.toString('base64')
+      audioBase64 = Buffer.from(arrayBuffer).toString('base64')
+      audioMimeType = 'audio/mp3'
     }
 
-    return NextResponse.json({ audioBase64 })
+    return NextResponse.json({ audioBase64, mimeType: audioMimeType })
 
   } catch (error: any) {
     console.error('TTS Request Error:', error)

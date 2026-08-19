@@ -82,6 +82,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
   const [dmPrompt, setDmPrompt] = useState(settings?.dm_prompt || DEFAULT_DM_PROMPT)
   const [counselingPrompt, setCounselingPrompt] = useState(settings?.counseling_prompt_adult || DEFAULT_COUNSELING_PROMPT)
   const [ttsPrompt, setTtsPrompt] = useState(settings?.tts_prompt || DEFAULT_TTS_PROMPT)
+  const [ttsVoiceName, setTtsVoiceName] = useState((settings as any)?.tts_voice_name || 'Zephyr')
   const [dmTab, setDmTab] = useState<'dm' | 'counseling'>('dm')
   const [feedTab, setFeedTab] = useState<'lite' | 'pro' | 'reporter'>('lite')
 
@@ -131,6 +132,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       <input type="hidden" name="dmPrompt" value={dmPrompt} />
       <input type="hidden" name="counselingPromptAdult" value={counselingPrompt} />
       <input type="hidden" name="ttsPrompt" value={ttsPrompt} />
+      <input type="hidden" name="ttsVoiceName" value={ttsVoiceName} />
 
       <div>
         {showTab === 'feed' && (
@@ -271,16 +273,55 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
         {showTab === 'voice' && (
           <div className="space-y-4">
             <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 text-sm text-purple-900 leading-relaxed">
-              <strong className="block mb-1">🎙️ 감성 연기 TTS 프롬프트</strong>
-              이곳에 작성된 지시문은 AI 봇이 메시지를 음성으로 변환(TTS)할 때 <strong>숨겨진 시스템 지시문</strong>으로 전송되어 봇의 목소리 톤과 뉘앙스를 결정합니다.
+              <strong className="block mb-1">🎙️ Gemini TTS 음성 설정</strong>
+              Gemini 3.1 Flash TTS Preview 모델의 목소리와 연기 지시문을 설정합니다. 목소리를 먼저 선택하고, 아래 프롬프트로 감정 톤을 지정하세요.
             </div>
-            <textarea
-              name="ttsPrompt"
-              value={ttsPrompt}
-              onChange={e => setTtsPrompt(e.target.value)}
-              className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
-              placeholder="음성 합성 시 AI에게 내릴 연기/톤 지시문을 작성하세요."
-            />
+
+            {/* 목소리 선택 UI */}
+            <div className="p-4 bg-white rounded-xl border border-purple-200">
+              <p className="text-sm font-bold text-gray-700 mb-3">🎤 목소리 (Voice) 선택</p>
+              <p className="text-xs text-gray-400 mb-3">선택한 목소리는 모든 봇 TTS에 기본 적용됩니다. (봇 성별에 따라 자동 분기되는 설정을 원하면 &apos;성별 자동&apos;을 선택하세요)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[
+                  { id: 'auto', label: '🔀 성별 자동', desc: '봇 성별에 따라 자동 분기' },
+                  { id: 'Zephyr', label: '🌬️ Zephyr', desc: '여성 · 밝고 경쾌함' },
+                  { id: 'Puck', label: '🎭 Puck', desc: '남성 · 장난스러움' },
+                  { id: 'Charon', label: '🌊 Charon', desc: '남성 · 중후하고 차분함' },
+                  { id: 'Kore', label: '🌸 Kore', desc: '여성 · 단호하고 또렷함' },
+                  { id: 'Fenrir', label: '🐺 Fenrir', desc: '남성 · 강하고 거침없음' },
+                  { id: 'Aoede', label: '🎶 Aoede', desc: '여성 · 부드럽고 서정적' },
+                  { id: 'Leda', label: '✨ Leda', desc: '여성 · 따뜻하고 친근함' },
+                  { id: 'Orus', label: '⚡ Orus', desc: '남성 · 활기차고 자신감' },
+                ].map(v => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setTtsVoiceName(v.id)}
+                    className={`p-3 rounded-xl border-2 text-left transition-all ${
+                      ttsVoiceName === v.id
+                        ? 'border-purple-500 bg-purple-50 shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="font-bold text-xs text-gray-800">{v.label}</div>
+                    <div className="text-[10px] text-gray-500 mt-0.5">{v.desc}</div>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-purple-600 font-medium mt-2">현재 선택: <strong>{ttsVoiceName}</strong></p>
+            </div>
+
+            {/* 감정 연기 프롬프트 */}
+            <div>
+              <p className="text-sm font-bold text-gray-700 mb-2">📝 감성 연기 지시문 (TTS Prompt)</p>
+              <textarea
+                name="ttsPrompt"
+                value={ttsPrompt}
+                onChange={e => setTtsPrompt(e.target.value)}
+                className="w-full min-h-[360px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-purple-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
+                placeholder="음성 합성 시 AI에게 내릴 연기/톤 지시문을 작성하세요."
+              />
+            </div>
           </div>
         )}
 

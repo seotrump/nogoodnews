@@ -75,7 +75,8 @@ export default function PostTTSButton({ text, senderId, receiverId = 'all', vari
       const data = await res.json()
       
       if (data.audioBase64) {
-        const audio = new Audio(`data:audio/mp3;base64,${data.audioBase64}`)
+        const mimeType = data.mimeType || 'audio/mp3'
+        const audio = new Audio(`data:${mimeType};base64,${data.audioBase64}`)
         currentAudio = audio
         audio.onended = () => {
           setIsPlaying(false)
