@@ -90,9 +90,8 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
   const uniqueTodayVisitors = todayVisitsError ? 0 : new Set(todayVisits?.map(v => v.session_id)).size
 
   // 2. 누적 활동량 (게시글, 댓글, 리액션)
-  // posts 테이블에서 원본 피드(parent_id null)와 댓글(parent_id not null) 분리 카운트
-  const { count: totalPosts } = await supabaseAdmin.from('posts').select('*', { count: 'exact', head: true }).is('parent_id', null)
-  const { count: totalComments } = await supabaseAdmin.from('posts').select('*', { count: 'exact', head: true }).not('parent_id', 'is', null)
+  const { count: totalPosts } = await supabaseAdmin.from('posts').select('*', { count: 'exact', head: true })
+  const { count: totalComments } = await supabaseAdmin.from('comments').select('*', { count: 'exact', head: true })
   const { count: totalReactions } = await supabaseAdmin.from('reactions').select('*', { count: 'exact', head: true })
 
   // 3. DAU (최근 7일) 및 최고 인기 경로
@@ -161,16 +160,16 @@ export default async function AnalyticsDashboardPage({ searchParams }: { searchP
   const powerUsersCount = Object.values(sessionDaysMap).filter(days => days.size >= 15).length
 
   // 인게이지먼트 비율 (최근 30일 활동 유저 비율)
-  const { count: recentPosts } = await supabaseAdmin.from('posts').select('*', { count: 'exact', head: true }).is('parent_id', null).gte('created_at', thirtyDaysAgo.toISOString())
-  const { count: recentComments } = await supabaseAdmin.from('posts').select('*', { count: 'exact', head: true }).not('parent_id', 'is', null).gte('created_at', thirtyDaysAgo.toISOString())
+  const { count: recentPosts } = await supabaseAdmin.from('posts').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString())
+  const { count: recentComments } = await supabaseAdmin.from('comments').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString())
   const { count: recentReactions } = await supabaseAdmin.from('reactions').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString())
   
   const totalInteractions = (recentPosts || 0) + (recentComments || 0) + (recentReactions || 0)
   const actionsPerUser = (totalInteractions / mau).toFixed(1)
 
   // 작성 유저 중복 제거를 위한 데이터 패치
-  const { data: postAuthors } = await supabaseAdmin.from('posts').select('author_id').is('parent_id', null).gte('created_at', thirtyDaysAgo.toISOString())
-  const { data: commentAuthors } = await supabaseAdmin.from('posts').select('author_id').not('parent_id', 'is', null).gte('created_at', thirtyDaysAgo.toISOString())
+  const { data: postAuthors } = await supabaseAdmin.from('posts').select('author_id').gte('created_at', thirtyDaysAgo.toISOString())
+  const { data: commentAuthors } = await supabaseAdmin.from('comments').select('author_id').gte('created_at', thirtyDaysAgo.toISOString())
   const { data: reactionAuthors } = await supabaseAdmin.from('reactions').select('user_id').gte('created_at', thirtyDaysAgo.toISOString())
 
   const uniquePostAuthors = new Set(postAuthors?.map(p => p.author_id)).size

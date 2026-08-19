@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { Volume2 } from 'lucide-react'
 
@@ -23,11 +23,43 @@ function applyTTSTuning(text: string) {
   return `${randomSigh} ${tunedText}`;
 }
 
+let currentAudio: HTMLAudioElement | null = null;
+
 export default function PostTTSButton({ text, senderId, receiverId = 'all', variant = 'default' }: { text: string, senderId: string, receiverId?: string, variant?: 'default' | 'icon' }) {
   const [isPlaying, setIsPlaying] = useState(false)
 
+  useEffect(() => {
+    const handleStop = () => setIsPlaying(false)
+    window.addEventListener('stop-all-tts', handleStop)
+    return () => window.removeEventListener('stop-all-tts', handleStop)
+  }, [])
+
   const handlePlayTTS = async () => {
-    if (isPlaying || !text) return
+    if (isPlaying || !text) {
+      // 만약 이미 재생 중인 자기 자신을 누르면 중지하는 로직 추가
+      if (isPlaying) {
+        window.dispatchEvent(new Event('stop-all-tts'))
+        if (currentAudio) {
+          currentAudio.pause()
+          currentAudio = null
+        }
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel()
+        }
+      }
+      return
+    }
+
+    // 다른 모든 TTS 중지
+    window.dispatchEvent(new Event('stop-all-tts'))
+    if (currentAudio) {
+      currentAudio.pause()
+      currentAudio = null
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+
     setIsPlaying(true)
     const toastId = toast.loading('음성 준비 중...')
     try {
@@ -45,7 +77,11 @@ export default function PostTTSButton({ text, senderId, receiverId = 'all', vari
       
       if (data.audioBase64) {
         const audio = new Audio(`data:audio/mp3;base64,${data.audioBase64}`)
-        audio.onended = () => setIsPlaying(false)
+        currentAudio = audio
+        audio.onended = () => {
+          setIsPlaying(false)
+          currentAudio = null
+        }
         audio.play()
         toast.success('재생 시작', { id: toastId })
       } else {
