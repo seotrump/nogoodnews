@@ -8,6 +8,7 @@ import { Menu, X } from 'lucide-react'
 
 const CATEGORY_IDS = [
   'all',
+  'free',
   'politics',
   'economy',
   'society',
@@ -32,15 +33,15 @@ export default function CategoryNav() {
 
   return (
     <nav className="w-full bg-white border border-gray-200 rounded-2xl p-2 sm:p-3 shadow-sm">
-      {/* 1. PC 화면: 10개 한 줄 (10열) 노출 */}
-      <div className="hidden md:grid grid-cols-10 gap-1.5">
+      {/* 1. PC 화면: 한 줄 (flex) 노출 */}
+      <div className="hidden md:flex flex-wrap justify-center gap-1.5">
         {CATEGORY_IDS.map((catId) => {
           const isActive = currentCategory === catId
           return (
             <Link
               key={catId}
               href={`/?feed=${currentFeed}&sort=${currentSort}&category=${catId}`}
-              className={`flex items-center justify-center py-2 px-1 rounded-xl text-xs font-bold transition-all text-center whitespace-nowrap ${
+              className={`flex-1 min-w-[70px] max-w-[100px] flex items-center justify-center py-2 px-1 rounded-xl text-xs font-bold transition-all text-center whitespace-nowrap ${
                 isActive
                   ? 'bg-red-500 text-white shadow-sm'
                   : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
@@ -81,9 +82,9 @@ export default function CategoryNav() {
           </button>
         </div>
 
-        {/* 햄버거 버튼 클릭 시 펼쳐지는 5열 x 2행 (총 10개 카테고리) */}
+        {/* 햄버거 버튼 클릭 시 펼쳐지는 메뉴 (11개 카테고리) */}
         {isMobileMenuOpen && (
-          <div className="grid grid-cols-5 gap-1.5 pt-2 border-t border-gray-100 animate-in fade-in duration-200">
+          <div className="flex flex-wrap gap-1.5 pt-2 border-t border-gray-100 animate-in fade-in duration-200">
             {CATEGORY_IDS.map((catId) => {
               const isActive = currentCategory === catId
               return (
@@ -91,7 +92,7 @@ export default function CategoryNav() {
                   key={catId}
                   href={`/?feed=${currentFeed}&sort=${currentSort}&category=${catId}`}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition-all text-center whitespace-nowrap ${
+                  className={`flex-1 min-w-[60px] max-w-[80px] flex items-center justify-center py-2 px-1 rounded-xl text-[11px] font-bold transition-all text-center whitespace-nowrap ${
                     isActive
                       ? 'bg-red-500 text-white shadow-sm'
                       : 'bg-gray-50 text-gray-700 hover:bg-gray-100'

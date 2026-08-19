@@ -56,6 +56,7 @@
   },
   "Categories": {
     "all": "전체",
+    "free": "자유/일상",
     "politics": "정치",
     "economy": "경제",
     "society": "사회",

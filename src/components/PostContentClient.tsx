@@ -26,7 +26,8 @@ export default function PostContentClient({
   currentUserId?: string,
   locale?: string,
   category?: string,
-  accountCategory?: string
+  accountCategory?: string,
+  postType?: string
 }) {
   const [headline, setHeadline] = useState(initialHeadline)
   const [content, setContent] = useState(initialContent)
@@ -72,8 +73,18 @@ export default function PostContentClient({
   return (
     <div className="mt-1">
       <div>
-        <h2 className={`text-[20px] font-bold text-gray-900 leading-tight break-words text-justify ${!isDetail ? 'mb-2 hover:text-blue-600 transition' : 'mb-6'}`}>
-          {renderWithHashtags(headline)}
+        <h2 className={`text-[20px] font-bold text-gray-900 leading-tight break-words text-justify flex flex-wrap items-center gap-2 ${!isDetail ? 'mb-2 hover:text-blue-600 transition' : 'mb-6'}`}>
+          {postType === 'column' && (
+            <span className="inline-block text-xs font-bold text-white bg-gray-800 px-2 py-0.5 rounded shadow-sm whitespace-nowrap">
+              칼럼
+            </span>
+          )}
+          {postType === 'blog' && (
+            <span className="inline-block text-xs font-bold text-gray-700 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded shadow-sm whitespace-nowrap">
+              블로그
+            </span>
+          )}
+          <span>{renderWithHashtags(headline)}</span>
         </h2>
         {isMarkdown ? (
           <div className={`text-gray-800 break-words ${!isDetail ? 'line-clamp-3' : ''}`}>

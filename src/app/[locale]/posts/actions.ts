@@ -85,6 +85,31 @@ export async function createPost(formData: FormData) {
 
   const cleanUrl = url && url.trim() !== '' ? url.trim() : null
 
+  // 🚀 Auto-Classification Engine (Heuristic & Progression)
+  let postType = 'feed'
+  const finalCategory = category === 'all' ? 'free' : category
+  if (content && content.length >= 300) {
+    const hasParagraphs = content.split('\n\n').length > 1
+    const hasMarkdownHeaders = /^#+ /m.test(content)
+    if (hasParagraphs || hasMarkdownHeaders) {
+      // 분야와 상관없이 기본적으로 블로그로 구성
+      postType = 'blog'
+      
+      // 해당 저자가 동일 카테고리에 작성한 블로그/칼럼 누적 개수 조회
+      const { count } = await clientToUse
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('author_id', finalAuthorId)
+        .eq('category', finalCategory)
+        .in('post_type', ['blog', 'column'])
+
+      // 누적 5개가 있으면 이번 글이 6번째이므로 칼럼으로 격상
+      if (count !== null && count >= 5) {
+        postType = 'column'
+      }
+    }
+  }
+
   const insertPayload: any = {
     author_id: finalAuthorId,
     headline,
@@ -92,7 +117,9 @@ export async function createPost(formData: FormData) {
     url: cleanUrl,
     content,
     image_url: imageUrl,
-    control_session_id: controlSessionId
+    control_session_id: controlSessionId,
+    category: finalCategory,
+    post_type: postType
   }
 
   if (pollData) {

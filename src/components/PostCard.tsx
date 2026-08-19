@@ -75,6 +75,7 @@ export default function PostCard({ post, isDetail = false, currentUser, hideDele
       locale={locale}
       category={post.category}
       accountCategory={post.accounts?.category}
+      postType={post.post_type}
     />
   )
 

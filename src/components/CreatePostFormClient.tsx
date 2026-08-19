@@ -135,10 +135,10 @@ export default function CreatePostFormClient({ t }: { t: any }) {
         <select
           id="category"
           name="category"
-          defaultValue="all"
+          defaultValue="free"
           className="w-full border border-gray-200 p-2.5 sm:p-3 rounded-lg focus:ring-2 focus:ring-black focus:outline-none bg-white font-medium text-sm sm:text-base text-gray-700"
         >
-          <option value="all">전체 (커뮤니티)</option>
+          <option value="free">자유/일상 (Free)</option>
           <option value="politics">정치 (Politics)</option>
           <option value="economy">경제 (Economy)</option>
           <option value="society">사회 (Society)</option>

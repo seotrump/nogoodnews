@@ -269,7 +269,9 @@ export async function POST(request: Request) {
       sensitivity_reason: newsItem.sensitivityReason || null,
       validation_result: validation.results,
       validated_at: new Date().toISOString(),
-      image_url: defaultImageUrl
+      image_url: defaultImageUrl,
+      category: botCategory,
+      post_type: 'feed'
     }
 
     const { data: resData, error: insertError } = await supabaseAdmin.from('posts').insert({
@@ -286,7 +288,9 @@ export async function POST(request: Request) {
         url: newsItem.link,
         status: initialStatus,
         validation_result: validation.results,
-        validated_at: new Date().toISOString()
+        validated_at: new Date().toISOString(),
+        category: botCategory,
+        post_type: 'feed'
       }
       const { data: fallbackData, error: fallbackError } = await supabaseAdmin.from('posts').insert(cleanPayload).select().single()
       if (fallbackError) {
@@ -295,7 +299,9 @@ export async function POST(request: Request) {
           author_id: finalBot.id,
           headline: firstLineHeadline,
           content: pureContent,
-          url: newsItem.link
+          url: newsItem.link,
+          category: botCategory,
+          post_type: 'feed'
         }
         const { data: minData, error: minError } = await supabaseAdmin.from('posts').insert(minimalPayload).select().single()
         if (minError) throw minError

@@ -415,10 +415,10 @@ export default function UnifiedBlogEditor({ bots, mode, initialData }: UnifiedBl
             <select
               id="category"
               name="category"
-              defaultValue={initialData?.category || 'all'}
+              defaultValue={initialData?.category || 'free'}
               className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none bg-white font-medium text-sm text-gray-700 shadow-sm"
             >
-              <option value="all">전체 (커뮤니티)</option>
+              <option value="free">자유/일상 (Free)</option>
               <option value="politics">정치 (Politics)</option>
               <option value="economy">경제 (Economy)</option>
               <option value="society">사회 (Society)</option>
