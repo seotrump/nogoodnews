@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { generateEnforcedAIContent } from '@/utils/ai-core'
+import fs from 'fs'
+import path from 'path'
 
 export const maxDuration = 300; // Vercel 서버리스 타임아웃 300초로 연장
 
@@ -11,7 +13,7 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { senderId, botId, message } = await req.json()
+    const { senderId, botId, message, roomId: providedRoomId } = await req.json()
 
     if (!senderId || !botId || !message) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
@@ -20,7 +22,7 @@ export async function POST(req: Request) {
     // 봇 정보 가져오기 (페르소나 관련 정보 포함)
     const { data: botAccount } = await supabase
       .from('accounts')
-      .select('username, display_name, bio, persona_prompt, ai_model_provider, gender, nbti_type, type_code, axis_profile, speech_style, category')
+      .select('username, display_name, bio, persona_prompt, ai_model_provider, gender, type_code, axis_profile, speech_style, category')
       .eq('id', botId)
       .single()
 
@@ -28,13 +30,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Bot not found' }, { status: 404 })
     }
 
+    // 1:1 방 ID 찾기 (providedRoomId가 없으면 1:1방으로 간주하고 검색)
+    let roomId = providedRoomId
+    if (!roomId) {
+      const { data: rooms } = await supabase.rpc('get_conversations', { p_user_id: senderId })
+      roomId = rooms?.find((r: any) => r.is_group === false && r.other_user_id === botId)?.room_id
+    }
+
     // 최근 대화 히스토리 (최대 15개) 가져오기
-    const { data: recentMessages } = await supabase
-      .from('direct_messages')
-      .select('sender_id, content, created_at')
-      .or(`and(sender_id.eq.${senderId},receiver_id.eq.${botId}),and(sender_id.eq.${botId},receiver_id.eq.${senderId})`)
-      .order('created_at', { ascending: false })
-      .limit(15)
+    let recentMessages: any = []
+    if (roomId) {
+      const { data } = await supabase
+        .from('chat_messages')
+        .select('sender_id, content, created_at')
+        .eq('room_id', roomId)
+        .order('created_at', { ascending: false })
+        .limit(15)
+      recentMessages = data
+    }
 
     // 시간순으로 정렬 (오래된 것 → 최신 순)
     const history = (recentMessages || []).reverse()
@@ -48,13 +61,13 @@ export async function POST(req: Request) {
     };
 
     const historyText = history.length > 0
-      ? history.map(m => `[${formatTime(m.created_at)}] ${m.sender_id === botId ? botAccount.display_name : '상대방'}: ${m.content}`).join('\n')
+      ? history.map((m: any) => `[${formatTime(m.created_at)}] ${m.sender_id === botId ? botAccount.display_name : '상대방'}: ${m.content}`).join('\n')
       : '(이전 대화 없음)'
 
     // 페르소나 정보 구성 (persona_prompt가 있으면 우선 사용)
     const personaInfo = botAccount.persona_prompt || botAccount.bio || '평범한 소셜 미디어 유저'
     const botGender = botAccount.gender === 'male' ? '남성' : botAccount.gender === 'female' ? '여성' : '중성/비공개'
-    const botMbti = botAccount.nbti_type || botAccount.type_code || '알 수 없음'
+    const botMbti = botAccount.type_code || '알 수 없음'
     const speechStyle = botAccount.speech_style || '자연스럽고 편안한 말투'
     
     // 4대 판단축 정보 (axis_profile)
@@ -86,8 +99,6 @@ export async function POST(req: Request) {
       const { data: siteSettings } = await supabase.from('site_settings').select('dm_prompt, counseling_prompt_adult').eq('id', 'global').single()
       let extraPrompts: any = {}
       try {
-        const fs = require('fs')
-        const path = require('path')
         const filePath = path.join(process.cwd(), 'public', 'extra_prompts.json')
         if (fs.existsSync(filePath)) {
           extraPrompts = JSON.parse(fs.readFileSync(filePath, 'utf8'))
@@ -213,12 +224,17 @@ ${historyText}
     }
 
     // 봇이 senderId(원래 보낸 사람)에게 메시지 보내기
-    await supabase.from('direct_messages').insert({
-      sender_id: botId,
-      receiver_id: senderId,
-      content: replyText,
-      is_read: false
-    })
+    if (roomId) {
+      await supabase.from('chat_messages').insert({
+        room_id: roomId,
+        sender_id: botId,
+        content: replyText
+      })
+      // 방금 응답했으므로 봇은 읽음 처리
+      await supabase.from('chat_participants').update({
+        last_read_at: new Date().toISOString()
+      }).eq('room_id', roomId).eq('user_id', botId)
+    }
 
     // [추가] DM 자율 팔로우 로직 (봇이 유저를 팔로우하고 있지 않은 경우)
     try {

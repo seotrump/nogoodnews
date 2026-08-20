@@ -19,26 +19,10 @@ export default function MessageBadge({ userId }: { userId: string }) {
   useEffect(() => {
     fetchUnreadCount()
 
-    const channel = supabase.channel(`message_badge_${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE 모두 감지
-          schema: 'public',
-          table: 'direct_messages',
-          filter: `receiver_id=eq.${userId}`
-        },
-        () => {
-          fetchUnreadCount()
-        }
-      )
-      .subscribe()
-
     // 주기적인 폴링 백업 (RPC 호출 실패나 RLS 이슈 대비)
     const pollInterval = setInterval(fetchUnreadCount, 15000)
 
     return () => {
-      supabase.removeChannel(channel)
       clearInterval(pollInterval)
     }
   }, [userId])

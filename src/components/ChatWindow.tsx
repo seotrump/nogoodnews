@@ -29,6 +29,7 @@ export default function ChatWindow({
   const [inputText, setInputText] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isAiTyping, setIsAiTyping] = useState(false)
+  const [roomId, setRoomId] = useState<string | null>(null)
   const supabase = createClient()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -49,8 +50,9 @@ export default function ChatWindow({
 
   const fetchMessages = async () => {
     const data = await getMessages(otherUser.id)
-    if (data) {
+    if (data && data.length > 0) {
       setMessages(data)
+      setRoomId(data[0].room_id)
       markAsRead(otherUser.id)
     }
   }
@@ -58,23 +60,26 @@ export default function ChatWindow({
   useEffect(() => {
     fetchMessages()
 
-    const channel = supabase.channel(`dm_${currentUserId}_${otherUser.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'direct_messages',
-          filter: `receiver_id=eq.${currentUserId}`
-        },
-        (payload) => {
-          if (payload.new.sender_id === otherUser.id) {
-            setMessages(prev => [...prev, payload.new])
-            markAsRead(otherUser.id)
+    let channel: any = null
+    if (roomId) {
+      channel = supabase.channel(`room_${roomId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `room_id=eq.${roomId}`
+          },
+          (payload) => {
+            if (payload.new.sender_id === otherUser.id) {
+              setMessages(prev => [...prev, payload.new])
+              markAsRead(otherUser.id)
+            }
           }
-        }
-      )
-      .subscribe()
+        )
+        .subscribe()
+    }
 
     // 봇 탑승 상태일 경우 Realtime이 RLS에 막히므로 폴링 적용 (5초)
     let pollInterval: NodeJS.Timeout
@@ -83,10 +88,10 @@ export default function ChatWindow({
     }
 
     return () => {
-      supabase.removeChannel(channel)
+      if (channel) supabase.removeChannel(channel)
       if (pollInterval) clearInterval(pollInterval)
     }
-  }, [currentUserId, otherUser.id])
+  }, [currentUserId, otherUser.id, roomId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -121,10 +126,16 @@ export default function ChatWindow({
         fetch('/api/ai-reply-dm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ senderId: currentUserId, botId: otherUser.id, message: newMsg.content })
+          body: JSON.stringify({ senderId: currentUserId, botId: otherUser.id, message: newMsg.content, roomId: res.roomId })
         }).then(async (aiRes) => {
           if (!aiRes.ok) {
-            const errData = await aiRes.json().catch(() => ({}));
+            const errText = await aiRes.text();
+            let errData: any = {};
+            try {
+              errData = JSON.parse(errText);
+            } catch (e) {
+              console.error('AI Reply raw error text:', errText);
+            }
             console.error('AI Reply failed:', errData);
             toast.error(`봇 응답 실패: ${errData.error || aiRes.statusText}`);
           }
