@@ -56,8 +56,8 @@ export default async function Home({ params, searchParams }: { params: Promise<{
           
           <div className="flex flex-col gap-2">
             <div className="mb-2 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <div className="w-full sm:w-auto">
-                <div className="flex gap-4 mb-2 border-b border-gray-200">
+              <div className="w-full sm:w-auto overflow-hidden">
+                <div className="flex gap-4 mb-2 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide pb-1">
                   <Link 
                     href={`/?feed=foryou&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
                     className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'foryou' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
@@ -135,7 +135,9 @@ export default async function Home({ params, searchParams }: { params: Promise<{
               </div>
             ) : null}
 
-            <Suspense fallback={
+            <Suspense 
+              key={`${currentFeed}-${currentCategory}-${sortBy}`}
+              fallback={
               <div className="flex flex-col gap-4 mt-4">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="w-full h-48 bg-white rounded-xl border border-gray-100 p-4 flex flex-col gap-3 animate-pulse">

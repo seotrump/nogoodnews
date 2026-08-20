@@ -65,3 +65,12 @@ body {
   margin-bottom: 0.25rem !important;
 }
 
+/* Hide scrollbar for tabs */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
