@@ -73,8 +73,8 @@ export default function BulkDeleteFeed({
       if (newPosts && newPosts.length > 0) {
         setLocalPosts(prev => {
           // 중복 제거 (혹시 모를 새 글 밀림 방지)
-          const existingIds = new Set(prev.map(p => p.id))
-          const filteredNew = newPosts.filter(p => !existingIds.has(p.id))
+          const existingIds = new Set(prev.map((p: any) => p.id))
+          const filteredNew = newPosts.filter((p: any) => !existingIds.has(p.id))
           return [...prev, ...filteredNew]
         })
         setPage(nextPage)
