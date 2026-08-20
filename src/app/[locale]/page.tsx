@@ -1,15 +1,13 @@
 import { createClient } from '@/utils/supabase/server'
 import { Link } from '@/i18n/routing'
-import PostCard from '@/components/PostCard'
 import FeedAutoTrigger from '@/components/FeedAutoTrigger'
-import BulkDeleteFeed from '@/components/BulkDeleteFeed'
 import SortFilter from '@/components/SortFilter'
 import TrendList from '@/components/TrendList'
 import CategoryNav from '@/components/CategoryNav'
 import TopHeadlines from '@/components/TopHeadlines'
-import FollowRecommendationWidget from '@/components/FollowRecommendationWidget'
-import { getRecommendedUsers } from '@/app/[locale]/users/actions'
-import { getFeedPosts } from '@/app/feed-actions'
+import FollowWidgetWrapper from '@/components/FollowWidgetWrapper'
+import FeedWrapper from '@/components/FeedWrapper'
+import { Suspense } from 'react'
 
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
@@ -41,153 +39,177 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     } catch (_) {}
   })
 
-  const recommendedUsers = await getRecommendedUsers(10)
-
-  // 최적화된 서버 액션(RPC 또는 오버페치+페이지네이션)으로 최초 20개만 로드
-  const posts = await getFeedPosts({
-    page: 1,
-    limit: 20,
-    feed: currentFeed,
-    sort: sortBy,
-    category: currentCategory,
-    badge: currentBadge,
-    locale: locale
-  })
-
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-6xl mx-auto px-4 mt-4 lg:grid lg:grid-cols-[1fr_320px] gap-6 items-start">
         <div className="flex flex-col gap-2.5">
           <CategoryNav />
           
-          <FollowRecommendationWidget users={recommendedUsers} currentUserId={user?.id} isMobile={true} />
-          
-          <BulkDeleteFeed 
-            initialPosts={posts || []} 
-            currentUser={user}
-            feedType={currentFeed}
-            sortBy={sortBy}
-            currentCategory={currentCategory}
-            currentBadge={currentBadge}
-            locale={locale} 
-          emptyFeedState={
-            posts?.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl border border-gray-100 mt-4">
-                <p className="text-gray-500">
-                  {currentBadge === 'reporter' 
-                    ? '기자단 뱃지를 보유한 유저가 작성한 게시글이 없습니다.' 
-                    : (currentCategory !== 'all' ? '해당 분야에 작성된 게시글이 없습니다.' : t('emptyFollowing'))}
-                </p>
-              </div>
-            ) : undefined
-          }
-          headerLeftContent={
-            <div className="flex gap-4 flex-wrap">
-              <Link 
-                href={`/?feed=foryou&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'foryou' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-              >
-                추천
-              </Link>
-              <Link 
-                href={`/?feed=global&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'global' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-              >
-                {t('allFeed')}
-              </Link>
-              <Link 
-                href={`/?feed=following&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                className={`text-lg font-bold pb-2 border-b-2 px-1 flex items-center gap-1 ${currentFeed === 'following' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-              >
-                <span>{t('followingFeed')}</span>
-                <span className="text-yellow-500 text-sm" title="내가 좋아하는 사람들의 글">★</span>
-              </Link>
-              <Link 
-                href={`/?feed=trend&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'trend' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-              >
-                {t('trendFeed')}
-              </Link>
-              <Link 
-                href={`/?feed=reporter&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'reporter' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-              >
-                {t('reporterFeed')}
-              </Link>
-              <Link 
-                href={`/?feed=blogger&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'blogger' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-              >
-                {t('bloggerFeed')}
-              </Link>
-              <Link 
-                href={`/?feed=best&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'best' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-              >
-                {t('bestFeed')}
-              </Link>
+          <Suspense fallback={
+            <div className="w-full h-32 bg-white rounded-xl border border-gray-100 flex items-center justify-center shadow-sm animate-pulse">
+              <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin"></div>
             </div>
-          }
-          headerBottomContent={
-            <p className="text-sm text-gray-500">
-              {currentFeed === 'foryou'
-                ? '당신의 취향과 인기 트렌드를 결합한 맞춤형 추천 피드입니다.'
-                : currentFeed === 'following' 
-                ? (user ? t('followingDesc') : t('followingLoginRequired')) 
-                 : currentFeed === 'trend' 
-                 ? t('trendDesc') 
-                 : currentFeed === 'reporter'
-                 ? t('reporterDesc')
-                 : currentFeed === 'blogger'
-                 ? t('bloggerDesc')
-                 : currentFeed === 'best'
-                ? t('bestDesc')
-                : t('globalDesc')}
-            </p>
-          }
-          feedTopContent={
-            currentFeed === 'best' ? (
+          }>
+            <FollowWidgetWrapper currentUserId={user?.id} isMobile={true} />
+          </Suspense>
+          
+          <div className="flex flex-col gap-2">
+            <div className="mb-2 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div className="w-full sm:w-auto">
+                <div className="flex gap-4 mb-2 border-b border-gray-200">
+                  <Link 
+                    href={`/?feed=foryou&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'foryou' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                  >
+                    추천
+                  </Link>
+                  <Link 
+                    href={`/?feed=global&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'global' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                  >
+                    {t('allFeed')}
+                  </Link>
+                  <Link 
+                    href={`/?feed=following&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                    className={`text-lg font-bold pb-2 border-b-2 px-1 flex items-center gap-1 ${currentFeed === 'following' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                  >
+                    {t('followingFeed')}
+                  </Link>
+                  <Link 
+                    href={`/?feed=reporter&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'reporter' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                  >
+                    기자단
+                  </Link>
+                  <Link 
+                    href={`/?feed=blogger&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'blogger' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                  >
+                    블로거
+                  </Link>
+                  <Link 
+                    href={`/?feed=trend&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'trend' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                  >
+                    {t('trendingFeed')}
+                  </Link>
+                  <Link 
+                    href={`/?feed=best&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
+                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'best' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+                  >
+                    {t('bestFeed')}
+                  </Link>
+                </div>
+                <div className="min-h-[1.25rem] flex items-center">
+                  <p className="text-sm text-gray-500 font-medium">
+                    {currentFeed === 'foryou' 
+                      ? 'AI가 내 취향을 분석해 추천하는 피드입니다.'
+                      : currentFeed === 'following' 
+                      ? (user ? t('followingDesc') : t('followingLoginRequired')) 
+                      : currentFeed === 'trend' 
+                      ? t('trendDesc') 
+                      : currentFeed === 'reporter'
+                      ? t('reporterDesc')
+                      : currentFeed === 'blogger'
+                      ? t('bloggerDesc')
+                      : currentFeed === 'best'
+                      ? t('bestDesc')
+                      : t('globalDesc')}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 flex-shrink-0 ml-auto justify-end">
+                <SortFilter currentSort={sortBy} currentFeed={currentFeed} />
+              </div>
+            </div>
+            
+            {currentFeed === 'best' ? (
               <div className="mb-4">
-                <TopHeadlines posts={posts} category={currentCategory} />
+                <TopHeadlines posts={[]} category={currentCategory} />
               </div>
             ) : currentFeed === 'trend' ? (
               <div className="mb-4">
                 <TrendList />
               </div>
-            ) : currentFeed === 'following' && recommendedUsers && recommendedUsers.length > 0 ? (
-              <div className="mb-4 bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-xl border border-pink-100 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    {recommendedUsers[0].avatar_url ? (
-                      <img src={recommendedUsers[0].avatar_url} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-pink-200 border-2 border-white shadow-sm flex items-center justify-center text-lg">🤖</div>
-                    )}
-                    <span className="absolute -bottom-1 -right-1 bg-pink-500 text-white text-[10px] px-1 rounded-full border border-white">추천</span>
+            ) : null}
+
+            <Suspense fallback={
+              <div className="flex flex-col gap-4 mt-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-full h-48 bg-white rounded-xl border border-gray-100 p-4 flex flex-col gap-3 animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                        <div className="h-3 bg-gray-100 rounded w-1/3"></div>
+                      </div>
+                    </div>
+                    <div className="space-y-2 mt-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-sm flex items-center gap-1">
-                      오늘의 인연 <span className="text-pink-500">💕</span>
-                    </h4>
-                    <p className="text-xs text-gray-600">나와 궁합이 잘 맞는 <span className="font-bold text-gray-800">{recommendedUsers[0].display_name}</span>님을 만나보세요!</p>
-                  </div>
-                </div>
-                <Link href={`/users/${(recommendedUsers[0] as any).username ? '@' + (recommendedUsers[0] as any).username : recommendedUsers[0].id}`} className="bg-white border border-pink-200 text-pink-600 text-xs font-bold px-3 py-1.5 rounded-full hover:bg-pink-50 transition whitespace-nowrap">
-                  프로필 보기
-                </Link>
+                ))}
               </div>
-            ) : undefined
-          }
-          sortFilter={<SortFilter currentSort={sortBy} currentFeed={currentFeed} />}
-        />
+            }>
+              <FeedWrapper 
+                currentFeed={currentFeed}
+                sortBy={sortBy}
+                currentCategory={currentCategory}
+                currentBadge={currentBadge}
+                locale={locale}
+                currentUser={user}
+              />
+            </Suspense>
+          </div>
         </div>
 
         {/* 우측 사이드바 (데스크탑에서만 보임) */}
-        <div className="hidden lg:flex flex-col gap-4 sticky top-20">
-          <FollowRecommendationWidget users={recommendedUsers} currentUserId={user?.id} isMobile={false} />
+        <div className="hidden lg:flex flex-col gap-6 sticky top-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white">
+              <h3 className="font-bold text-gray-900">맞춤 추천 친구</h3>
+              <Link href="/users" className="text-xs text-blue-500 hover:text-blue-600 font-medium">더보기</Link>
+            </div>
+            
+            <Suspense fallback={
+              <div className="p-4 space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="flex items-center gap-3 animate-pulse">
+                    <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-2 bg-gray-100 rounded w-1/3"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            }>
+              <FollowWidgetWrapper currentUserId={user?.id} isMobile={false} />
+            </Suspense>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <h3 className="font-bold text-gray-900 mb-2">{t('sidebarTitle')}</h3>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              {t('sidebarDesc')}
+            </p>
+          </div>
+          
+          <div className="text-xs text-gray-400 px-2 flex flex-col gap-2">
+            <div className="flex gap-3 flex-wrap">
+              <a href="#" className="hover:text-gray-600">이용약관</a>
+              <a href="#" className="hover:text-gray-600">개인정보처리방침</a>
+              <a href="#" className="hover:text-gray-600">쿠키 정책</a>
+              <a href="#" className="hover:text-gray-600">접근성</a>
+              <a href="#" className="hover:text-gray-600">광고 정보</a>
+            </div>
+            <p>© 2026 No Good News.</p>
+          </div>
         </div>
       </div>
+      <FeedAutoTrigger />
     </main>
   )
 }
-
