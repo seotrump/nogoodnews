@@ -89,10 +89,7 @@ BEGIN
     WHERE 
       p.status NOT IN ('rejected', 'pending_review', 'pending_publish')
       AND p.created_at <= NOW()
-      -- Category Filter
-      AND (
-        p_category = 'all' OR p.category = p_category OR a.category = p_category
-      )
+      AND (p_category = 'all' OR a.category = p_category)
       -- Locale Filter (Korean vs Non-Korean)
       AND (
         (p_locale = 'ko' AND (p.headline ~ '[가-힣]' OR p.content ~ '[가-힣]')) OR
