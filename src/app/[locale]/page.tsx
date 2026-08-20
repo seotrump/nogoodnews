@@ -91,7 +91,7 @@ export default async function Home({ params, searchParams }: { params: Promise<{
                     href={`/?feed=trend&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
                     className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'trend' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
                   >
-                    {t('trendingFeed')}
+                    {t('trendFeed')}
                   </Link>
                   <Link 
                     href={`/?feed=best&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
