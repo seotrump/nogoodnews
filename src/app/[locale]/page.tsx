@@ -2,9 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { Link } from '@/i18n/routing'
 import FeedAutoTrigger from '@/components/FeedAutoTrigger'
 import SortFilter from '@/components/SortFilter'
-import TrendList from '@/components/TrendList'
 import CategoryNav from '@/components/CategoryNav'
-import TopHeadlines from '@/components/TopHeadlines'
 import FollowWidgetWrapper from '@/components/FollowWidgetWrapper'
 import FeedWrapper from '@/components/FeedWrapper'
 import FeedTabsClient from '@/components/FeedTabsClient'
@@ -76,16 +74,6 @@ export default async function Home({ params, searchParams }: { params: Promise<{
                 <SortFilter currentSort={sortBy} currentFeed={currentFeed} />
               </div>
             </div>
-            
-            {currentFeed === 'best' ? (
-              <div className="mb-4">
-                <TopHeadlines posts={[]} category={currentCategory} />
-              </div>
-            ) : currentFeed === 'trend' ? (
-              <div className="mb-4">
-                <TrendList />
-              </div>
-            ) : null}
 
             <Suspense 
               key={`${currentFeed}-${currentCategory}-${sortBy}`}
