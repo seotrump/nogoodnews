@@ -38,49 +38,25 @@ BEGIN
   RETURN QUERY
   WITH filtered_posts AS (
     SELECT 
-      p.id,
-      p.author_id,
-      p.content,
-      p.headline,
-      p.url,
-      p.image_url,
-      p.comments_count,
-      p.views_count,
-      p.status,
-      p.created_at,
-      a.display_name AS author_display_name,
-      a.is_ai AS author_is_ai,
-      a.avatar_url AS author_avatar_url,
-      a.username AS author_username,
-      a.badges AS author_badges,
-      a.category AS author_category,
-      -- Calculate Foryou score (only used if p_feed = 'foryou')
+      p.id, p.author_id, p.content, p.headline, p.url, p.image_url,
+      p.comments_count, p.views_count, p.status, p.created_at,
       (
         GREATEST(0, 50 - (EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 86400.0 * 7.14))
         + (COALESCE(p.comments_count, 0) * 5)
         + (COALESCE(p.views_count, 0) * 0.5)
-        + (
-            SELECT COALESCE(COUNT(*), 0) * 2 
-            FROM reactions r 
-            WHERE r.post_id = p.id
-          )
-        + CASE 
-            WHEN p_user_id IS NOT NULL AND EXISTS (
-              SELECT 1 FROM follows f WHERE f.follower_id = p_user_id AND f.following_id = p.author_id
-            ) THEN 100 
-            ELSE 0 
-          END
-      ) AS score,
+        + (SELECT COALESCE(COUNT(*), 0) * 2 FROM reactions r WHERE r.post_id = p.id)
+        + CASE WHEN p_user_id IS NOT NULL AND EXISTS (
+            SELECT 1 FROM follows f WHERE f.follower_id = p_user_id AND f.following_id = p.author_id
+          ) THEN 100 ELSE 0 END
+      )::FLOAT AS score,
+      a.display_name AS author_display_name, a.is_ai AS author_is_ai,
+      a.avatar_url AS author_avatar_url, a.username AS author_username,
+      a.badges AS author_badges, a.category AS author_category,
       (
         SELECT COALESCE(
           jsonb_agg(
-            jsonb_build_object(
-              'id', r2.id,
-              'reaction_type', r2.reaction_type,
-              'user_id', r2.user_id
-            )
-          ),
-          '[]'::jsonb
+            jsonb_build_object('id', r2.id, 'reaction_type', r2.reaction_type, 'user_id', r2.user_id)
+          ), '[]'::jsonb
         )
         FROM reactions r2 WHERE r2.post_id = p.id
       ) AS reactions
@@ -112,10 +88,10 @@ BEGIN
   )
   SELECT * FROM filtered_posts
   ORDER BY 
-    CASE WHEN p_feed = 'foryou' THEN score END DESC NULLS LAST,
-    CASE WHEN p_sort = 'comments' THEN comments_count END DESC NULLS LAST,
-    CASE WHEN p_sort = 'views' THEN views_count END DESC NULLS LAST,
-    created_at DESC
+    CASE WHEN p_feed = 'foryou' THEN filtered_posts.score END DESC NULLS LAST,
+    CASE WHEN p_sort = 'comments' THEN filtered_posts.comments_count END DESC NULLS LAST,
+    CASE WHEN p_sort = 'views' THEN filtered_posts.views_count END DESC NULLS LAST,
+    filtered_posts.created_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
 $$;
