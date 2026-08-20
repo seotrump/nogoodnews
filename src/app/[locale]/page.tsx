@@ -7,6 +7,7 @@ import CategoryNav from '@/components/CategoryNav'
 import TopHeadlines from '@/components/TopHeadlines'
 import FollowWidgetWrapper from '@/components/FollowWidgetWrapper'
 import FeedWrapper from '@/components/FeedWrapper'
+import FeedTabsClient from '@/components/FeedTabsClient'
 import { Suspense } from 'react'
 
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -56,69 +57,20 @@ export default async function Home({ params, searchParams }: { params: Promise<{
           
           <div className="flex flex-col gap-2">
             <div className="mb-2 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <div className="w-full sm:w-auto overflow-hidden">
-                <div className="flex gap-4 mb-2 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide pb-1">
-                  <Link 
-                    href={`/?feed=foryou&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'foryou' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-                  >
-                    추천
-                  </Link>
-                  <Link 
-                    href={`/?feed=global&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'global' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-                  >
-                    {t('allFeed')}
-                  </Link>
-                  <Link 
-                    href={`/?feed=following&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                    className={`text-lg font-bold pb-2 border-b-2 px-1 flex items-center gap-1 ${currentFeed === 'following' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-                  >
-                    {t('followingFeed')}
-                  </Link>
-                  <Link 
-                    href={`/?feed=reporter&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'reporter' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-                  >
-                    기자단
-                  </Link>
-                  <Link 
-                    href={`/?feed=blogger&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'blogger' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-                  >
-                    블로거
-                  </Link>
-                  <Link 
-                    href={`/?feed=trend&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'trend' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-                  >
-                    {t('trendFeed')}
-                  </Link>
-                  <Link 
-                    href={`/?feed=best&sort=${sortBy}${currentCategory !== 'all' ? `&category=${currentCategory}` : ''}`} 
-                    className={`text-lg font-bold pb-2 border-b-2 px-1 ${currentFeed === 'best' ? 'text-gray-900 border-gray-900' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
-                  >
-                    {t('bestFeed')}
-                  </Link>
-                </div>
-                <div className="min-h-[1.25rem] flex items-center">
-                  <p className="text-sm text-gray-500 font-medium">
-                    {currentFeed === 'foryou' 
-                      ? 'AI가 내 취향을 분석해 추천하는 피드입니다.'
-                      : currentFeed === 'following' 
-                      ? (user ? t('followingDesc') : t('followingLoginRequired')) 
-                      : currentFeed === 'trend' 
-                      ? t('trendDesc') 
-                      : currentFeed === 'reporter'
-                      ? t('reporterDesc')
-                      : currentFeed === 'blogger'
-                      ? t('bloggerDesc')
-                      : currentFeed === 'best'
-                      ? t('bestDesc')
-                      : t('globalDesc')}
-                  </p>
-                </div>
-              </div>
+              <FeedTabsClient 
+                initialFeed={currentFeed}
+                initialCategory={currentCategory}
+                sortBy={sortBy}
+                tabs={[
+                  { id: 'foryou', label: '추천', desc: 'AI가 내 취향을 분석해 추천하는 피드입니다.' },
+                  { id: 'global', label: t('allFeed'), desc: t('globalDesc') },
+                  { id: 'following', label: <span className="flex items-center gap-1">{t('followingFeed')}</span>, desc: user ? t('followingDesc') : t('followingLoginRequired') },
+                  { id: 'reporter', label: '기자단', desc: t('reporterDesc') },
+                  { id: 'blogger', label: '블로거', desc: t('bloggerDesc') },
+                  { id: 'trend', label: t('trendFeed'), desc: t('trendDesc') },
+                  { id: 'best', label: t('bestFeed'), desc: t('bestDesc') }
+                ]}
+              />
               
               <div className="flex items-center gap-2 flex-shrink-0 ml-auto justify-end">
                 <SortFilter currentSort={sortBy} currentFeed={currentFeed} />
