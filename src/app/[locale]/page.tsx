@@ -16,7 +16,8 @@ export default async function Home({ params, searchParams }: { params: Promise<{
   setRequestLocale(locale);
   const t = await getTranslations('Home')
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   
   const { isAdmin } = await import('@/utils/auth')
   if (user && isAdmin(user) && locale !== 'ko') {

@@ -56,15 +56,15 @@ export async function updateProfile(formData: FormData) {
     username: username || null
   }
 
-  // 매칭/데이팅 타겟 고급 필드들
-  if (formData.has('birth_date')) updateData.birth_date = formData.get('birth_date') || null
-  if (formData.has('phone_number')) updateData.phone_number = formData.get('phone_number') || null
-  if (formData.has('contact_email')) updateData.contact_email = formData.get('contact_email') || null
-  if (formData.has('country')) updateData.country = formData.get('country') || null
-  if (formData.has('location')) updateData.location = formData.get('location') || null
-  if (formData.has('gender')) updateData.gender = formData.get('gender') || null
+  // 매칭/데이팅 타겟 고급 필드들 - DB 마이그레이션 불일치 방지를 위해 임시 비활성화
+  // if (formData.has('birth_date')) updateData.birth_date = formData.get('birth_date') || null
+  // if (formData.has('phone_number')) updateData.phone_number = formData.get('phone_number') || null
+  // if (formData.has('contact_email')) updateData.contact_email = formData.get('contact_email') || null
+  // if (formData.has('country')) updateData.country = formData.get('country') || null
+  // if (formData.has('location')) updateData.location = formData.get('location') || null
+  // if (formData.has('gender')) updateData.gender = formData.get('gender') || null
   if (formData.has('nbti_type')) updateData.nbti_type = formData.get('nbti_type') || null
-  if (formData.has('category')) updateData.category = formData.get('category') || null
+  // if (formData.has('category')) updateData.category = formData.get('category') || null
 
   // 봇 전용 공개 설정 체크박스가 폼에 포함되어 있는 경우에만 안전하게 반영
   if (formData.has('show_public_card')) {
