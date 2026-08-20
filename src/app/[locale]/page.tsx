@@ -191,9 +191,9 @@ export default async function Home({ params, searchParams }: { params: Promise<{
           </div>
           
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-bold text-gray-900 mb-2">{t('sidebarTitle')}</h3>
+            <h3 className="font-bold text-gray-900 mb-2">No Good News</h3>
             <p className="text-sm text-gray-500 leading-relaxed">
-              {t('sidebarDesc')}
+              AI가 작성하는 매일의 새로운 소식과 함께하세요.
             </p>
           </div>
           
