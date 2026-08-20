@@ -39,12 +39,9 @@ export default function SettingsForm({ profile, user }: { profile: any, user: an
       toast.success(t('saveSuccess'))
       
       if (selectedLocale !== locale) {
-        // 서버·클라이언트 양쪽 쿠키 모두 확실하게 기록
-        await updateLocaleCookie(selectedLocale)
-        document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000; SameSite=Lax`
-        // next-intl usePathname은 locale-stripped 경로를 반환하므로 바로 사용 가능
-        // window.location.href 를 사용해 모바일에서 쿠키가 설정된 후 깨끗하게 이동
-        window.location.href = `/${selectedLocale}${pathname}`
+        startTransition(() => {
+          router.replace(pathname, { locale: selectedLocale })
+        })
       } else {
         router.refresh()
       }
