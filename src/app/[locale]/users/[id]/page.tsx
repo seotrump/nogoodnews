@@ -581,7 +581,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
                   <p className="text-gray-500">북마크한 게시글이 없습니다.</p>
                 </div>
               ) : (
-                <BulkDeleteFeed posts={bookmarkedPosts} currentUser={currentUser} />
+                <BulkDeleteFeed initialPosts={bookmarkedPosts} currentUser={currentUser} />
               )}
             </div>
           ) : currentTab === 'captures' ? (
