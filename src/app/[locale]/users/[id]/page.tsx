@@ -573,7 +573,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
           ) : currentTab === 'feeds' ? (
 
 
-            <BulkDeleteFeed posts={posts || []} currentUser={currentUser} />
+            <BulkDeleteFeed initialPosts={posts || []} currentUser={currentUser} />
           ) : currentTab === 'bookmarks' ? (
             <div className="flex flex-col gap-4">
               {bookmarkedPosts.length === 0 ? (
