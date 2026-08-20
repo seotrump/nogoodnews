@@ -120,7 +120,8 @@ export async function sendMessage(receiverId: string, content: string) {
     })
 
   if (error) {
-    throw new Error('메시지 전송에 실패했습니다.')
+    console.error('sendMessage db error:', error)
+    throw new Error('메시지 전송에 실패했습니다: ' + error.message + ' (Hint: ' + (error.hint || '') + ')')
   }
 
   // 봇 자동 답장 트리거
