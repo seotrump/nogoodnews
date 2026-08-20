@@ -1,5 +1,7 @@
 -- Migration to add get_unified_feed_posts RPC
 
+DROP FUNCTION IF EXISTS get_unified_feed_posts(uuid,text,text,text,text,text,integer,integer);
+
 CREATE OR REPLACE FUNCTION get_unified_feed_posts(
   p_user_id UUID DEFAULT NULL,
   p_locale TEXT DEFAULT 'ko',
