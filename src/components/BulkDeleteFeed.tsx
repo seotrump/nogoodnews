@@ -3,13 +3,13 @@
 import React, { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import PostCard from '@/components/PostCard'
-import { deleteMultiplePosts } from '@/app/feed-actions'
+import { deleteMultiplePosts, getFeedPosts } from '@/app/feed-actions'
 import { isAdmin } from '@/utils/auth'
 import { Link, useRouter } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 
 export default function BulkDeleteFeed({ 
-  posts, 
+  initialPosts, 
   currentUser, 
   sortFilter,
   headerLeftContent,
@@ -17,9 +17,14 @@ export default function BulkDeleteFeed({
   feedTopContent,
   emptyFeedState,
   externalDeleteMode,
-  hideInternalDeleteButton
+  hideInternalDeleteButton,
+  feedType = 'foryou',
+  sortBy = 'latest',
+  currentCategory = 'all',
+  currentBadge = null,
+  locale = 'ko'
 }: { 
-  posts: any[], 
+  initialPosts: any[], 
   currentUser: any, 
   sortFilter?: React.ReactNode,
   headerLeftContent?: React.ReactNode,
@@ -27,14 +32,64 @@ export default function BulkDeleteFeed({
   feedTopContent?: React.ReactNode,
   emptyFeedState?: React.ReactNode,
   externalDeleteMode?: boolean,
-  hideInternalDeleteButton?: boolean
+  hideInternalDeleteButton?: boolean,
+  feedType?: string,
+  sortBy?: string,
+  currentCategory?: string,
+  currentBadge?: string | null,
+  locale?: string
 }) {
   const t = useTranslations('Home')
+  const [localPosts, setLocalPosts] = useState<any[]>(initialPosts || [])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState((initialPosts || []).length === 20)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
   const [internalDeleteMode, setInternalDeleteMode] = useState(false)
   const router = useRouter()
   
+  React.useEffect(() => {
+    setLocalPosts(initialPosts || [])
+    setPage(1)
+    setHasMore((initialPosts || []).length === 20)
+  }, [initialPosts])
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) return
+    setIsLoadingMore(true)
+    try {
+      const nextPage = page + 1
+      const newPosts = await getFeedPosts({
+        page: nextPage,
+        limit: 20,
+        feed: feedType,
+        sort: sortBy,
+        category: currentCategory,
+        badge: currentBadge,
+        locale
+      })
+      
+      if (newPosts && newPosts.length > 0) {
+        setLocalPosts(prev => {
+          // 중복 제거 (혹시 모를 새 글 밀림 방지)
+          const existingIds = new Set(prev.map(p => p.id))
+          const filteredNew = newPosts.filter(p => !existingIds.has(p.id))
+          return [...prev, ...filteredNew]
+        })
+        setPage(nextPage)
+        setHasMore(newPosts.length === 20)
+      } else {
+        setHasMore(false)
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('추가 데이터를 불러오는데 실패했습니다.')
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
+
   const deleteMode = externalDeleteMode !== undefined ? externalDeleteMode : internalDeleteMode;
   const hasAdmin = isAdmin(currentUser)
 
@@ -45,10 +100,10 @@ export default function BulkDeleteFeed({
   }
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === posts.length) {
+    if (selectedIds.length === localPosts.length) {
       setSelectedIds([])
     } else {
-      setSelectedIds(posts.map(p => p.id))
+      setSelectedIds(localPosts.map(p => p.id))
     }
   }
 
@@ -82,7 +137,7 @@ export default function BulkDeleteFeed({
     }
   }, [externalDeleteMode])
 
-  if (!posts || posts.length === 0) {
+  if (!localPosts || localPosts.length === 0) {
     return (
       <div className="flex flex-col gap-6">
         {(!hideInternalDeleteButton || sortFilter || headerLeftContent) && (
@@ -190,7 +245,7 @@ export default function BulkDeleteFeed({
           <div className="flex items-center gap-3">
             <input 
               type="checkbox" 
-              checked={selectedIds.length === posts.length && posts.length > 0}
+              checked={selectedIds.length === localPosts.length && localPosts.length > 0}
               onChange={toggleSelectAll}
               className="w-5 h-5 cursor-pointer accent-black"
             />
@@ -210,7 +265,7 @@ export default function BulkDeleteFeed({
         </div>
       )}
 
-      {posts.map((post) => (
+      {localPosts.map((post) => (
         <div key={post.id} className="relative flex items-stretch gap-3">
           {hasAdmin && deleteMode && (
             <div className="pt-5 pl-2 flex items-start">
@@ -227,6 +282,28 @@ export default function BulkDeleteFeed({
           </div>
         </div>
       ))}
+      
+      {hasMore && (
+        <div className="py-6 flex justify-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={isLoadingMore}
+            className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all ${
+              isLoadingMore 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-black text-white hover:bg-gray-800 shadow-md hover:shadow-lg active:scale-95'
+            }`}
+          >
+            {isLoadingMore ? '불러오는 중...' : '더 보기'}
+          </button>
+        </div>
+      )}
+      
+      {!hasMore && localPosts.length > 0 && (
+        <div className="py-8 text-center text-gray-400 text-sm">
+          마지막 게시물입니다.
+        </div>
+      )}
     </div>
   )
 }

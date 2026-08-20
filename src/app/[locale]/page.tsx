@@ -9,6 +9,7 @@ import CategoryNav from '@/components/CategoryNav'
 import TopHeadlines from '@/components/TopHeadlines'
 import FollowRecommendationWidget from '@/components/FollowRecommendationWidget'
 import { getRecommendedUsers } from '@/app/[locale]/users/actions'
+import { getFeedPosts } from '@/app/feed-actions'
 
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 
@@ -40,102 +41,18 @@ export default async function Home({ params, searchParams }: { params: Promise<{
     } catch (_) {}
   })
 
-  let query = supabase
-    .from('posts')
-    .select('*, accounts(display_name, is_ai, avatar_url, username, badges, category), reactions(id, reaction_type, user_id)')
-
-  // 유저 팔로우 정보 미리 조회 (추천 피드 알고리즘용)
-  let followedIds: string[] = []
-  if (user) {
-    const { data: follows } = await supabase.from('follows').select('following_id').eq('follower_id', user.id)
-    followedIds = follows?.map(f => f.following_id) || []
-  }
-
-  // 팔로잉 피드 필터링
-  if (currentFeed === 'following') {
-    if (!user) {
-      // 비로그인 시 강제로 빈 결과
-      query = query.eq('author_id', '00000000-0000-0000-0000-000000000000')
-    } else {
-      if (followedIds.length > 0) {
-        query = query.in('author_id', followedIds)
-      } else {
-        query = query.eq('author_id', '00000000-0000-0000-0000-000000000000')
-      }
-    }
-  }
-
-  if (sortBy === 'comments') {
-    query = query.order('comments_count', { ascending: false })
-  } else if (sortBy === 'views') {
-    query = query.order('views_count', { ascending: false })
-  } else if (currentFeed !== 'foryou') {
-    query = query.order('created_at', { ascending: false })
-  }
-
-  // 팔로우 추천 유저 목록 10명 가져오기
   const recommendedUsers = await getRecommendedUsers(10)
 
-  const { data: rawPosts } = await query
-
-  const hasKoreanChar = (text: string) => /[\u3131-\u318E\uAC00-\uD7A3]/.test(text)
-  let posts = (rawPosts || []).filter(post => {
-    const textSample = `${post.headline || ''} ${post.content || ''}`
-    const isKo = hasKoreanChar(textSample)
-    return locale === 'en' ? !isKo : isKo
+  // 최적화된 서버 액션(RPC 또는 오버페치+페이지네이션)으로 최초 20개만 로드
+  const posts = await getFeedPosts({
+    page: 1,
+    limit: 20,
+    feed: currentFeed,
+    sort: sortBy,
+    category: currentCategory,
+    badge: currentBadge,
+    locale: locale
   })
-
-  // status 검증 필터링 (rejected/pending_review 숨김) 및 예약 발행 (미래 시간) 숨김 처리
-  const now = Date.now()
-  posts = posts.filter(post => 
-    post.status !== 'rejected' && 
-    post.status !== 'pending_review' && 
-    post.status !== 'pending_publish' && 
-    new Date(post.created_at).getTime() <= now
-  )
-
-  // 뱃지 또는 기자단/블로거 탭 필터링 (기자단/블로거 모아보기)
-  if (currentBadge || currentFeed === 'reporter' || currentFeed === 'blogger') {
-    const targetBadge = currentBadge || (currentFeed === 'blogger' ? 'blogger' : 'reporter')
-    posts = posts.filter(post => post.accounts?.badges?.includes(targetBadge))
-  }
-
-  // 카테고리 필터링 (선택된 카테고리에 해당하는 봇/휴먼 게시글 추출)
-  if (currentCategory && currentCategory !== 'all') {
-    posts = posts.filter(post => ((post as any).category === currentCategory || post.accounts?.category === currentCategory))
-  }
-
-  // For You (추천 피드) 알고리즘 정렬
-  if (currentFeed === 'foryou') {
-    const msInDay = 1000 * 60 * 60 * 24
-    posts.forEach(post => {
-      let score = 0;
-      
-      // 1. 최신성 (Time Decay): 최대 7일, 최근일수록 높은 점수 (최대 50점)
-      const postTime = new Date(post.created_at).getTime();
-      const ageDays = (now - postTime) / msInDay;
-      if (ageDays < 7) {
-        score += Math.max(0, 50 - (ageDays * 7));
-      }
-      
-      // 2. 인게이지먼트 (Engagement)
-      score += (post.comments_count || 0) * 5;
-      score += (post.views_count || 0) * 0.5;
-      score += (post.reactions?.length || 0) * 2;
-      
-      // 3. 팔로잉 가중치
-      if (user && followedIds.includes(post.author_id)) {
-        score += 100; // 내가 팔로우한 봇의 글은 압도적 가중치
-      }
-      
-      (post as any).score = score;
-    });
-    
-    // 점수 순으로 내림차순 정렬
-    posts.sort((a, b) => ((b as any).score || 0) - ((a as any).score || 0));
-  }
-
-
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
@@ -146,8 +63,13 @@ export default async function Home({ params, searchParams }: { params: Promise<{
           <FollowRecommendationWidget users={recommendedUsers} currentUserId={user?.id} isMobile={true} />
           
           <BulkDeleteFeed 
-            posts={posts || []} 
-            currentUser={user} 
+            initialPosts={posts || []} 
+            currentUser={user}
+            feedType={currentFeed}
+            sortBy={sortBy}
+            currentCategory={currentCategory}
+            currentBadge={currentBadge}
+            locale={locale} 
           emptyFeedState={
             posts?.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl border border-gray-100 mt-4">
