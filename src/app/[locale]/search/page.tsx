@@ -53,6 +53,22 @@ export default async function SearchPage({ params, searchParams }: { params: Pro
     }
   }
 
+  // 4. 그룹 채팅방 검색 (로그인한 유저만)
+  let chatRooms: any[] = []
+  if (user) {
+    const { data } = await supabase
+      .from('chat_rooms')
+      .select('id, name, is_group, chat_participants!inner(user_id)')
+      .eq('chat_participants.user_id', user.id)
+      .eq('is_group', true)
+      .ilike('name', `%${q}%`)
+      .limit(10)
+    
+    if (data) {
+      chatRooms = data
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-6 sm:mt-8 pb-20 w-full">
       <h1 className="text-2xl font-bold mb-8">
@@ -67,6 +83,23 @@ export default async function SearchPage({ params, searchParams }: { params: Pro
               👤 유저 <span className="text-gray-400 text-sm font-normal">({users.length})</span>
             </h2>
             <UserList users={users} currentUserId={user?.id} currentUserFollowingIds={currentUserFollowingIds} />
+          </section>
+        )}
+
+        {/* 채팅방 결과 영역 */}
+        {chatRooms && chatRooms.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold border-b pb-2 mb-4 flex items-center gap-2">
+              💬 내 채팅방 <span className="text-gray-400 text-sm font-normal">({chatRooms.length})</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {chatRooms.map(room => (
+                <Link key={room.id} href={`/messages?group=${room.id}`} className="block p-4 border rounded-xl hover:border-blue-500 hover:shadow-sm transition bg-white group">
+                  <div className="font-bold text-gray-900 group-hover:text-blue-600 transition truncate">{room.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">그룹 채팅방으로 이동하기 →</div>
+                </Link>
+              ))}
+            </div>
           </section>
         )}
 

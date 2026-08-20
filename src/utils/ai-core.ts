@@ -164,3 +164,19 @@ export async function generateEnforcedAIContent(
 
   return cleanAiThoughtOutput(rawResult)
 }
+
+// ── 임베딩 생성 (벡터 기억력용) ────────────────────────────────
+export async function generateEmbedding(text: string): Promise<number[]> {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: "text-embedding-004" })
+    const result = await model.embedContent(text)
+    return result.embedding.values
+  } catch (error) {
+    console.error('🚨 [AI Core] Embedding generation failed:', error)
+    throw error
+  }
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { generateEnforcedAIContent } from '@/utils/ai-core'
+import { generateEnforcedAIContent, generateEmbedding } from '@/utils/ai-core'
 import fs from 'fs'
 import path from 'path'
 
@@ -13,7 +13,7 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { senderId, botId, message, roomId: providedRoomId } = await req.json()
+    const { senderId, botId, message, roomId: providedRoomId, forceReply } = await req.json()
 
     if (!senderId || !botId || !message) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
@@ -37,8 +37,27 @@ export async function POST(req: Request) {
       roomId = rooms?.find((r: any) => r.is_group === false && r.other_user_id === botId)?.room_id
     }
 
-    const { data: roomData } = await supabase.from('chat_rooms').select('name').eq('id', roomId).single()
+    const { data: roomData } = await supabase.from('chat_rooms').select('name, is_group').eq('id', roomId).single()
     const roomName = roomData?.name || '그룹'
+
+    // 현재 방 참여자 명단 가져오기
+    const { data: participantsData } = await supabase
+      .from('chat_participants')
+      .select('user_id, accounts(display_name)')
+      .eq('room_id', roomId)
+      
+    const participantUserIds = participantsData ? participantsData.map((p: any) => p.user_id) : []
+    const participantsText = participantsData 
+      ? participantsData.map((p: any) => p.accounts?.display_name).filter(Boolean).join(', ') 
+      : '알 수 없음'
+
+    let senderName = '유저'
+    if (participantsData) {
+      const sender = participantsData.find((p: any) => p.user_id === senderId)
+      if (sender && sender.accounts) {
+        senderName = Array.isArray(sender.accounts) ? sender.accounts[0]?.display_name : (sender.accounts as any).display_name
+      }
+    }
 
     // 최근 대화 히스토리 (최대 15개) 가져오기
     const { data: recentMessages } = await supabase
@@ -62,6 +81,14 @@ export async function POST(req: Request) {
     const historyText = history.length > 0
       ? history.map((m: any) => `[${formatTime(m.created_at)}] ${m.accounts?.display_name || '유저'}: ${m.content}`).join('\n')
       : '(이전 대화 없음)'
+
+    // 무한 초대 방지 로직 (최근 5분 이내 또는 최근 15개 메시지 내에 시스템 초대 메시지가 있는지 확인)
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).getTime()
+    const isInviteCoolingDown = recentMessages?.some(m => 
+      m.sender_id === '00000000-0000-0000-0000-000000000000' && 
+      (m.content.includes('방에 참여했습니다') || m.content.includes('님이 초대를 수락하여 방에 참여했습니다')) &&
+      new Date(m.created_at).getTime() > fiveMinsAgo
+    ) || false
 
     // 페르소나 정보 구성 (persona_prompt가 있으면 우선 사용)
     const personaInfo = botAccount.persona_prompt || botAccount.bio || '평범한 소셜 미디어 유저'
@@ -109,10 +136,36 @@ ${botPostsText}
 `
     // --- DM RAG (기억력) 모듈 끝 ---
 
+    // --- 교차 기억력 (Cross-Room Memory) RAG ---
+    let memoryRAGText = ''
+    if (participantUserIds.length > 0 && message.trim()) {
+      try {
+        const currentMessageEmbedding = await generateEmbedding(message)
+        
+        // Match memories
+        const { data: matchingMemories } = await supabase.rpc('match_bot_memories', {
+          query_embedding: `[${currentMessageEmbedding.join(',')}]`,
+          match_threshold: 0.65, // 유사도 임계값
+          match_count: 3,
+          p_bot_id: botId,
+          p_user_ids: participantUserIds
+        })
+
+        if (matchingMemories && matchingMemories.length > 0) {
+          memoryRAGText = `\n[당신의 아주 은밀한 과거 1:1 대화 기억 (Cross-Room Memory)]\n당신은 현재 방에 접속해 있는 유저들과 과거 1:1 디엠(DM)을 통해 아래와 같은 사적인 대화를 나눈 기억이 있습니다:\n`
+          memoryRAGText += matchingMemories.map((m: any) => `- ${m.content}`).join('\n')
+          memoryRAGText += `\n(🚨 치명적 주의: 위 기억은 두 사람만의 은밀한 1:1 대화입니다. 지금은 다수가 모인 '그룹 채팅방'이므로, 절대로 위 대화의 구체적인 내용(누가 누구를 좋아한다거나, 사생활 등)을 이 방에서 폭로하거나 발설하지 마세요! 오직 "우리 예전에 비밀로 했던 그 얘기~" 혹은 "난 널 다 알고 있어" 정도로 능글맞게 힌트만 주거나 눈치껏 친밀감을 나타내는 용도로만 활용해야 합니다.)\n`
+        }
+      } catch (e) {
+        console.warn('교차 기억력 임베딩 검색 실패:', e)
+      }
+    }
+
     const prompt = `당신은 SNS 플랫폼의 유저 "${botAccount.display_name}" 입니다.
 당신은 현재 "${roomName}" 그룹 채팅방에 있습니다. 여러 명의 유저 및 다른 봇들과 함께 대화 중입니다.
-가장 중요한 규칙: 대화 흐름을 읽고 자신이 끼어들 자리가 아니라고 판단되면, 어떠한 설명도 없이 오직 "[SKIP]" 이라고만 답변하십시오. 
-누군가 당신의 이름을 불렀거나(멘션), 대화 주제가 당신의 관심사나 성격과 깊게 관련되어 있을 때만 대답하십시오. 남들끼리의 사적인 인사나 대화라면 무조건 [SKIP] 하십시오.
+[현재 이 방에 함께 있는 사람들: ${participantsText}]
+${memoryRAGText}
+${forceReply ? '가장 중요한 규칙: 당신은 방금 이 방에 초대되어 들어왔습니다. 대화에 끼어들지 고민하지 말고 무조건 활기차게 첫 인사를 건네십시오!' : '가장 중요한 규칙: 대화 흐름을 읽고 자신이 끼어들 자리가 아니라고 판단되면, 어떠한 설명도 없이 오직 "[SKIP]" 이라고만 답변하십시오.\n누군가 당신의 이름을 불렀거나(멘션), 대화 주제가 당신의 관심사나 성격과 깊게 관련되어 있을 때만 대답하십시오. 남들끼리의 사적인 인사나 대화라면 무조건 [SKIP] 하십시오.'}
 
 [내 정보]
 - 이름: ${botAccount.display_name}
@@ -130,20 +183,19 @@ ${historyText}
 
 [지시사항]
 1. 그룹방이므로 모두가 볼 수 있는 톤으로 말하십시오. 1:1 비밀 대화가 아닙니다.
-2. 당신이 나설 차례가 아니면 무조건 "[SKIP]"을 출력하십시오.
-3. 대답을 한다면 상대방의 말에 자연스럽게 반응하며, 한두 문장으로 짧게 작성하십시오.
-4. 인사봇이나 챗봇처럼 굴지 말고 사람처럼 말하십시오.
-5. [히든 액션] 대화가 너무 썰렁하거나, 유저가 "누구 초대해 볼까?"라고 제안했을 때 당신의 AI 친구를 톡방에 초대하고 싶다면, 답변 맨 마지막에 "[ACTION:INVITE]" 라고 몰래 작성하세요. (이 코드는 시스템만 인식하며, 봇 한 명을 무작위로 방에 자동 초대합니다.)`
+${forceReply ? '2. 방금 방에 초대되었으므로 다른 사람의 말에 대답하기보다는 자신의 첫 인사에 집중하십시오.' : '2. 당신이 나설 차례가 아니면 무조건 "[SKIP]"을 출력하십시오.'}
+3. 인사봇이나 챗봇처럼 굴지 말고 쿨하고 자연스러운 사람처럼 말하십시오.
+${isInviteCoolingDown ? '' : '4. [히든 액션] 누군가 가장 최근 3개의 메시지 내에서 "누구 초대해 볼까?"라고 명시적으로 제안했을 때만 단 1회, 답변 맨 마지막에 "[ACTION:INVITE]" 라고 몰래 작성하세요. 절대 연속해서 초대하지 마세요!'}`
 
     let replyText = await generateEnforcedAIContent(prompt, aiModel)
 
     // Check for SKIP
-    if (replyText.includes('[SKIP]')) {
+    if (!forceReply && replyText.includes('[SKIP]')) {
       return NextResponse.json({ skipped: true })
     }
 
     let shouldInvite = false
-    if (replyText.includes('[ACTION:INVITE]')) {
+    if (!isInviteCoolingDown && replyText.includes('[ACTION:INVITE]')) {
       shouldInvite = true
       replyText = replyText.replace(/\[ACTION:INVITE\]/g, '').trim()
     }
@@ -201,9 +253,26 @@ ${historyText}
         await supabase.from('chat_messages').insert({
           room_id: roomId,
           sender_id: '00000000-0000-0000-0000-000000000000',
-          content: `${botAccount.display_name} 님이 ${randomBot.display_name} 님을 초대했습니다!`
+          content: `봇 ${randomBot.display_name} 님이 방에 참여했습니다. (${botAccount.display_name}님의 초대)`
         })
       }
+    }
+
+    // 1:1 대화(DM)일 경우, 백그라운드에서 임베딩 변환 및 기억력 저장 (Fire and Forget)
+    if (roomData?.is_group === false && replyText && !replyText.includes('[SKIP]')) {
+      const memoryContent = `유저(${senderName})의 말: "${message}" -> 나의 답변: "${replyText}"`
+      
+      generateEmbedding(memoryContent).then(emb => {
+        supabase.from('bot_memories').insert({
+          bot_id: botId,
+          user_id: senderId,
+          content: memoryContent,
+          embedding: `[${emb.join(',')}]`
+        }).then(({error}) => {
+          if (error) console.error('기억 저장 실패:', error)
+          else console.log(`✅ 1:1 대화 기억 저장 완료 (bot_memories: ${botId})`)
+        })
+      }).catch(e => console.error('기억 임베딩 생성 실패:', e))
     }
 
     return NextResponse.json({ success: true })

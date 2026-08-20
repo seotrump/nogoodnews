@@ -4,12 +4,14 @@ import { useEffect, useState, useRef } from 'react'
 import { getUserProfileUrl } from '@/utils/user'
 import { createClient } from '@/utils/supabase/client'
 import { Link } from '@/i18n/routing'
-import { markNotificationAsRead, markAllNotificationsAsRead } from '@/app/notifications/actions'
+import { markNotificationAsRead, markAllNotificationsAsRead, acceptGroupInvite } from '@/app/notifications/actions'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 export default function NotificationBell({ userId }: { userId: string }) {
   const t = useTranslations('Notifications')
   const [notifications, setNotifications] = useState<any[]>([])
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   
@@ -88,7 +90,17 @@ export default function NotificationBell({ userId }: { userId: string }) {
   const handleRead = async (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
     await markNotificationAsRead(id)
-    setIsOpen(false)
+  }
+
+  const handleAcceptInvite = async (e: React.MouseEvent, n: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, is_read: true } : item))
+    const res = await acceptGroupInvite(n.id, n.target_id)
+    if (res.success) {
+      router.push(`/messages?group=${n.target_id}`)
+      setIsOpen(false)
+    }
   }
 
   const handleReadAll = async () => {
@@ -142,9 +154,15 @@ export default function NotificationBell({ userId }: { userId: string }) {
                   } else if (n.type === 'comment') {
                     textKey = 'comment'
                     href = `/posts/${n.target_id}`
+                  } else if (n.type === 'group_invite') {
+                    textKey = 'group_invite'
+                    href = '#'
                   }
 
-                  const textStr = textKey ? t(textKey) : ''
+                  // 임시 문구 (번역본 업데이트 전)
+                  let textStr = textKey ? t(textKey) : ''
+                  if (n.type === 'group_invite' && !textStr) textStr = '님께서 그룹 채팅에 초대했습니다.'
+                  
                   const actorName = n.actor?.display_name || t('unknownUser')
 
                   return (
@@ -161,11 +179,25 @@ export default function NotificationBell({ userId }: { userId: string }) {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-800">
-                          {t('format', { actor: actorName, text: textStr })}
+                          {n.type === 'group_invite' 
+                            ? <span className="font-semibold">{actorName}</span> 
+                            : t('format', { actor: actorName, text: textStr })
+                          }
+                          {n.type === 'group_invite' && ` ${textStr}`}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
                           {new Date(n.created_at).toLocaleDateString()}
                         </p>
+                        {n.type === 'group_invite' && (
+                          <div className="mt-2">
+                            <button 
+                              onClick={(e) => handleAcceptInvite(e, n)}
+                              className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition"
+                            >
+                              수락하기
+                            </button>
+                          </div>
+                        )}
                       </div>
                       {!n.is_read && <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 shrink-0"></div>}
                     </Link>

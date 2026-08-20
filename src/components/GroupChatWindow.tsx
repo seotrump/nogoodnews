@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { sendGroupMessage, inviteToGroupChat } from '@/app/[locale]/messages/actions'
+import { sendGroupMessage, inviteToGroupChat, updateRoomName, kickUser, deleteMessage } from '@/app/[locale]/messages/actions'
 import { toast } from 'react-hot-toast'
 import { Link } from '@/i18n/routing'
-import { UserPlus, X } from 'lucide-react'
+import { UserPlus, X, Edit2, Check, Trash2, UserMinus } from 'lucide-react'
 
 export default function GroupChatWindow({ 
   currentUserId, 
@@ -23,6 +23,10 @@ export default function GroupChatWindow({
   const [availableUsersToInvite, setAvailableUsersToInvite] = useState<any[]>([])
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [isInviting, setIsInviting] = useState(false)
+  const [localRoomName, setLocalRoomName] = useState(room.name || '그룹 채팅방')
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editNameInput, setEditNameInput] = useState('')
+
   const supabase = createClient()
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -88,6 +92,20 @@ export default function GroupChatWindow({
           }
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${room.id}` },
+        (payload) => {
+          setMessages(prev => prev.map(m => m.id === payload.new.id ? payload.new : m))
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${room.id}` },
+        (payload) => {
+          setMessages(prev => prev.filter(m => m.id !== payload.old.id))
+        }
+      )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
@@ -121,27 +139,23 @@ export default function GroupChatWindow({
       if (res.success && res.aiBots && res.aiBots.length > 0) {
         setIsAiTyping(true)
         
-        // 봇 순차 호출 (앞 봇의 응답 결과를 뒤 봇이 볼 수 있도록)
+        // 봇 병렬 호출 (지연 병렬 처리로 속도 개선 - Phase 3)
         const triggerBots = async () => {
-          // 배열 순서를 랜덤하게 섞어서 항상 같은 봇이 먼저 대답하지 않도록 함
           const shuffledBots = [...res.aiBots].sort(() => Math.random() - 0.5)
           
-          for (const botId of shuffledBots) {
+          await Promise.all(shuffledBots.map(async (botId, index) => {
+            // 각 봇이 완전히 동시에 응답하지 않고 약간씩 시간차를 두고 고민하도록 (자연스러운 다중 발화 허용)
+            await new Promise(r => setTimeout(r, index * 500))
             try {
-              const aiRes = await fetch('/api/ai-reply-group', {
+              await fetch('/api/ai-reply-group', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ senderId: currentUserId, botId, message: newMsg.content, roomId: room.id })
               })
-              const data = await aiRes.json().catch(() => ({}))
-              if (!data.skipped) {
-                // 대답을 한 경우, 다음 봇이 대답하기 전 약간의 딜레이
-                await new Promise(r => setTimeout(r, 1500))
-              }
             } catch (e) {
               console.error(e)
             }
-          }
+          }))
           setIsAiTyping(false)
         }
         
@@ -168,13 +182,70 @@ export default function GroupChatWindow({
     try {
       await inviteToGroupChat(room.id, selectedUserIds)
       toast.success('초대 완료!')
+      
+      const invitedBots = availableUsersToInvite.filter(u => u.is_ai && selectedUserIds.includes(u.id)).map(u => u.id)
+      
       setShowParticipantsModal(false)
       setSelectedUserIds([])
-      fetchMessagesAndParticipants()
+      await fetchMessagesAndParticipants()
+
+      // 봇이 초대된 경우 즉시 첫인사 유도 (Phase 2)
+      if (invitedBots.length > 0) {
+        setIsAiTyping(true)
+        await Promise.all(invitedBots.map(async botId => {
+          try {
+            await fetch('/api/ai-reply-group', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ senderId: currentUserId, botId, message: '[SYSTEM] 방금 이 채팅방에 초대되었습니다. 인사말을 남겨주세요!', roomId: room.id, forceReply: true })
+            })
+          } catch (e) {
+            console.error(e)
+          }
+        }))
+        setIsAiTyping(false)
+      }
     } catch (e: any) {
       toast.error(e.message || '초대에 실패했습니다.')
     } finally {
       setIsInviting(false)
+    }
+  }
+
+  const handleSaveRoomName = async () => {
+    if (editNameInput.trim() === localRoomName) {
+      setIsEditingName(false)
+      return
+    }
+    try {
+      await updateRoomName(room.id, editNameInput)
+      setLocalRoomName(editNameInput.trim())
+      setIsEditingName(false)
+      toast.success('방 이름이 변경되었습니다.')
+    } catch (e: any) {
+      toast.error(e.message)
+    }
+  }
+
+  const handleKickUser = async (targetId: string) => {
+    if (!window.confirm('정말 내보내시겠습니까?')) return
+    try {
+      await kickUser(room.id, targetId)
+      toast.success('강퇴 처리되었습니다.')
+      await fetchMessagesAndParticipants()
+    } catch (e: any) {
+      toast.error(e.message || '강퇴 실패')
+    }
+  }
+
+  const handleDeleteMessage = async (msgId: string) => {
+    if (!window.confirm('메시지를 삭제하시겠습니까?')) return
+    try {
+      await deleteMessage(msgId, room.id)
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, content: '삭제된 메시지입니다.', is_deleted: true } : m))
+      toast.success('삭제되었습니다.')
+    } catch (e: any) {
+      toast.error(e.message || '삭제 실패')
     }
   }
 
@@ -185,11 +256,37 @@ export default function GroupChatWindow({
         onClick={() => setShowParticipantsModal(true)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
+          <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold shrink-0">
             {Object.keys(participants).length}명
           </div>
-          <div>
-            <div className="font-bold text-gray-900">{room.name || '그룹 채팅방'}</div>
+          <div className="min-w-0" onClick={(e) => e.stopPropagation()}>
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editNameInput}
+                  onChange={e => setEditNameInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSaveRoomName()}
+                  className="font-bold text-gray-900 border-b border-blue-500 outline-none bg-transparent px-1 max-w-[150px]"
+                  autoFocus
+                />
+                <button onClick={handleSaveRoomName} className="text-green-600 hover:bg-green-50 p-1 rounded"><Check size={16}/></button>
+                <button onClick={() => setIsEditingName(false)} className="text-gray-400 hover:bg-gray-100 p-1 rounded"><X size={16}/></button>
+              </div>
+            ) : (
+              <div className="font-bold text-gray-900 flex items-center gap-1 group">
+                <span className="truncate max-w-[200px]">{localRoomName}</span>
+                <button 
+                  onClick={() => {
+                    setEditNameInput(localRoomName)
+                    setIsEditingName(true)
+                  }}
+                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-600 transition"
+                >
+                  <Edit2 size={14} />
+                </button>
+              </div>
+            )}
             <div className="text-xs text-gray-500 line-clamp-1 max-w-[200px] md:max-w-md">
               참여자: {Object.values(participants).map((p: any) => p.display_name).join(', ')}
             </div>
@@ -205,9 +302,19 @@ export default function GroupChatWindow({
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
         {messages.map((msg, idx) => {
+          if (msg.sender_id === '00000000-0000-0000-0000-000000000000') {
+            return (
+              <div key={msg.id || idx} className="flex justify-center my-4">
+                <div className="bg-gray-200/70 text-gray-600 text-xs px-3 py-1.5 rounded-full font-medium">
+                  {msg.content}
+                </div>
+              </div>
+            )
+          }
+
           const isMine = msg.sender_id === currentUserId
           const sender = participants[msg.sender_id]
-          const showAvatar = !isMine && (idx === 0 || messages[idx-1].sender_id !== msg.sender_id)
+          const showAvatar = !isMine && (idx === 0 || messages[idx-1].sender_id !== msg.sender_id || messages[idx-1].sender_id === '00000000-0000-0000-0000-000000000000')
 
           return (
             <div key={msg.id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start gap-2'}`}>
@@ -224,7 +331,7 @@ export default function GroupChatWindow({
                   )}
                 </div>
               )}
-              <div className="max-w-[75%]">
+              <div className="max-w-[75%] group">
                 {showAvatar && (
                   <div className="text-xs text-gray-500 mb-1 ml-1 flex items-center gap-1">
                     {sender?.display_name || '알 수 없음'}
@@ -232,12 +339,21 @@ export default function GroupChatWindow({
                   </div>
                 )}
                 <div className={`flex items-end gap-1.5 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`rounded-2xl px-4 py-2.5 text-sm relative group whitespace-pre-wrap ${isMine ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none shadow-sm'}`}>
+                  <div className={`rounded-2xl px-4 py-2.5 text-sm relative whitespace-pre-wrap ${msg.is_deleted ? 'bg-gray-100 text-gray-400 border border-gray-200 shadow-none italic' : isMine ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-900 rounded-tl-none shadow-sm'}`}>
                     {msg.content}
                   </div>
                   <div className="flex flex-col gap-1 items-end shrink-0">
                     <span className="text-[10px] text-gray-400 mb-1">{formatTime(msg.created_at)}</span>
                   </div>
+                  {!msg.is_deleted && (isMine || room.admin_id === currentUserId) && (
+                    <button 
+                      onClick={() => handleDeleteMessage(msg.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition"
+                      title="메시지 삭제"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -291,11 +407,29 @@ export default function GroupChatWindow({
               <div>
                 <h3 className="text-xs font-bold text-gray-500 mb-2">현재 참여 중</h3>
                 <div className="space-y-2">
-                  {Object.values(participants).map((p: any) => (
-                    <div key={p.id} className="flex items-center gap-3">
-                      {p.avatar_url ? <img src={p.avatar_url} className="w-8 h-8 rounded-full border" alt=""/> : <div className="w-8 h-8 bg-gray-200 rounded-full"/>}
-                      <span className="font-medium text-sm">{p.display_name}</span>
-                      {p.is_ai && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">AI</span>}
+                  {Object.values(participants).sort((a: any, b: any) => {
+                    if (a.id === room.admin_id) return -1
+                    if (b.id === room.admin_id) return 1
+                    return 0
+                  }).map((p: any) => (
+                    <div key={p.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group">
+                      <div className="flex items-center gap-3">
+                        {p.avatar_url ? <img src={p.avatar_url} className="w-8 h-8 rounded-full border" alt=""/> : <div className="w-8 h-8 bg-gray-200 rounded-full"/>}
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium text-sm">{p.display_name}</span>
+                          {room.admin_id === p.id && <span className="text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded border border-yellow-200">방장</span>}
+                          {p.is_ai && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">AI</span>}
+                        </div>
+                      </div>
+                      {room.admin_id === currentUserId && p.id !== currentUserId && (
+                        <button 
+                          onClick={() => handleKickUser(p.id)}
+                          className="text-red-500 bg-red-50 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-100 transition"
+                          title="내보내기"
+                        >
+                          <UserMinus size={16} />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>

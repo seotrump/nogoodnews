@@ -8,7 +8,7 @@ import DeleteConversationButton from '@/components/DeleteConversationButton'
 import { deleteConversation, leaveGroupChat } from './actions'
 import CreateGroupChatModal from '@/components/CreateGroupChatModal'
 import CreateDMModal from '@/components/CreateDMModal'
-import { Users, Plus, MessageCircle } from 'lucide-react'
+import { Users, Plus, Search } from 'lucide-react'
 
 export default function MessagesClientWrapper({
   conversations,
@@ -30,10 +30,26 @@ export default function MessagesClientWrapper({
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
   const [showCreateDMModal, setShowCreateDMModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'dm' | 'group'>('dm')
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredConversations = conversations.filter((c: any) => 
-    activeTab === 'group' ? c.is_group : !c.is_group
-  )
+  const filteredConversations = conversations.filter((c: any) => {
+    // 탭 필터링
+    if (activeTab === 'group' && !c.is_group) return false
+    if (activeTab === 'dm' && c.is_group) return false
+    
+    // 검색어 필터링
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      if (c.is_group) {
+        const roomName = (c.room_name || '그룹 채팅').toLowerCase()
+        if (!roomName.includes(q)) return false
+      } else {
+        const userName = (c.profile?.display_name || '').toLowerCase()
+        if (!userName.includes(q)) return false
+      }
+    }
+    return true
+  })
 
   return (
     <div className="max-w-6xl mx-auto px-4 mt-4 md:mt-6 h-[calc(100vh-180px)] md:h-[calc(100vh-120px)] pb-16 md:pb-0 flex flex-col md:flex-row gap-4 md:gap-6">
@@ -56,6 +72,18 @@ export default function MessagesClientWrapper({
           >
             <Plus size={20} />
           </button>
+        </div>
+        <div className="p-3 border-b border-gray-100 bg-gray-50/50">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder={activeTab === 'group' ? '방 이름으로 검색...' : '이름으로 검색...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+          </div>
         </div>
         <div className="flex border-b border-gray-100 px-2 pt-2">
           <button

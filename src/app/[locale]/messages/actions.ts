@@ -202,11 +202,25 @@ export async function leaveGroupChat(roomId: string) {
     .eq('room_id', roomId)
     .eq('user_id', effectiveUserId)
 
+  // 방에 남은 참여자 확인
+  const { data: remainingParticipants } = await supabaseAdmin
+    .from('chat_participants')
+    .select('user_id, accounts(is_ai)')
+    .eq('room_id', roomId)
+
+  // 남은 사람이 없거나, 모두 봇(is_ai === true)뿐이라면 방 자체를 삭제(폭파)
+  if (!remainingParticipants || remainingParticipants.length === 0 || !remainingParticipants.some((p: any) => p.accounts?.is_ai === false)) {
+    await supabaseAdmin.from('chat_rooms').delete().eq('id', roomId)
+    revalidatePath('/messages')
+    return
+  }
+
   // 시스템 메시지 (누가 나갔는지)
+  const userName = user.user_metadata?.display_name || '사용자'
   await supabaseAdmin.from('chat_messages').insert({
     room_id: roomId,
     sender_id: '00000000-0000-0000-0000-000000000000', // 시스템 봇
-    content: `사용자가 퇴장했습니다.`
+    content: `${userName} 님이 퇴장했습니다.`
   })
 
   revalidatePath('/messages')
@@ -228,23 +242,37 @@ export async function inviteToGroupChat(roomId: string, userIdsToInvite: string[
     throw new Error('권한이 없습니다.')
   }
 
-  // Insert new participants
-  const inserts = userIdsToInvite.map(uid => ({
-    room_id: roomId,
-    user_id: uid
-  }))
+  // 1. Get info about users to invite
+  const { data: invitedUsers } = await supabaseAdmin.from('accounts').select('id, display_name, is_ai').in('id', userIdsToInvite)
+  if (!invitedUsers || invitedUsers.length === 0) return
 
-  await supabaseAdmin.from('chat_participants').insert(inserts)
+  const aiUsers = invitedUsers.filter(u => u.is_ai)
+  const humanUsers = invitedUsers.filter(u => !u.is_ai)
+  const inviterName = user.user_metadata?.display_name || '사용자'
 
-  // Send system message
-  const { data: invitedUsers } = await supabaseAdmin.from('accounts').select('display_name').in('id', userIdsToInvite)
-  if (invitedUsers && invitedUsers.length > 0) {
-    const names = invitedUsers.map(u => u.display_name).join(', ')
+  // 2. Add AI users directly to room
+  if (aiUsers.length > 0) {
+    const inserts = aiUsers.map(u => ({ room_id: roomId, user_id: u.id }))
+    await supabaseAdmin.from('chat_participants').insert(inserts)
+
+    // Send AI arrival message
+    const names = aiUsers.map(u => u.display_name).join(', ')
     await supabaseAdmin.from('chat_messages').insert({
       room_id: roomId,
       sender_id: '00000000-0000-0000-0000-000000000000',
-      content: `${names} 님이 초대되었습니다.`
+      content: `봇 ${names} 님이 방에 참여했습니다. (${inviterName}님의 초대)`
     })
+  }
+
+  // 3. Send Notification to Human users
+  if (humanUsers.length > 0) {
+    const notifInserts = humanUsers.map(u => ({
+      recipient_id: u.id,
+      actor_id: user.id,
+      type: 'group_invite',
+      target_id: roomId,
+    }))
+    await supabaseAdmin.from('notifications').insert(notifInserts)
   }
 
   revalidatePath('/messages')
@@ -324,6 +352,8 @@ export async function getMessages(otherUserId: string) {
   return data || []
 }
 
+
+
 export async function createGroupChat(name: string, participantIds: string[]) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -336,7 +366,7 @@ export async function createGroupChat(name: string, participantIds: string[]) {
   // 방 생성은 RLS RETURNING 이슈 방지를 위해 Admin 클라이언트 사용
   const { data: newRoom, error: roomError } = await supabaseAdmin
     .from('chat_rooms')
-    .insert({ name: name || null, is_group: true })
+    .insert({ name: name || null, is_group: true, admin_id: effectiveUserId })
     .select('id')
     .single()
     
@@ -361,6 +391,23 @@ export async function createGroupChat(name: string, participantIds: string[]) {
   if (partError) {
     console.error('Participant insert error:', partError)
     throw new Error('참여자 추가 실패')
+  }
+
+  // 봇이 포함되어 있다면 환영 알림 시스템 메시지 전송
+  const { data: botAccounts } = await supabaseAdmin
+    .from('accounts')
+    .select('display_name')
+    .in('id', participantIds)
+    .eq('is_ai', true)
+    
+  if (botAccounts && botAccounts.length > 0) {
+    const names = botAccounts.map(b => b.display_name).join(', ')
+    const inviterName = user.user_metadata?.display_name || '방장'
+    await supabaseAdmin.from('chat_messages').insert({
+      room_id: roomId,
+      sender_id: '00000000-0000-0000-0000-000000000000',
+      content: `봇 ${names} 님이 방에 참여했습니다. (${inviterName}님의 초대)`
+    })
   }
 
   revalidatePath('/messages')
@@ -405,14 +452,159 @@ export async function sendGroupMessage(roomId: string, content: string) {
     const participantIds = participants.map(p => p.user_id)
     const { data: bots } = await supabaseAdmin
       .from('accounts')
-      .select('id')
+      .select('id, display_name, username')
       .in('id', participantIds)
       .eq('is_ai', true)
 
     if (bots && bots.length > 0) {
+      // 멘션 체크 (@표시 이름)
+      const mentionedBots = bots.filter(b => content.includes('@' + b.display_name) || content.includes('@' + b.username))
+      
+      if (mentionedBots.length > 0) {
+        // 멘션된 봇이 있다면 걔네들만 리턴
+        return { success: true, aiBots: mentionedBots.map(b => b.id) }
+      }
       return { success: true, aiBots: bots.map(b => b.id) }
     }
   }
 
   return { success: true, aiBots: [] }
+}
+
+export async function updateRoomName(roomId: string, newName: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error('로그인이 필요합니다.')
+
+  const { effectiveUserId, isPiloting } = await getPilotInfo(user)
+  const dbClient = isPiloting ? supabaseAdmin : supabase
+
+  // 권한 확인 (해당 방 참가자인지)
+  const { data: participant } = await dbClient
+    .from('chat_participants')
+    .select('user_id')
+    .eq('room_id', roomId)
+    .eq('user_id', effectiveUserId)
+    .single()
+
+  if (!participant) throw new Error('권한이 없습니다.')
+
+  // 방 이름 업데이트
+  const { error } = await supabaseAdmin
+    .from('chat_rooms')
+    .update({ name: newName.trim() || null })
+    .eq('id', roomId)
+
+  if (error) throw new Error('방 이름 변경에 실패했습니다.')
+
+  // 시스템 메시지 기록
+  const userName = user.user_metadata?.display_name || '사용자'
+  await supabaseAdmin.from('chat_messages').insert({
+    room_id: roomId,
+    sender_id: '00000000-0000-0000-0000-000000000000',
+    content: `${userName} 님이 방 이름을 변경했습니다.`
+  })
+
+  revalidatePath('/messages')
+}
+
+export async function kickUser(roomId: string, targetUserId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error('로그인이 필요합니다.')
+
+  const { effectiveUserId, isPiloting } = await getPilotInfo(user)
+  const dbClient = isPiloting ? supabaseAdmin : supabase
+
+  // 해당 방의 admin_id 확인
+  const { data: room } = await dbClient
+    .from('chat_rooms')
+    .select('admin_id')
+    .eq('id', roomId)
+    .single()
+
+  if (!room || room.admin_id !== effectiveUserId) {
+    throw new Error('강퇴 권한이 없습니다 (방장이 아닙니다).')
+  }
+
+  // 타겟 유저 이름 가져오기
+  const { data: targetAccount } = await supabaseAdmin
+    .from('accounts')
+    .select('display_name')
+    .eq('id', targetUserId)
+    .single()
+
+  const targetName = targetAccount?.display_name || '사용자'
+
+  // 참여자 명단에서 삭제
+  await supabaseAdmin
+    .from('chat_participants')
+    .delete()
+    .eq('room_id', roomId)
+    .eq('user_id', targetUserId)
+
+  // 강퇴당한 유저가 작성한 모든 메시지 일괄 강제 삭제 (하드 딜리트)
+  await supabaseAdmin
+    .from('chat_messages')
+    .delete()
+    .eq('room_id', roomId)
+    .eq('sender_id', targetUserId)
+
+  // 시스템 메시지
+  const adminName = user.user_metadata?.display_name || '방장'
+  await supabaseAdmin.from('chat_messages').insert({
+    room_id: roomId,
+    sender_id: '00000000-0000-0000-0000-000000000000',
+    content: `${adminName} 님이 ${targetName} 님을 강퇴했습니다.`
+  })
+
+  revalidatePath('/messages')
+}
+
+export async function deleteMessage(messageId: string, roomId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) throw new Error('로그인이 필요합니다.')
+
+  const { effectiveUserId, isPiloting } = await getPilotInfo(user)
+  const dbClient = isPiloting ? supabaseAdmin : supabase
+
+  // 메시지 조회
+  const { data: message } = await dbClient
+    .from('chat_messages')
+    .select('sender_id')
+    .eq('id', messageId)
+    .single()
+
+  if (!message) throw new Error('메시지를 찾을 수 없습니다.')
+
+  // 권한 확인: 본인 메시지이거나, 현재 유저가 해당 방의 방장이어야 함
+  let hasPermission = false
+  if (message.sender_id === effectiveUserId) {
+    hasPermission = true
+  } else {
+    const { data: room } = await dbClient
+      .from('chat_rooms')
+      .select('admin_id')
+      .eq('id', roomId)
+      .single()
+    if (room && room.admin_id === effectiveUserId) {
+      hasPermission = true
+    }
+  }
+
+  if (!hasPermission) {
+    throw new Error('삭제 권한이 없습니다.')
+  }
+
+  // 메시지 회수(tombstone) 처리
+  await supabaseAdmin
+    .from('chat_messages')
+    .update({ content: '삭제된 메시지입니다.', is_deleted: true })
+    .eq('id', messageId)
+
+  revalidatePath('/messages')
 }
