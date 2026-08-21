@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useRouter } from '@/i18n/routing'
 import ChatWindow from '@/components/ChatWindow'
 import GroupChatWindow from '@/components/GroupChatWindow' // Will create this next
@@ -32,6 +32,17 @@ export default function MessagesClientWrapper({
   const [activeTab, setActiveTab] = useState<'dm' | 'group'>('dm')
   const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
+
+  // 만약 1:1 대화방이 전혀 없고 그룹 채팅방만 있다면, 기본 탭을 'group'으로 자동 변경합니다.
+  useEffect(() => {
+    const hasDMs = conversations.some(c => !c.is_group)
+    const hasGroups = conversations.some(c => c.is_group)
+    if (!hasDMs && hasGroups && activeTab === 'dm') {
+      setActiveTab('group')
+    } else if (hasDMs && !hasGroups && activeTab === 'group') {
+      setActiveTab('dm')
+    }
+  }, [conversations])
 
   const handleDeleteDM = async (userId: string) => {
     await deleteConversation(userId)
