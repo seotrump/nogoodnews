@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Link } from '@/i18n/routing'
+import { Link, useRouter } from '@/i18n/routing'
 import ChatWindow from '@/components/ChatWindow'
 import GroupChatWindow from '@/components/GroupChatWindow' // Will create this next
 import DeleteConversationButton from '@/components/DeleteConversationButton'
@@ -31,6 +31,19 @@ export default function MessagesClientWrapper({
   const [showCreateDMModal, setShowCreateDMModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'dm' | 'group'>('dm')
   const [searchQuery, setSearchQuery] = useState('')
+  const router = useRouter()
+
+  const handleDeleteDM = async (userId: string) => {
+    await deleteConversation(userId)
+    router.push('/messages')
+    router.refresh()
+  }
+
+  const handleDeleteGroup = async (roomId: string) => {
+    await leaveGroupChat(roomId)
+    router.push('/messages')
+    router.refresh()
+  }
 
   const filteredConversations = conversations.filter((c: any) => {
     // 탭 필터링
@@ -144,15 +157,15 @@ export default function MessagesClientWrapper({
                   {!conv.is_group ? (
                     <form className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
                       <DeleteConversationButton 
-                        onAction={deleteConversation.bind(null, conv.other_user_id)} 
-                        title="대화방 나가기 (숨김)" 
+                        onAction={async () => await handleDeleteDM(conv.other_user_id)} 
+                        title="대화방에서 나가기" 
                       />
                     </form>
                   ) : (
                     <form className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
                       <DeleteConversationButton 
-                        onAction={leaveGroupChat.bind(null, conv.room_id)} 
-                        title="그룹방 나가기" 
+                        onAction={async () => await handleDeleteGroup(conv.room_id)} 
+                        title="그룹방에서 나가기" 
                       />
                     </form>
                   )}
