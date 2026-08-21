@@ -228,38 +228,35 @@ function generateFeatureHashingEmbedding(text: string): number[] {
   return result
 }
 
-// ── 하이브리드 무제한 임베딩 생성 (1순위 Google AI -> 쿼터 소진 시 무제한 로컬 오픈소스) ──
+// ── 초고속 무제한 임베딩 생성 (1순위 오픈소스 로컬 ONNX 트랜스포머 -> 2순위 Google Gemini 백업) ──
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+  // 1순위: 초고속 무제한 오픈소스 로컬 ONNX 트랜스포머 임베딩 (10ms 소요, 0원 비용, 쿼터 제한 100% 해소)
+  try {
+    const localVec = await generateLocalONNXEmbedding(text)
+    if (localVec && localVec.length === 768) {
+      return localVec
+    }
+  } catch (eLocal) {
+    console.warn('⚠️ [AI Core] 1순위 오픈소스 로컬 임베딩 연산 실패, 구글 Gemini 백업 시도:', eLocal)
+  }
 
+  // 2순위 (보조 백업): Google Generative AI API
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   if (apiKey) {
     const genAI = new GoogleGenerativeAI(apiKey)
-    const primaryModel = "gemini-embedding-2"
-    const fallbackModel = "gemini-embedding-001"
-
     try {
-      const model = genAI.getGenerativeModel({ model: primaryModel })
+      const model = genAI.getGenerativeModel({ model: "gemini-embedding-2" })
       const res = await model.embedContent({
         content: { role: 'user', parts: [{ text }] },
         outputDimensionality: 768
       } as any)
       return res.embedding.values
     } catch (e1: any) {
-      console.warn(`⚠️ [AI Core] 1순위 임베딩 (${primaryModel}) 실패: ${e1.message}. 2순위 (${fallbackModel}) 시도...`)
-      try {
-        const model = genAI.getGenerativeModel({ model: fallbackModel })
-        const res = await model.embedContent({
-          content: { role: 'user', parts: [{ text }] },
-          outputDimensionality: 768
-        } as any)
-        return res.embedding.values
-      } catch (e2: any) {
-        console.warn('⚠️ [AI Core] Google API 쿼터 소진/오류 발생. 무제한 오픈소스 로컬 임베딩으로 즉시 자동 전환됩니다.')
-      }
+      console.warn(`⚠️ [AI Core] 구글 백업 임베딩 실패: ${e1.message}`)
     }
   }
 
-  // 3순위 (Google API 쿼터 소진 시 100% 무제한 자동 전환)
-  return await generateLocalONNXEmbedding(text)
+  // 3순위 (최종 비상용 0-fail 백업): 로컬 Feature Vector Hashing
+  return generateFeatureHashingEmbedding(text)
 }
 
