@@ -142,22 +142,36 @@ ${botPostsText}
       try {
         const currentMessageEmbedding = await generateEmbedding(message)
         
-        // Match memories (pass float array, lower threshold to 0.3)
         const { data: matchingMemories, error: memError } = await supabase.rpc('match_bot_memories', {
           query_embedding: Array.from(currentMessageEmbedding),
-          match_threshold: 0.3, // 유사도 임계값 조정 (0.65 -> 0.3)
+          match_threshold: 0.1, // 유사도 임계값을 0.1로 완화
           match_count: 5,
           p_bot_id: botId,
           p_user_ids: participantUserIds
         })
 
+        // 보완: 벡터 유사도가 임계값 미만으로 0건인 경우, 현재 방 유저와의 최근 기억 5건을 기본 소환
+        let finalMemories = matchingMemories || []
+        if (finalMemories.length === 0) {
+          const { data: recentMems } = await supabase
+            .from('bot_memories')
+            .select('content, created_at')
+            .eq('bot_id', botId)
+            .in('user_id', participantUserIds)
+            .order('created_at', { ascending: false })
+            .limit(5)
+          if (recentMems && recentMems.length > 0) {
+            finalMemories = recentMems
+          }
+        }
+
         if (memError) {
           console.error('❌ 교차 기억력 RPC 검색 에러:', memError.message, memError.details)
-        } else if (matchingMemories && matchingMemories.length > 0) {
-          console.log(`✅ [기억 소환 성공] 봇(${botAccount.display_name})이 ${matchingMemories.length}개의 과거 대화 기억을 소환했습니다.`)
-          memoryRAGText = `\n[당신의 과거 1:1 대화 및 사적 기억 (Cross-Room Memory)]\n당신은 현재 방에 있는 유저와 1:1 대화를 통해 아래의 내용을 나누고 기억하고 있습니다:\n`
-          memoryRAGText += matchingMemories.map((m: any) => `- ${m.content}`).join('\n')
-          memoryRAGText += `\n(지침: 상대방이 과거 대화나 사적 질문을 물어보면 위 기억을 바탕으로 자연스럽고 친밀하게 답변하세요. 단, 남들에게 대놓고 개인정보를 노출하지는 말고 자연스럽게 아는 척하세요.)\n`
+        } else if (finalMemories && finalMemories.length > 0) {
+          console.log(`✅ [기억 소환 성공] 봇(${botAccount.display_name})이 ${finalMemories.length}개의 과거 대화 기억을 소환했습니다.`)
+          memoryRAGText = `\n[당신의 과거 1:1 대화 및 사적 기억 (Cross-Room Memory)]\n당신은 현재 방에 있는 유저와 과거에 아래의 대화를 나누고 기억하고 있습니다:\n`
+          memoryRAGText += finalMemories.map((m: any) => `- ${m.content}`).join('\n')
+          memoryRAGText += `\n[기억 활용 필수 지침]: 상대방이 과거 대화나 사적 질문을 물어보면 위 [Cross-Room Memory]에 기록된 사실을 바탕으로 정확하고 자연스럽게 답변하십시오.\n`
         } else {
           console.log(`ℹ️ [기억 소환 0건] 봇(${botAccount.display_name}) 관련 매칭되는 과거 기억이 없습니다.`)
         }

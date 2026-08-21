@@ -212,14 +212,11 @@ export default function ChatWindow({
           )
         })}
         {isAiTyping && (
-          <div className="flex justify-start items-center gap-2 py-1">
-            <div className="max-w-[80%] rounded-2xl px-4 py-2.5 text-xs bg-blue-50 border border-blue-200 text-blue-700 rounded-bl-none shadow-sm flex items-center gap-2">
-              <span className="font-semibold">🤖 {otherUser.display_name} 봇이 답변 작성 중...</span>
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></span>
-                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
-              </span>
+          <div className="flex justify-start">
+            <div className="max-w-[70%] rounded-2xl px-4 py-3 text-sm bg-white border border-gray-200 text-gray-500 rounded-bl-none shadow-sm flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
             </div>
           </div>
         )}
