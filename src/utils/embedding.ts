@@ -1,5 +1,7 @@
 import { generateEmbedding as generateCoreEmbedding } from './ai-core'
 
+export const EMBEDDING_DIMENSIONS = 768
+
 export async function generateEmbedding(text: string): Promise<number[]> {
   const truncated = text.slice(0, 2500)
   return await generateCoreEmbedding(truncated)
