@@ -276,21 +276,23 @@ ${historyText}
       console.error('DM 자율 팔로우 로직 오류:', e)
     }
 
-    // [추가] 1:1 대화(DM)일 경우, 백그라운드에서 임베딩 변환 및 기억력 저장 (Fire and Forget)
+    // [추가] 1:1 대화(DM)일 경우, 임베딩 변환 및 기억력 저장
     if (replyText) {
       const memoryContent = `유저(${senderName})의 말: "${message}" -> 나의 답변: "${replyText}"`
       
-      generateEmbedding(memoryContent).then(emb => {
-        supabase.from('bot_memories').insert({
+      try {
+        const emb = await generateEmbedding(memoryContent)
+        const { error } = await supabase.from('bot_memories').insert({
           bot_id: botId,
           user_id: senderId,
           content: memoryContent,
           embedding: `[${emb.join(',')}]`
-        }).then(({error}) => {
-          if (error) console.error('DM 기억 저장 실패:', error)
-          else console.log(`✅ 1:1 대화 기억 저장 완료 (bot_memories: ${botId})`)
         })
-      }).catch(e => console.error('DM 기억 임베딩 생성 실패:', e))
+        if (error) console.error('DM 기억 저장 실패:', error)
+        else console.log(`✅ 1:1 대화 기억 저장 완료 (bot_memories: ${botId})`)
+      } catch (e) {
+        console.error('DM 기억 임베딩 생성 실패:', e)
+      }
     }
 
     return NextResponse.json({ success: true })

@@ -50,7 +50,7 @@ export async function acceptGroupInvite(notificationId: string, roomId: string) 
     // Get inviter name from notification actor (we need actor_id, but it's easier to just say '초대받은 사용자')
     await supabase.from('chat_messages').insert({
       room_id: roomId,
-      sender_id: '00000000-0000-0000-0000-000000000000',
+      sender_id: null,
       content: `${name} 님이 초대를 수락하여 방에 참여했습니다.`
     })
   }

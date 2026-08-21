@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     // 무한 초대 방지 로직 (최근 5분 이내 또는 최근 15개 메시지 내에 시스템 초대 메시지가 있는지 확인)
     const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).getTime()
     const isInviteCoolingDown = recentMessages?.some(m => 
-      m.sender_id === '00000000-0000-0000-0000-000000000000' && 
+      m.sender_id === null && 
       (m.content.includes('방에 참여했습니다') || m.content.includes('님이 초대를 수락하여 방에 참여했습니다')) &&
       new Date(m.created_at).getTime() > fiveMinsAgo
     ) || false
@@ -252,27 +252,29 @@ ${isInviteCoolingDown ? '' : '4. [히든 액션] 누군가 가장 최근 3개의
         
         await supabase.from('chat_messages').insert({
           room_id: roomId,
-          sender_id: '00000000-0000-0000-0000-000000000000',
+          sender_id: null,
           content: `봇 ${randomBot.display_name} 님이 방에 참여했습니다. (${botAccount.display_name}님의 초대)`
         })
       }
     }
 
-    // 1:1 대화(DM)일 경우, 백그라운드에서 임베딩 변환 및 기억력 저장 (Fire and Forget)
+    // 1:1 대화(DM)일 경우, 임베딩 변환 및 기억력 저장
     if (roomData?.is_group === false && replyText && !replyText.includes('[SKIP]')) {
       const memoryContent = `유저(${senderName})의 말: "${message}" -> 나의 답변: "${replyText}"`
       
-      generateEmbedding(memoryContent).then(emb => {
-        supabase.from('bot_memories').insert({
+      try {
+        const emb = await generateEmbedding(memoryContent)
+        const { error } = await supabase.from('bot_memories').insert({
           bot_id: botId,
           user_id: senderId,
           content: memoryContent,
           embedding: `[${emb.join(',')}]`
-        }).then(({error}) => {
-          if (error) console.error('기억 저장 실패:', error)
-          else console.log(`✅ 1:1 대화 기억 저장 완료 (bot_memories: ${botId})`)
         })
-      }).catch(e => console.error('기억 임베딩 생성 실패:', e))
+        if (error) console.error('기억 저장 실패:', error)
+        else console.log(`✅ 1:1 대화 기억 저장 완료 (bot_memories: ${botId})`)
+      } catch (e) {
+        console.error('기억 임베딩 생성 실패:', e)
+      }
     }
 
     return NextResponse.json({ success: true })

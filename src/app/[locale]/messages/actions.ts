@@ -220,7 +220,7 @@ export async function leaveGroupChat(roomId: string) {
   const userName = user.user_metadata?.display_name || '사용자'
   await supabaseAdmin.from('chat_messages').insert({
     room_id: roomId,
-    sender_id: '00000000-0000-0000-0000-000000000000', // 시스템 봇
+    sender_id: null, // 시스템 봇
     content: `${userName} 님이 퇴장했습니다.`
   })
 
@@ -260,7 +260,7 @@ export async function inviteToGroupChat(roomId: string, userIdsToInvite: string[
     const names = aiUsers.map(u => u.display_name).join(', ')
     await supabaseAdmin.from('chat_messages').insert({
       room_id: roomId,
-      sender_id: '00000000-0000-0000-0000-000000000000',
+      sender_id: null,
       content: `봇 ${names} 님이 방에 참여했습니다. (${inviterName}님의 초대)`
     })
   }
@@ -406,7 +406,7 @@ export async function createGroupChat(name: string, participantIds: string[]) {
     const inviterName = user.user_metadata?.display_name || '방장'
     await supabaseAdmin.from('chat_messages').insert({
       room_id: roomId,
-      sender_id: '00000000-0000-0000-0000-000000000000',
+      sender_id: null,
       content: `봇 ${names} 님이 방에 참여했습니다. (${inviterName}님의 초대)`
     })
   }
@@ -503,7 +503,7 @@ export async function updateRoomName(roomId: string, newName: string) {
   const userName = user.user_metadata?.display_name || '사용자'
   await supabaseAdmin.from('chat_messages').insert({
     room_id: roomId,
-    sender_id: '00000000-0000-0000-0000-000000000000',
+    sender_id: null,
     content: `${userName} 님이 방 이름을 변경했습니다.`
   })
 
@@ -557,7 +557,7 @@ export async function kickUser(roomId: string, targetUserId: string) {
   const adminName = user.user_metadata?.display_name || '방장'
   await supabaseAdmin.from('chat_messages').insert({
     room_id: roomId,
-    sender_id: '00000000-0000-0000-0000-000000000000',
+    sender_id: null,
     content: `${adminName} 님이 ${targetName} 님을 강퇴했습니다.`
   })
 

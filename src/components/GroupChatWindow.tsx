@@ -302,7 +302,7 @@ export default function GroupChatWindow({
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
         {messages.map((msg, idx) => {
-          if (msg.sender_id === '00000000-0000-0000-0000-000000000000') {
+          if (!msg.sender_id || msg.sender_id === '00000000-0000-0000-0000-000000000000') {
             return (
               <div key={msg.id || idx} className="flex justify-center my-4">
                 <div className="bg-gray-200/70 text-gray-600 text-xs px-3 py-1.5 rounded-full font-medium">
@@ -314,7 +314,7 @@ export default function GroupChatWindow({
 
           const isMine = msg.sender_id === currentUserId
           const sender = participants[msg.sender_id]
-          const showAvatar = !isMine && (idx === 0 || messages[idx-1].sender_id !== msg.sender_id || messages[idx-1].sender_id === '00000000-0000-0000-0000-000000000000')
+          const showAvatar = !isMine && (idx === 0 || messages[idx-1].sender_id !== msg.sender_id || !messages[idx-1].sender_id || messages[idx-1].sender_id === '00000000-0000-0000-0000-000000000000')
 
           return (
             <div key={msg.id || idx} className={`flex ${isMine ? 'justify-end' : 'justify-start gap-2'}`}>
