@@ -49,5 +49,3 @@ export function findMostSimilarBot(
 
   return best
 }
-
-export { EMBEDDING_DIMENSIONS }
