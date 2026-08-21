@@ -1,26 +1,8 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { generateEmbedding as generateCoreEmbedding } from './ai-core'
 
-const EMBEDDING_MODEL = 'gemini-embedding-2'
-const EMBEDDING_DIMENSIONS = 768
-
-/**
- * 텍스트를 Gemini Embedding 벡터로 변환합니다.
- * gemini-embedding-2 모델 사용 (768차원)
- */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
-  if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
-
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: EMBEDDING_MODEL })
-
-  // 너무 긴 텍스트는 앞부분만 사용 (API 토큰 한도 대비)
   const truncated = text.slice(0, 2500)
-  const result = await model.embedContent({
-    content: { role: 'user', parts: [{ text: truncated }] },
-    outputDimensionality: EMBEDDING_DIMENSIONS,
-  } as any)
-  return result.embedding.values
+  return await generateCoreEmbedding(truncated)
 }
 
 /**

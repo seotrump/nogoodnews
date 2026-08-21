@@ -165,35 +165,101 @@ export async function generateEnforcedAIContent(
   return cleanAiThoughtOutput(rawResult)
 }
 
-// ── 임베딩 생성 (벡터 기억력용: 1순위 gemini-embedding-2, 2순위 gemini-embedding-001) ──
+// ── 오픈소스 로컬 트랜스포머 임베딩 (무제한 쿼터용) ──
+let localPipelinePromise: Promise<any> | null = null
+
+async function getLocalExtractor() {
+  if (!localPipelinePromise) {
+    const { pipeline } = await import('@xenova/transformers')
+    localPipelinePromise = pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
+  }
+  return localPipelinePromise
+}
+
+async function generateLocalONNXEmbedding(text: string): Promise<number[]> {
+  try {
+    const extractor = await getLocalExtractor()
+    const res = await extractor(text, { pooling: 'mean', normalize: true })
+    const rawEmb = Array.from(res.data) as number[]
+    
+    // 384 차원을 PostgreSQL vector(768) 규격에 맞게 768 차원으로 Zero-padding
+    const padded = new Float32Array(768)
+    padded.set(rawEmb)
+    return Array.from(padded)
+  } catch (err) {
+    console.warn('⚠️ [Local ONNX Embedding] 백업 해시 임베딩 전환:', err)
+    return generateFeatureHashingEmbedding(text)
+  }
+}
+
+function generateFeatureHashingEmbedding(text: string): number[] {
+  const DIM = 768
+  const vec = new Float64Array(DIM)
+  const clean = text.toLowerCase().trim()
+  const tokens: string[] = clean.split(/\s+/)
+
+  for (let n = 1; n <= 3; n++) {
+    for (let i = 0; i <= clean.length - n; i++) {
+      tokens.push(clean.substring(i, i + n))
+    }
+  }
+
+  for (const token of tokens) {
+    let hash = 2166136261
+    for (let i = 0; i < token.length; i++) {
+      hash ^= token.charCodeAt(i)
+      hash = Math.imul(hash, 16777619)
+    }
+    const idx = Math.abs(hash) % DIM
+    const sign = (hash & 1) === 0 ? 1 : -1
+    vec[idx] += sign * (1 + token.length * 0.1)
+  }
+
+  let norm = 0
+  for (let i = 0; i < DIM; i++) {
+    norm += vec[i] * vec[i]
+  }
+  norm = Math.sqrt(norm) || 1
+
+  const result = new Array(DIM)
+  for (let i = 0; i < DIM; i++) {
+    result[i] = vec[i] / norm
+  }
+  return result
+}
+
+// ── 하이브리드 무제한 임베딩 생성 (1순위 Google AI -> 쿼터 소진 시 무제한 로컬 오픈소스) ──
 export async function generateEmbedding(text: string): Promise<number[]> {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
-  if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
 
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const primaryModel = "gemini-embedding-2"
-  const fallbackModel = "gemini-embedding-001"
+  if (apiKey) {
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const primaryModel = "gemini-embedding-2"
+    const fallbackModel = "gemini-embedding-001"
 
-  try {
-    const model = genAI.getGenerativeModel({ model: primaryModel })
-    const res = await model.embedContent({
-      content: { role: 'user', parts: [{ text }] },
-      outputDimensionality: 768
-    } as any)
-    return res.embedding.values
-  } catch (e1: any) {
-    console.warn(`⚠️ [AI Core] 1순위 임베딩 (${primaryModel}) 실패: ${e1.message}. 2순위 (${fallbackModel}) 시도...`)
     try {
-      const model = genAI.getGenerativeModel({ model: fallbackModel })
+      const model = genAI.getGenerativeModel({ model: primaryModel })
       const res = await model.embedContent({
         content: { role: 'user', parts: [{ text }] },
         outputDimensionality: 768
       } as any)
       return res.embedding.values
-    } catch (e2: any) {
-      console.error('🚨 [AI Core] 모든 임베딩 모델 생성 실패:', e2)
-      throw e2
+    } catch (e1: any) {
+      console.warn(`⚠️ [AI Core] 1순위 임베딩 (${primaryModel}) 실패: ${e1.message}. 2순위 (${fallbackModel}) 시도...`)
+      try {
+        const model = genAI.getGenerativeModel({ model: fallbackModel })
+        const res = await model.embedContent({
+          content: { role: 'user', parts: [{ text }] },
+          outputDimensionality: 768
+        } as any)
+        return res.embedding.values
+      } catch (e2: any) {
+        console.warn('⚠️ [AI Core] Google API 쿼터 소진/오류 발생. 무제한 오픈소스 로컬 임베딩으로 즉시 자동 전환됩니다.')
+      }
     }
   }
+
+  // 3순위 (Google API 쿼터 소진 시 100% 무제한 자동 전환)
+  return await generateLocalONNXEmbedding(text)
 }
 
