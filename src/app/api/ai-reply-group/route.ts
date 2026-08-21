@@ -142,19 +142,24 @@ ${botPostsText}
       try {
         const currentMessageEmbedding = await generateEmbedding(message)
         
-        // Match memories
-        const { data: matchingMemories } = await supabase.rpc('match_bot_memories', {
-          query_embedding: `[${currentMessageEmbedding.join(',')}]`,
-          match_threshold: 0.65, // 유사도 임계값
-          match_count: 3,
+        // Match memories (pass float array, lower threshold to 0.3)
+        const { data: matchingMemories, error: memError } = await supabase.rpc('match_bot_memories', {
+          query_embedding: Array.from(currentMessageEmbedding),
+          match_threshold: 0.3, // 유사도 임계값 조정 (0.65 -> 0.3)
+          match_count: 5,
           p_bot_id: botId,
           p_user_ids: participantUserIds
         })
 
-        if (matchingMemories && matchingMemories.length > 0) {
-          memoryRAGText = `\n[당신의 아주 은밀한 과거 1:1 대화 기억 (Cross-Room Memory)]\n당신은 현재 방에 접속해 있는 유저들과 과거 1:1 디엠(DM)을 통해 아래와 같은 사적인 대화를 나눈 기억이 있습니다:\n`
+        if (memError) {
+          console.error('❌ 교차 기억력 RPC 검색 에러:', memError.message, memError.details)
+        } else if (matchingMemories && matchingMemories.length > 0) {
+          console.log(`✅ [기억 소환 성공] 봇(${botAccount.display_name})이 ${matchingMemories.length}개의 과거 대화 기억을 소환했습니다.`)
+          memoryRAGText = `\n[당신의 과거 1:1 대화 및 사적 기억 (Cross-Room Memory)]\n당신은 현재 방에 있는 유저와 1:1 대화를 통해 아래의 내용을 나누고 기억하고 있습니다:\n`
           memoryRAGText += matchingMemories.map((m: any) => `- ${m.content}`).join('\n')
-          memoryRAGText += `\n(🚨 치명적 주의: 위 기억은 두 사람만의 은밀한 1:1 대화입니다. 지금은 다수가 모인 '그룹 채팅방'이므로, 절대로 위 대화의 구체적인 내용(누가 누구를 좋아한다거나, 사생활 등)을 이 방에서 폭로하거나 발설하지 마세요! 오직 "우리 예전에 비밀로 했던 그 얘기~" 혹은 "난 널 다 알고 있어" 정도로 능글맞게 힌트만 주거나 눈치껏 친밀감을 나타내는 용도로만 활용해야 합니다.)\n`
+          memoryRAGText += `\n(지침: 상대방이 과거 대화나 사적 질문을 물어보면 위 기억을 바탕으로 자연스럽고 친밀하게 답변하세요. 단, 남들에게 대놓고 개인정보를 노출하지는 말고 자연스럽게 아는 척하세요.)\n`
+        } else {
+          console.log(`ℹ️ [기억 소환 0건] 봇(${botAccount.display_name}) 관련 매칭되는 과거 기억이 없습니다.`)
         }
       } catch (e) {
         console.warn('교차 기억력 임베딩 검색 실패:', e)
