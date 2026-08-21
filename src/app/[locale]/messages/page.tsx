@@ -56,7 +56,11 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
     }
 
     // 1. 대화 목록 가져오기 (effectiveUserId 기준)
-    const { data: convData } = await supabaseAdmin.rpc('get_conversations', { p_user_id: effectiveUserId })
+    const { data: convData, error: convError } = await supabaseAdmin.rpc('get_conversations', { p_user_id: effectiveUserId })
+    if (convError) {
+      console.error('get_conversations RPC error:', convError)
+      throw new Error(`대화 목록 DB 조회 실패: ${convError.message} (코드: ${convError.code})`)
+    }
     let conversations = convData || []
 
     // 1-1. 중복된 1:1 방(동일한 other_user_id)이 있을 경우 가장 최신 방 1개만 남기고 제거 (이전 버그로 인한 잔재 정리)
