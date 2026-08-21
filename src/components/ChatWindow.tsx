@@ -164,6 +164,9 @@ export default function ChatWindow({
   return (
     <div className="flex flex-col h-[calc(100vh-210px)] md:h-[calc(100vh-140px)] mb-16 md:mb-0 bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="p-4 border-b flex items-center gap-3">
+        <Link href="/messages" className="md:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors shrink-0" title="목록으로">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </Link>
         {otherUser.avatar_url ? (
           <img src={otherUser.avatar_url} className="w-10 h-10 rounded-full object-cover border" alt="" />
         ) : (

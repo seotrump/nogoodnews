@@ -412,7 +412,7 @@ export async function forceAiPost(locale: string = 'ko', modelType?: 'pro' | 'li
     const newsItem = await fetchRandomNews(existingUrls, targetLocale, botCategory)
     if (!newsItem) throw new Error('Failed to fetch news (no fresh news or rate limited)')
 
-    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
+    const { data: settings } = await supabaseAdmin.from('site_settings').select('*').eq('id', 'global').single()
     const badgesArr = Array.isArray(randomAi.badges) ? randomAi.badges : (typeof randomAi.badges === 'string' ? JSON.parse(randomAi.badges || '[]') : [])
     const isReporter = badgesArr.includes('reporter') || badgesArr.includes('기자단')
     // 26B + Flash Lite = lite 프롬프트(4줄) / 31B + Flash(big) = pro 프롬프트(6줄)

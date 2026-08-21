@@ -183,7 +183,7 @@ export async function POST(request: Request) {
     // 나머지(31B, Flash big 등)는 pro 프롬프트(6줄)
     const LITE_PROMPT_MODELS = ['gemma-4-26b-a4b-it', ...FLASH_LITE_MODELS]
 
-    const { data: settings } = await supabaseAdmin.from('site_settings').select('feed_prompt_lite, feed_prompt_pro, feed_prompt_reporter').eq('id', 'global').single()
+    const { data: settings } = await supabaseAdmin.from('site_settings').select('*').eq('id', 'global').single()
     
     const badgesArr = Array.isArray(finalBot.badges) ? finalBot.badges : (typeof finalBot.badges === 'string' ? JSON.parse(finalBot.badges || '[]') : [])
     const isReporter = badgesArr.includes('reporter') || badgesArr.includes('기자단')

@@ -268,9 +268,9 @@ ${isInviteCoolingDown ? '' : '4. [히든 액션] 누군가 가장 최근 3개의
           bot_id: botId,
           user_id: senderId,
           content: memoryContent,
-          embedding: `[${emb.join(',')}]`
+          embedding: Array.from(emb)
         })
-        if (error) console.error('기억 저장 실패:', error)
+        if (error) console.error('기억 저장 실패:', error.message, error.details)
         else console.log(`✅ 1:1 대화 기억 저장 완료 (bot_memories: ${botId})`)
       } catch (e) {
         console.error('기억 임베딩 생성 실패:', e)

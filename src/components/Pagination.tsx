@@ -1,8 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { useRouter } from '@/i18n/routing'
-import { usePathname } from 'next/navigation'
+import { useRouter, usePathname } from '@/i18n/routing'
 
 export default function Pagination({ totalPages, currentPage }: { totalPages: number, currentPage: number }) {
   const pathname = usePathname()

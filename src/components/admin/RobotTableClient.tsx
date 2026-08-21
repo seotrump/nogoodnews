@@ -324,7 +324,7 @@ export default function RobotTableClient({ aiBots, currentTab }: { aiBots: any[]
 
                       {/* 2. 수정 버튼 (활성/정지 탭 모두 표시) */}
                       <Link
-                        href={`/${locale}/admin/bots/${userItem.id}`}
+                        href={`/admin/bots/${userItem.id}`}
                         className="inline-flex items-center gap-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-black font-bold py-1 px-2.5 rounded transition text-xs shadow-xs"
                       >
                         ✏️ 수정

@@ -42,7 +42,7 @@ export default function MessagesClientWrapper({
     } else if (hasDMs && !hasGroups && activeTab === 'group') {
       setActiveTab('dm')
     }
-  }, [conversations])
+  }, [conversations, activeTab])
 
   const handleDeleteDM = async (userId: string) => {
     await deleteConversation(userId)

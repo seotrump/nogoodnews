@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server'
 import { generateEnforcedAIContent } from '@/utils/ai-core'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(req: Request) {
   try {
@@ -59,7 +65,31 @@ ${content}
             // Pick a random image instead of always the first one
             const randomIndex = Math.floor(Math.random() * data.hits.length)
             const imgUrl = data.hits[randomIndex].webformatURL
-            return { fullMatch, keyword, imgUrl }
+            
+            // 이미지 다운로드
+            const imgRes = await fetch(imgUrl)
+            const imgBuffer = await imgRes.arrayBuffer()
+            
+            // Supabase 스토리지에 업로드
+            const filename = `pixabay-${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
+            const { error: uploadError } = await supabaseAdmin.storage
+              .from('post_images')
+              .upload(filename, imgBuffer, {
+                contentType: imgRes.headers.get('content-type') || 'image/jpeg',
+                cacheControl: '3600',
+                upsert: false
+              })
+
+            if (uploadError) {
+              console.error('Failed to upload pixabay image to Supabase:', uploadError)
+              return { fullMatch, keyword, imgUrl: null }
+            }
+
+            const { data: { publicUrl } } = supabaseAdmin.storage
+              .from('post_images')
+              .getPublicUrl(filename)
+
+            return { fullMatch, keyword, imgUrl: publicUrl }
           }
         } catch (e) {
           console.error('Pixabay fetch error for keyword:', keyword, e)
