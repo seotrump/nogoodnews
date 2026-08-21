@@ -206,11 +206,13 @@ export async function leaveGroupChat(roomId: string) {
   // 방에 남은 참여자 확인
   const { data: remainingParticipants } = await supabaseAdmin
     .from('chat_participants')
-    .select('user_id, accounts(is_ai)')
+    .select('user_id, accounts!inner(is_ai)')
     .eq('room_id', roomId)
 
-  // 남은 사람이 없거나, 모두 봇(is_ai === true)뿐이라면 방 자체를 삭제(폭파)
-  if (!remainingParticipants || remainingParticipants.length === 0 || !remainingParticipants.some((p: any) => p.accounts?.is_ai === false)) {
+  // 남은 사람이 없거나, 인간 멤버(is_ai === false)가 0명이면 방 자체를 폭파(삭제)
+  const humanCount = (remainingParticipants || []).filter((p: any) => p.accounts && (p.accounts.is_ai === false || p.accounts.is_ai === null)).length
+  if (!remainingParticipants || remainingParticipants.length === 0 || humanCount === 0) {
+    console.log(`🧹 [Ghost Room Explosion] 인간 유저 퇴장 후 인간 멤버 0명이 되어 그룹방(${roomId})을 자동 폭파 삭제합니다.`)
     await supabaseAdmin.from('chat_rooms').delete().eq('id', roomId)
     revalidatePath('/messages')
     return
@@ -552,6 +554,20 @@ export async function kickUser(roomId: string, targetUserId: string) {
     .delete()
     .eq('room_id', roomId)
     .eq('sender_id', targetUserId)
+
+  // 방에 남은 사람 확인 (인간 유저가 0명이면 방 폭파 삭제)
+  const { data: remainingParticipants } = await supabaseAdmin
+    .from('chat_participants')
+    .select('user_id, accounts!inner(is_ai)')
+    .eq('room_id', roomId)
+
+  const humanCount = (remainingParticipants || []).filter((p: any) => p.accounts && (p.accounts.is_ai === false || p.accounts.is_ai === null)).length
+  if (!remainingParticipants || remainingParticipants.length === 0 || humanCount === 0) {
+    console.log(`🧹 [Ghost Room Explosion] 인간 유저가 0명이 되어 그룹방(${roomId})을 자동 삭제합니다.`)
+    await supabaseAdmin.from('chat_rooms').delete().eq('id', roomId)
+    revalidatePath('/messages')
+    return
+  }
 
   // 시스템 메시지
   const adminName = user.user_metadata?.display_name || '방장'

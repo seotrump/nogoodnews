@@ -72,6 +72,25 @@ export default async function MessagesPage({ searchParams, params }: { searchPar
       return true
     })
 
+    // 1-2. 유령 그룹방(인간 멤버 0명) 자동 청소 및 대화 목록에서 제외
+    const validConversations = []
+    for (const c of conversations) {
+      if (c.is_group) {
+        const { data: pList } = await supabaseAdmin
+          .from('chat_participants')
+          .select('user_id, accounts!inner(is_ai)')
+          .eq('room_id', c.room_id)
+        
+        const humanCount = (pList || []).filter((p: any) => p.accounts && (p.accounts.is_ai === false || p.accounts.is_ai === null)).length
+        if (!pList || pList.length === 0 || humanCount === 0) {
+          await supabaseAdmin.from('chat_rooms').delete().eq('id', c.room_id)
+          continue
+        }
+      }
+      validConversations.push(c)
+    }
+    conversations = validConversations
+
     // 2. 만약 selectedUserId가 있는데 대화 목록에 없다면 (새로운 대화)
     if (selectedUserId && !conversations.find((c: any) => c.other_user_id === selectedUserId)) {
       conversations = [{ other_user_id: selectedUserId, is_group: false, last_message: '', last_created_at: new Date().toISOString(), unread_count: 0 }, ...conversations]
