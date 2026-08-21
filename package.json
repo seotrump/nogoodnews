@@ -1,6 +1,6 @@
 {
   "name": "nn-nogoodnews",
-  "version": "9.09.0",
+  "version": "9.10.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

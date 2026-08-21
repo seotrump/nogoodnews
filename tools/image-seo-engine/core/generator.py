@@ -28,13 +28,16 @@ def get_pipeline():
 def generate_image_from_prompt(prompt: str, steps: int = DEFAULT_STEPS) -> Image.Image:
     pipe = get_pipeline()
 
+    # Enforce photorealistic 8K photography style with NO text/watermark graphics
+    photo_prompt = f"Award-winning professional photography of {prompt}, 8k resolution, photorealistic, natural lighting, sharp focus, 35mm lens, cinematic depth of field, highly detailed, no text, no watermark, no typography"
+
     if pipe == "dummy" or pipe is None:
         # Fallback dummy PIL image for CPU/test mode without GPU weights
         img = Image.new("RGB", (IMAGE_WIDTH, IMAGE_HEIGHT), color=(73, 109, 137))
         return img
 
     image = pipe(
-        prompt=prompt,
+        prompt=photo_prompt,
         num_inference_steps=steps,
         guidance_scale=0.0, # 0.0 for FLUX schnell
         width=IMAGE_WIDTH,
