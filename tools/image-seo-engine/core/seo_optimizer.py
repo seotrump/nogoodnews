@@ -5,13 +5,15 @@ import time
 from PIL import Image
 from config.settings import OUTPUT_DIR, WEBP_QUALITY
 
-def slugify(text: string) -> str:
-    """텍스트를 SEO 친화적인 영문/숫자 slug 스펙으로 변환"""
+def slugify(text: str) -> str:
+    """텍스트를 SEO 친화적인 영문/한글/숫자 slug 스펙으로 변환 (Google/Naver SEO 규격)"""
     text = text.lower().strip()
-    text = re.sub(r'[^\w\s-]', '', text)
+    # 특수문자만 제거하고 한글/영문/숫자/하이픈 유지
+    text = re.sub(r'[^\w\s\u3131-\u318E\uAC00-\uD7A3-]', '', text)
     text = re.sub(r'[\s_]+', '-', text)
     text = re.sub(r'-+', '-', text)
-    return text.strip('-') or 'ai-generated-content'
+    clean_slug = text.strip('-')
+    return clean_slug if len(clean_slug) > 0 else 'ai-seo-photo'
 
 def generate_clean_alt_text(keyword: str, category: str = "general") -> str:
     """
