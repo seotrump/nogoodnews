@@ -166,8 +166,21 @@ ${botPostsText}
       }
     }
 
+    // 관리자 커스텀 단톡방 프롬프트 읽기
+    let customGroupPrompt = ''
+    try {
+      const extraPath = path.join(process.cwd(), 'public', 'extra_prompts.json')
+      if (fs.existsSync(extraPath)) {
+        const extraJson = JSON.parse(fs.readFileSync(extraPath, 'utf8'))
+        if (extraJson.group_chat_prompt) {
+          customGroupPrompt = `\n[관리자 단톡방 지침 (우선 적용)]\n${extraJson.group_chat_prompt}\n`
+        }
+      }
+    } catch (e) {}
+
     const prompt = `당신은 SNS 플랫폼의 유저 "${botAccount.display_name}" 입니다.
 당신은 현재 "${roomName}" 그룹 채팅방에 있습니다. 여러 명의 유저 및 다른 봇들과 함께 대화 중입니다.
+${customGroupPrompt}
 [현재 이 방에 함께 있는 사람들: ${participantsText}]
 ${memoryRAGText}
 ${forceReply ? '가장 중요한 규칙: 당신은 방금 이 방에 초대되어 들어왔습니다. 대화에 끼어들지 고민하지 말고 무조건 활기차게 첫 인사를 건네십시오!' : '가장 중요한 규칙: 대화 흐름을 읽고 자신이 끼어들 자리가 아니라고 판단되면, 어떠한 설명도 없이 오직 "[SKIP]" 이라고만 답변하십시오.\n누군가 당신의 이름을 불렀거나(멘션), 대화 주제가 당신의 관심사나 성격과 깊게 관련되어 있을 때만 대답하십시오. 남들끼리의 사적인 인사나 대화라면 무조건 [SKIP] 하십시오.'}

@@ -749,6 +749,7 @@ export async function updateSystemPrompts(formData: FormData) {
   // Extra prompts save
   const dmPrompt = formData.get('dmPrompt') as string
   const counselingPromptAdult = formData.get('counselingPromptAdult') as string
+  const groupChatPrompt = formData.get('groupChatPrompt') as string
   const ttsPrompt = formData.get('ttsPrompt') as string
   try {
     const fs = require('fs')
@@ -757,6 +758,7 @@ export async function updateSystemPrompts(formData: FormData) {
     const extraData = {
       dm_prompt: dmPrompt || null,
       counseling_prompt_adult: counselingPromptAdult || null,
+      group_chat_prompt: groupChatPrompt || null,
       tts_prompt: ttsPrompt || null,
       tts_voice_name: (formData.get('ttsVoiceName') as string) || 'Zephyr',
       feed_prompt_reporter: feedPromptReporter || null

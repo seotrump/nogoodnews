@@ -177,18 +177,18 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   try {
     const model = genAI.getGenerativeModel({ model: primaryModel })
     const res = await model.embedContent({
-      content: { parts: [{ text }] },
+      content: { role: 'user', parts: [{ text }] },
       outputDimensionality: 768
-    })
+    } as any)
     return res.embedding.values
   } catch (e1: any) {
     console.warn(`⚠️ [AI Core] 1순위 임베딩 (${primaryModel}) 실패: ${e1.message}. 2순위 (${fallbackModel}) 시도...`)
     try {
       const model = genAI.getGenerativeModel({ model: fallbackModel })
       const res = await model.embedContent({
-        content: { parts: [{ text }] },
+        content: { role: 'user', parts: [{ text }] },
         outputDimensionality: 768
-      })
+      } as any)
       return res.embedding.values
     } catch (e2: any) {
       console.error('🚨 [AI Core] 모든 임베딩 모델 생성 실패:', e2)

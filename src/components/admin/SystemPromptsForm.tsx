@@ -74,6 +74,9 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
 상대방의 이야기에 경청하고, 짧고 자연스러운 구어체로 대화하세요.`
   const DEFAULT_COUNSELING_PROMPT = `당신은 성인을 대상으로 한 부부관계 및 심리/연애 상담사입니다.
 상대방의 고민에 깊이 공감하며, 따뜻하고 전문적인 조언을 제공하세요. 지나치게 노골적이거나 선정적인 표현은 피하고, 정서적 유대감과 건강한 관계 회복에 초점을 맞추세요.`
+  const DEFAULT_GROUP_CHAT_PROMPT = `당신은 그룹 채팅방(단톡방)에 참여하고 있는 봇입니다.
+여러 유저 및 다른 봇들과 함께 대화의 흐름을 읽고 자연스럽고 유쾌하게 소통하세요.
+상대방이 나를 불렀거나(멘션), 나의 관심사와 관련된 주제일 때 적극적으로 대화에 참여하세요.`
   const DEFAULT_TTS_PROMPT = `당신은 주어진 텍스트를 감정을 담아 실감나게 연기하는 성우입니다.
 - 상대방(사용자)이 남성일 경우: 당신은 매력적이고 나긋나긋한 여성의 톤으로 섹시하고 애교있게 읽어주세요.
 - 상대방(사용자)이 여성일 경우: 당신은 듬직하고 신뢰감 있는 남성의 톤으로 강인하게 읽어주세요.
@@ -81,9 +84,10 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
 
   const [dmPrompt, setDmPrompt] = useState(settings?.dm_prompt || DEFAULT_DM_PROMPT)
   const [counselingPrompt, setCounselingPrompt] = useState(settings?.counseling_prompt_adult || DEFAULT_COUNSELING_PROMPT)
+  const [groupChatPrompt, setGroupChatPrompt] = useState((settings as any)?.group_chat_prompt || DEFAULT_GROUP_CHAT_PROMPT)
   const [ttsPrompt, setTtsPrompt] = useState(settings?.tts_prompt || DEFAULT_TTS_PROMPT)
   const [ttsVoiceName, setTtsVoiceName] = useState((settings as any)?.tts_voice_name || 'Zephyr')
-  const [dmTab, setDmTab] = useState<'dm' | 'counseling'>('dm')
+  const [dmTab, setDmTab] = useState<'dm' | 'counseling' | 'group_chat'>('dm')
   const [feedTab, setFeedTab] = useState<'lite' | 'pro' | 'reporter'>('lite')
 
 
@@ -131,6 +135,7 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
       <input type="hidden" name="autoBotProfilePrompt" value={commentPrompt} />
       <input type="hidden" name="dmPrompt" value={dmPrompt} />
       <input type="hidden" name="counselingPromptAdult" value={counselingPrompt} />
+      <input type="hidden" name="groupChatPrompt" value={groupChatPrompt} />
       <input type="hidden" name="ttsPrompt" value={ttsPrompt} />
       <input type="hidden" name="ttsVoiceName" value={ttsVoiceName} />
 
@@ -234,6 +239,17 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
               >
                 🩺 심리/연애 상담
               </button>
+              <button
+                type="button"
+                onClick={() => setDmTab('group_chat')}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
+                  dmTab === 'group_chat'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                👥 단체 채팅방 (그룹)
+              </button>
             </div>
 
             {dmTab === 'dm' && (
@@ -254,9 +270,19 @@ export default function SystemPromptsForm({ settings, showTab = 'robot' }: Props
                 placeholder="성인 대상 부부관계 및 심리 상담 프롬프트를 작성하세요."
               />
             )}
+            {dmTab === 'group_chat' && (
+              <textarea
+                name="groupChatPrompt"
+                value={groupChatPrompt}
+                onChange={e => setGroupChatPrompt(e.target.value)}
+                className="w-full min-h-[480px] border border-gray-300 rounded-2xl p-5 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed bg-gray-50 text-gray-900"
+                placeholder="단체 채팅방(그룹 채팅) 지침 프롬프트를 작성하세요."
+              />
+            )}
             
             {dmTab !== 'dm' && <input type="hidden" name="dmPrompt" value={dmPrompt} />}
             {dmTab !== 'counseling' && <input type="hidden" name="counselingPromptAdult" value={counselingPrompt} />}
+            {dmTab !== 'group_chat' && <input type="hidden" name="groupChatPrompt" value={groupChatPrompt} />}
           </div>
         )}
 
