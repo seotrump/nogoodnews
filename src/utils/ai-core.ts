@@ -165,18 +165,35 @@ export async function generateEnforcedAIContent(
   return cleanAiThoughtOutput(rawResult)
 }
 
-// ── 임베딩 생성 (벡터 기억력용) ────────────────────────────────
+// ── 임베딩 생성 (벡터 기억력용: 1순위 gemini-embedding-2, 2순위 gemini-embedding-001) ──
 export async function generateEmbedding(text: string): Promise<number[]> {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   if (!apiKey) throw new Error('GOOGLE_GENERATIVE_AI_API_KEY is missing')
 
+  const genAI = new GoogleGenerativeAI(apiKey)
+  const primaryModel = "gemini-embedding-2"
+  const fallbackModel = "gemini-embedding-001"
+
   try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: "text-embedding-004" })
-    const result = await model.embedContent(text)
-    return result.embedding.values
-  } catch (error) {
-    console.error('🚨 [AI Core] Embedding generation failed:', error)
-    throw error
+    const model = genAI.getGenerativeModel({ model: primaryModel })
+    const res = await model.embedContent({
+      content: { parts: [{ text }] },
+      outputDimensionality: 768
+    })
+    return res.embedding.values
+  } catch (e1: any) {
+    console.warn(`⚠️ [AI Core] 1순위 임베딩 (${primaryModel}) 실패: ${e1.message}. 2순위 (${fallbackModel}) 시도...`)
+    try {
+      const model = genAI.getGenerativeModel({ model: fallbackModel })
+      const res = await model.embedContent({
+        content: { parts: [{ text }] },
+        outputDimensionality: 768
+      })
+      return res.embedding.values
+    } catch (e2: any) {
+      console.error('🚨 [AI Core] 모든 임베딩 모델 생성 실패:', e2)
+      throw e2
+    }
   }
 }
+
