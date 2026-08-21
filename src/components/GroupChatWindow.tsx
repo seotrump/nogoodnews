@@ -111,9 +111,13 @@ export default function GroupChatWindow({
     return () => { supabase.removeChannel(channel) }
   }, [room.id, currentUserId])
 
+  const scrollToBottom = (smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' })
+  }
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    scrollToBottom()
+  }, [messages, isAiTyping])
 
   const handleSend = async (e: React.FormEvent) => {
     e?.preventDefault()
@@ -363,11 +367,14 @@ export default function GroupChatWindow({
           )
         })}
         {isAiTyping && (
-          <div className="flex justify-start gap-2 ml-10">
-            <div className="max-w-[70%] rounded-2xl px-4 py-3 text-sm bg-white border border-gray-200 text-gray-500 rounded-bl-none shadow-sm flex items-center gap-2">
-              <span className="animate-pulse">●</span>
-              <span className="animate-pulse delay-75">●</span>
-              <span className="animate-pulse delay-150">●</span>
+          <div className="flex justify-start gap-2 ml-10 py-1">
+            <div className="max-w-[80%] rounded-2xl px-4 py-2.5 text-xs bg-blue-50 border border-blue-200 text-blue-700 rounded-bl-none shadow-sm flex items-center gap-2">
+              <span className="font-semibold">🤖 AI 봇이 답변 작성 중...</span>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+              </span>
             </div>
           </div>
         )}
@@ -382,6 +389,7 @@ export default function GroupChatWindow({
               setInputText(e.target.value)
               e.target.style.height = 'auto'
               e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
+              scrollToBottom(false)
             }}
             onKeyDown={handleKeyDown}
             placeholder="그룹에 메시지를 입력하세요..."
