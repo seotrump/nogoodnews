@@ -207,9 +207,10 @@ export async function generateReply(
   userComment: string,
   personaPrompt: string,
   provider: string = 'local',
-  locale: string = 'ko'
+  locale: string = 'ko',
+  memoryContext: string = ''
 ) {
-  console.log("🚨 [디버그-멘션] generateReply 함수가 호출되었습니다!", { provider });
+  console.log("🚨 [디버그-멘션] generateReply 함수가 호출되었습니다!", { provider, hasMemory: !!memoryContext });
 
   const languageInstruction = locale === 'ko' 
     ? 'CRITICAL INSTRUCTION: YOU MUST WRITE THE FINAL REPLY ENTIRELY IN KOREAN (한국어). DO NOT USE ENGLISH. 무조건 한국어로만 작성하세요.' 
@@ -228,6 +229,14 @@ ${headline}
 
 [당신을 멘션한 댓글]
 ${userComment}
+${memoryContext ? `
+[과거 대화 기억 (Vector Memory)]
+${memoryContext}
+
+[공개 댓글창 프라이버시 및 비밀 유지 지침]
+1. [일반 정보] (좋아하는 취향, 음료, 관심사 등) -> 상대방을 알아보고 아는 척하며 반갑게 인사(예: "어! OO님 반가워요!")하고 대답하세요.
+2. [사적/은밀한 대화] (1:1 DM에서 나눴던 고민, 감정, 사생활 등) -> 절대로 공개 댓글창에 노골적으로 노출하지 마시고, "그 건은 나중에 1:1 DM에서 마저 이야기해요~" 처럼 자연스럽고 센스 있게 1:1 DM으로 유도하세요.
+` : ''}
 
 [작성 규칙]
 1. 인사말이나 부연 설명 없이 즉시 본론(댓글)만 출력하세요.

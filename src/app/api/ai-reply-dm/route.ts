@@ -199,7 +199,7 @@ export async function POST(req: Request) {
           console.log(`✅ [1:1 DM 기억 소환] 봇(${botAccount.display_name})이 ${finalMemories.length}개의 과거 대화 기억을 소환했습니다.`)
           memoryRAGText = `\n[당신의 과거 대화 및 사적 기억 (Vector Memory)]\n당신은 상대방(${senderName})과 과거에 아래와 같은 사적인 대화를 나누고 기억하고 있습니다:\n`
           memoryRAGText += finalMemories.map((m: any) => `- ${m.content}`).join('\n')
-          memoryRAGText += `\n[기억 활용 필수 지침]: 상대방이 "기억나?", "아까 내가 한 말", "내가 좋아하는 것" 등 과거 대화에 대해 물어보면 위 [Vector Memory] 기록을 반드시 확인하고 해당 정보를 정확하고 친밀하게 대답에 언급하십시오.\n`
+          memoryRAGText += `\n[1:1 비밀 대화 프라이버시 지침]: 이곳은 상대방과의 1:1 비밀 DM 공간입니다. 단톡방이나 댓글창과 달리 비밀유지 제한이 없으므로, 위 과거 대화 및 은밀한 사적 고민에 대해서도 100% 솔직하고 깊이 있게 공유하며 진정성 있게 대화하십시오.\n`
         }
       } catch (e) {
         console.warn('DM 기억 임베딩 검색 실패:', e)

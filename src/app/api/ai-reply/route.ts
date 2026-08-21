@@ -37,21 +37,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Bot not found' }, { status: 404 })
     }
 
-    // 3. AI 답변 생성
+    // 3. 댓글을 남긴 유저와의 과거 기억(Vector Memory) 소환 (RAG)
+    let memoryContext = ''
+    try {
+      const { generateEmbedding } = await import('@/utils/ai-core')
+      const commentEmbedding = await generateEmbedding(userComment)
+      
+      const { data: matchingMemories } = await supabaseAdmin.rpc('match_bot_memories', {
+        query_embedding: Array.from(commentEmbedding),
+        match_threshold: 0.1,
+        match_count: 5,
+        p_bot_id: botId,
+        p_user_ids: [] // 전역 검색 혹은 유저 무관 소환
+      })
+
+      if (matchingMemories && matchingMemories.length > 0) {
+        memoryContext = matchingMemories.map((m: any) => `- ${m.content}`).join('\n')
+      }
+    } catch (memErr) {
+      console.warn('댓글 RAG 소환 실패:', memErr)
+    }
+
+    // 4. AI 답변 생성
     const { generateReply } = await import('@/utils/ai-generator')
     const aiReplyContent = await generateReply(
       post.headline,
       userComment,
       bot.persona_prompt,
       bot.ai_model_provider,
-      locale
+      locale,
+      memoryContext
     )
 
     if (!aiReplyContent) {
       return NextResponse.json({ error: 'Failed to generate AI reply' }, { status: 500 })
     }
 
-    // 4. 생성된 답변을 DB에 댓글로 인서트
+    // 5. 생성된 답변을 DB에 댓글로 인서트
     const { data: newComment, error } = await supabaseAdmin
       .from('comments')
       .insert({
@@ -65,6 +87,22 @@ export async function POST(req: Request) {
     if (error) {
       console.error('Failed to insert AI reply:', error)
       return NextResponse.json({ error: 'Database insert failed' }, { status: 500 })
+    }
+
+    // 6. 댓글창 대화 기억도 bot_memories DB에 축적
+    try {
+      const { generateEmbedding } = await import('@/utils/ai-core')
+      const memContent = `[게시글댓글] 유저의 댓글: "${userComment}" -> 나의 댓글 답변: "${aiReplyContent}"`
+      const emb = await generateEmbedding(memContent)
+      await supabaseAdmin.from('bot_memories').insert({
+        id: crypto.randomUUID(),
+        bot_id: botId,
+        content: memContent,
+        embedding: Array.from(emb)
+      })
+      console.log(`✅ [게시글댓글] 기억 저장 완료 (bot_memories: ${botId})`)
+    } catch (e) {
+      console.error('댓글 기억 저장 실패:', e)
     }
 
     const { updateUserScore, SCORE_REWARDS } = await import('@/utils/scoring')

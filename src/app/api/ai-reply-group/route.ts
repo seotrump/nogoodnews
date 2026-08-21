@@ -169,9 +169,11 @@ ${botPostsText}
           console.error('❌ 교차 기억력 RPC 검색 에러:', memError.message, memError.details)
         } else if (finalMemories && finalMemories.length > 0) {
           console.log(`✅ [기억 소환 성공] 봇(${botAccount.display_name})이 ${finalMemories.length}개의 과거 대화 기억을 소환했습니다.`)
-          memoryRAGText = `\n[당신의 과거 1:1 대화 및 사적 기억 (Cross-Room Memory)]\n당신은 현재 방에 있는 유저와 과거에 아래의 대화를 나누고 기억하고 있습니다:\n`
+          memoryRAGText = `\n[당신의 과거 대화 및 사적 기억 (Cross-Room Memory)]\n당신은 현재 방에 있는 유저와 과거에 아래의 대화를 나누고 기억하고 있습니다:\n`
           memoryRAGText += finalMemories.map((m: any) => `- ${m.content}`).join('\n')
-          memoryRAGText += `\n[기억 활용 필수 지침]: 상대방이 과거 대화나 사적 질문을 물어보면 위 [Cross-Room Memory]에 기록된 사실을 바탕으로 정확하고 자연스럽게 답변하십시오.\n`
+          memoryRAGText += `\n[단톡방(공개장소) 프라이버시 및 비밀 유지 지침 - 필수 준수]
+1. [일반 정보] (좋아하는 카페, 음식, 노래, 취미 등) -> 단톡방에서도 구체적인 팩트를 밝혀 답변하며 친근하게 대화하세요.
+2. [사적/은밀한 대화] (1:1 DM에서 나눴던 고민, 감정, 사생활 등) -> 절대로 구체적인 개인 사생활을 단톡방에서 노골적으로 폭로하지 마세요. "비밀이다"라고 티 내는 대신, "그 얘기는 나중에 우리 1:1 DM에서 더 이야기하자~" 처럼 1:1 디엠으로 유도하거나 자연스럽게 다른 화제로 넘어가세요.\n`
         } else {
           console.log(`ℹ️ [기억 소환 0건] 봇(${botAccount.display_name}) 관련 매칭되는 과거 기억이 없습니다.`)
         }
@@ -290,20 +292,22 @@ ${isInviteCoolingDown ? '' : '4. [히든 액션] 누군가 가장 최근 3개의
       }
     }
 
-    // 1:1 대화(DM)일 경우, 임베딩 변환 및 기억력 저장
-    if (roomData?.is_group === false && replyText && !replyText.includes('[SKIP]')) {
-      const memoryContent = `유저(${senderName})의 말: "${message}" -> 나의 답변: "${replyText}"`
+    // 대화 임베딩 변환 및 기억력 저장 (1:1 및 단톡방 공통)
+    if (replyText && !replyText.includes('[SKIP]')) {
+      const roomLabel = roomData?.is_group ? `단톡방(${roomName})` : '1:1대화'
+      const memoryContent = `[${roomLabel}] 유저(${senderName})의 말: "${message}" -> 나의 답변: "${replyText}"`
       
       try {
         const emb = await generateEmbedding(memoryContent)
         const { error } = await supabase.from('bot_memories').insert({
+          id: crypto.randomUUID(),
           bot_id: botId,
           user_id: senderId,
           content: memoryContent,
           embedding: Array.from(emb)
         })
         if (error) console.error('기억 저장 실패:', error.message, error.details)
-        else console.log(`✅ 1:1 대화 기억 저장 완료 (bot_memories: ${botId})`)
+        else console.log(`✅ [${roomLabel}] 기억 저장 완료 (bot_memories: ${botId})`)
       } catch (e) {
         console.error('기억 임베딩 생성 실패:', e)
       }
