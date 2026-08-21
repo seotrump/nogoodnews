@@ -609,3 +609,10 @@ export async function deleteMessage(messageId: string, roomId: string) {
 
   revalidatePath('/messages')
 }
+
+export async function clearPilotMode() {
+  const cookieStore = await cookies()
+  cookieStore.delete('active_persona_id')
+  revalidatePath('/messages')
+}
+
