@@ -113,7 +113,7 @@ BEGIN
         GROUP BY cm.room_id
     ),
     other_users AS (
-        SELECT cp.room_id, MAX(cp.user_id) as other_user_id
+        SELECT cp.room_id, (ARRAY_AGG(cp.user_id))[1] as other_user_id
         FROM chat_participants cp JOIN my_rooms mr ON cp.room_id = mr.room_id
         WHERE mr.is_group = false AND cp.user_id != p_user_id
         GROUP BY cp.room_id
@@ -128,3 +128,5 @@ BEGIN
     ORDER BY lm.last_created_at DESC;
 END;
 $func$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION get_conversations(uuid) TO anon, authenticated, service_role;
