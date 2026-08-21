@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { generateEnforcedAIContent } from '@/utils/ai-core'
+import { generateEnforcedAIContent, generateEmbedding } from '@/utils/ai-core'
 import fs from 'fs'
 import path from 'path'
 
@@ -29,6 +29,14 @@ export async function POST(req: Request) {
     if (!botAccount) {
       return NextResponse.json({ error: 'Bot not found' }, { status: 404 })
     }
+
+    // 유저 정보 가져오기
+    const { data: senderAccount } = await supabase
+      .from('accounts')
+      .select('display_name')
+      .eq('id', senderId)
+      .single()
+    const senderName = senderAccount?.display_name || '유저'
 
     // 1:1 방 ID 찾기 (providedRoomId가 없으면 1:1방으로 간주하고 검색)
     let roomId = providedRoomId
@@ -266,6 +274,23 @@ ${historyText}
       }
     } catch (e) {
       console.error('DM 자율 팔로우 로직 오류:', e)
+    }
+
+    // [추가] 1:1 대화(DM)일 경우, 백그라운드에서 임베딩 변환 및 기억력 저장 (Fire and Forget)
+    if (replyText) {
+      const memoryContent = `유저(${senderName})의 말: "${message}" -> 나의 답변: "${replyText}"`
+      
+      generateEmbedding(memoryContent).then(emb => {
+        supabase.from('bot_memories').insert({
+          bot_id: botId,
+          user_id: senderId,
+          content: memoryContent,
+          embedding: `[${emb.join(',')}]`
+        }).then(({error}) => {
+          if (error) console.error('DM 기억 저장 실패:', error)
+          else console.log(`✅ 1:1 대화 기억 저장 완료 (bot_memories: ${botId})`)
+        })
+      }).catch(e => console.error('DM 기억 임베딩 생성 실패:', e))
     }
 
     return NextResponse.json({ success: true })
