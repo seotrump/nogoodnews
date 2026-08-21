@@ -165,6 +165,32 @@ export async function POST(req: Request) {
       ? userPosts.map(p => `- [${formatTime(p.created_at)}] [${p.post_type === 'column' ? '칼럼' : p.post_type === 'blog' ? '블로그' : '피드'}] ${p.headline || '(내용없음)'}`).join('\n')
       : '(작성한 게시글 없음)'
 
+    // --- 교차 기억력 (Cross-Room Memory) RAG ---
+    let memoryRAGText = ''
+    if (message.trim()) {
+      try {
+        const currentMessageEmbedding = await generateEmbedding(message)
+        const { data: matchingMemories, error: memError } = await supabase.rpc('match_bot_memories', {
+          query_embedding: Array.from(currentMessageEmbedding),
+          match_threshold: 0.3,
+          match_count: 5,
+          p_bot_id: botId,
+          p_user_ids: [senderId]
+        })
+
+        if (memError) {
+          console.error('❌ DM 기억 RPC 검색 에러:', memError.message, memError.details)
+        } else if (matchingMemories && matchingMemories.length > 0) {
+          console.log(`✅ [1:1 DM 기억 소환] 봇(${botAccount.display_name})이 ${matchingMemories.length}개의 과거 대화 기억을 소환했습니다.`)
+          memoryRAGText = `\n[당신의 과거 대화 및 사적 기억 (Vector Memory)]\n당신은 상대방(${senderName})과 과거에 아래와 같은 사적인 대화를 나누고 기억하고 있습니다:\n`
+          memoryRAGText += matchingMemories.map((m: any) => `- ${m.content}`).join('\n')
+          memoryRAGText += `\n(지침: 위 과거 대화 기억을 참고하여 상대방의 질문이나 언급에 자연스럽고 친밀하게 아는 척하며 대화하세요.)\n`
+        }
+      } catch (e) {
+        console.warn('DM 기억 임베딩 검색 실패:', e)
+      }
+    }
+
     const ragContext = `
 [당신(봇)의 과거 전체 활동 이력 요약]
 - 당신이 작성한 게시글들:
@@ -175,8 +201,9 @@ ${botCommentsText}
 [상대방(유저)의 과거 활동 이력 요약]
 - 상대방이 작성한 게시글들:
 ${userPostsText}
+${memoryRAGText}
 
-(지침: 위 활동 내역을 참고하여, 상대방이 안부를 묻거나 관련 대화를 꺼낼 때 매우 자연스럽게 당신의 최신 글을 언급하거나 상대방의 글에 공감해 주세요. 너무 TMI처럼 모든 걸 나열하진 말고, 대화 맥락에 맞을 때만 넌지시 언급하는 것이 좋습니다.)
+(지침: 위 활동 내역과 과거 기억을 참고하여, 상대방이 안부를 묻거나 관련 대화를 꺼낼 때 매우 자연스럽게 당신의 최신 글을 언급하거나 과거 대화 내용을 자연스럽게 아는 척해 주세요.)
 `
     // --- DM RAG (기억력) 모듈 끝 ---
 
@@ -276,22 +303,23 @@ ${historyText}
       console.error('DM 자율 팔로우 로직 오류:', e)
     }
 
-    // [추가] 1:1 대화(DM)일 경우, 임베딩 변환 및 기억력 저장
+    // [추가] 1:1 대화(DM)일 경우, 임베딩 변환 및 기억력 저장 (crypto.randomUUID 사용으로 DB 확장 함수 에러 완벽 차단)
     if (replyText) {
       const memoryContent = `유저(${senderName})의 말: "${message}" -> 나의 답변: "${replyText}"`
       
       try {
         const emb = await generateEmbedding(memoryContent)
         const { error } = await supabase.from('bot_memories').insert({
+          id: crypto.randomUUID(),
           bot_id: botId,
           user_id: senderId,
           content: memoryContent,
           embedding: Array.from(emb)
         })
-        if (error) console.error('DM 기억 저장 실패:', error.message, error.details)
-        else console.log(`✅ 1:1 대화 기억 저장 완료 (bot_memories: ${botId})`)
+        if (error) console.error('❌ DM 기억 저장 실패:', error.message, error.details)
+        else console.log(`✅ 1:1 대화 기억 저장 성공! (bot_memories: ${botId})`)
       } catch (e) {
-        console.error('DM 기억 임베딩 생성 실패:', e)
+        console.error('❌ DM 기억 임베딩 생성 실패:', e)
       }
     }
 
